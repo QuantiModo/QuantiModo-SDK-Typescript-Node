@@ -1316,7 +1316,11 @@ class VoidAuth implements Authentication {
 }
 
 export class VariableUserSourceApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -1334,12 +1338,19 @@ export class VariableUserSourceApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public variableUserSourcesGet (variableId?: number, userId?: number, timestamp?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
-        let path = this.url + this.basePath + '/variableUserSources';
-
+        const path = this.url + this.basePath + '/variableUserSources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1413,10 +1424,9 @@ export class VariableUserSourceApi {
     }
 
     public variableUserSourcesPost (body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
-        let path = this.url + this.basePath + '/variableUserSources';
-
+        const path = this.url + this.basePath + '/variableUserSources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1459,12 +1469,10 @@ export class VariableUserSourceApi {
     }
 
     public variableUserSourcesIdGet (id: number, sourceId: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
-        let path = this.url + this.basePath + '/variableUserSources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variableUserSources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1520,12 +1528,10 @@ export class VariableUserSourceApi {
     }
 
     public variableUserSourcesIdPut (id: number, sourceId: number, body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableUserSources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variableUserSources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1582,12 +1588,10 @@ export class VariableUserSourceApi {
     }
 
     public variableUserSourcesIdDelete (id: number, sourceId: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableUserSources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variableUserSources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1643,7 +1647,11 @@ export class VariableUserSourceApi {
     }
 }
 export class MeasurementApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -1661,12 +1669,19 @@ export class MeasurementApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public measurementsGet (userId?: number, clientId?: string, connectorId?: number, variableId?: number, startTime?: number, value?: number, originalValue?: number, duration?: number, note?: string, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, error?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_11;  }> {
-        let path = this.url + this.basePath + '/measurements';
-
+        const path = this.url + this.basePath + '/measurements';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1780,10 +1795,9 @@ export class MeasurementApi {
     }
 
     public measurementsPost (body?: MeasurementPost) : Promise<{ response: http.ClientResponse; body: inline_response_200_11;  }> {
-        let path = this.url + this.basePath + '/measurements';
-
+        const path = this.url + this.basePath + '/measurements';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1826,10 +1840,9 @@ export class MeasurementApi {
     }
 
     public measurementsCsvGet () : Promise<{ response: http.ClientResponse; body: any;  }> {
-        let path = this.url + this.basePath + '/measurements/csv';
-
+        const path = this.url + this.basePath + '/measurements/csv';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1871,10 +1884,9 @@ export class MeasurementApi {
     }
 
     public measurementsRequestCsvPost () : Promise<{ response: http.ClientResponse; body: number;  }> {
-        let path = this.url + this.basePath + '/measurements/request_csv';
-
+        const path = this.url + this.basePath + '/measurements/request_csv';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1916,12 +1928,10 @@ export class MeasurementApi {
     }
 
     public measurementsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_12;  }> {
-        let path = this.url + this.basePath + '/measurements/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/measurements/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1968,12 +1978,10 @@ export class MeasurementApi {
     }
 
     public measurementsIdPut (id: number, body?: Measurement) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/measurements/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/measurements/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2021,12 +2029,10 @@ export class MeasurementApi {
     }
 
     public measurementsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/measurements/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/measurements/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2073,7 +2079,11 @@ export class MeasurementApi {
     }
 }
 export class VariableApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -2091,12 +2101,19 @@ export class VariableApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public variablesGet (id?: number, clientId?: string, parentId?: number, name?: string, variableCategoryId?: number, defaultUnitId?: number, combinationOperation?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, onsetDelay?: number, durationOfAction?: number, _public?: number, causeOnly?: boolean, mostCommonValue?: number, mostCommonUnitId?: number, standardDeviation?: number, variance?: number, mean?: number, median?: number, numberOfMeasurements?: number, numberOfUniqueValues?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, createdAt?: string, updatedAt?: string, productUrl?: string, imageUrl?: string, price?: number, numberOfUserVariables?: number, outcome?: boolean, minimumRecordedValue?: number, maximumRecordedValue?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_27;  }> {
-        let path = this.url + this.basePath + '/variables';
-
+        const path = this.url + this.basePath + '/variables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2306,10 +2323,9 @@ export class VariableApi {
     }
 
     public variablesPost (body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
-        let path = this.url + this.basePath + '/variables';
-
+        const path = this.url + this.basePath + '/variables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2352,12 +2368,10 @@ export class VariableApi {
     }
 
     public variablesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
-        let path = this.url + this.basePath + '/variables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2404,12 +2418,10 @@ export class VariableApi {
     }
 
     public variablesIdPut (id: number, body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2457,12 +2469,10 @@ export class VariableApi {
     }
 
     public variablesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2509,7 +2519,11 @@ export class VariableApi {
     }
 }
 export class UpdateApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -2527,12 +2541,19 @@ export class UpdateApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public updatesGet (userId?: number, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_19;  }> {
-        let path = this.url + this.basePath + '/updates';
-
+        const path = this.url + this.basePath + '/updates';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2614,10 +2635,9 @@ export class UpdateApi {
     }
 
     public updatesPost (body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
-        let path = this.url + this.basePath + '/updates';
-
+        const path = this.url + this.basePath + '/updates';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2660,12 +2680,10 @@ export class UpdateApi {
     }
 
     public updatesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
-        let path = this.url + this.basePath + '/updates/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/updates/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2712,12 +2730,10 @@ export class UpdateApi {
     }
 
     public updatesIdPut (id: number, body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/updates/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/updates/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2765,12 +2781,10 @@ export class UpdateApi {
     }
 
     public updatesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/updates/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/updates/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2817,7 +2831,11 @@ export class UpdateApi {
     }
 }
 export class AggregatedCorrelationApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -2835,12 +2853,19 @@ export class AggregatedCorrelationApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public aggregatedCorrelationsGet (correlation?: number, causeId?: number, effectId?: number, onsetDelay?: number, durationOfAction?: number, numberOfPairs?: number, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, optimalPearsonProduct?: number, vote?: number, numberOfUsers?: number, numberOfCorrelations?: number, statisticalSignificance?: number, causeUnit?: string, causeUnitId?: number, causeChanges?: number, effectChanges?: number, aggregateQmScore?: number, createdAt?: string, updatedAt?: string, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, reversePearsonCorrelationCoefficient?: number, predictivePearsonCorrelationCoefficient?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations';
-
+        const path = this.url + this.basePath + '/aggregatedCorrelations';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2994,10 +3019,9 @@ export class AggregatedCorrelationApi {
     }
 
     public aggregatedCorrelationsPost (body?: AggregatedCorrelation) : Promise<{ response: http.ClientResponse; body: inline_response_200_1;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations';
-
+        const path = this.url + this.basePath + '/aggregatedCorrelations';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3040,12 +3064,10 @@ export class AggregatedCorrelationApi {
     }
 
     public aggregatedCorrelationsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_1;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/aggregatedCorrelations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3092,12 +3114,10 @@ export class AggregatedCorrelationApi {
     }
 
     public aggregatedCorrelationsIdPut (id: number, body?: AggregatedCorrelation) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/aggregatedCorrelations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3145,12 +3165,10 @@ export class AggregatedCorrelationApi {
     }
 
     public aggregatedCorrelationsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/aggregatedCorrelations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3197,7 +3215,11 @@ export class AggregatedCorrelationApi {
     }
 }
 export class ConnectorApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -3215,12 +3237,19 @@ export class ConnectorApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public connectorsGet (name?: string, displayName?: string, image?: string, getItUrl?: string, shortDescription?: string, longDescription?: string, enabled?: boolean, oauth?: boolean, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_5;  }> {
-        let path = this.url + this.basePath + '/connectors';
-
+        const path = this.url + this.basePath + '/connectors';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3306,10 +3335,9 @@ export class ConnectorApi {
     }
 
     public connectorsPost (body?: Connector) : Promise<{ response: http.ClientResponse; body: inline_response_200_6;  }> {
-        let path = this.url + this.basePath + '/connectors';
-
+        const path = this.url + this.basePath + '/connectors';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3352,12 +3380,10 @@ export class ConnectorApi {
     }
 
     public connectorsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_6;  }> {
-        let path = this.url + this.basePath + '/connectors/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/connectors/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3404,12 +3430,10 @@ export class ConnectorApi {
     }
 
     public connectorsIdPut (id: number, body?: Connector) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connectors/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/connectors/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3457,12 +3481,10 @@ export class ConnectorApi {
     }
 
     public connectorsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connectors/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/connectors/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3509,7 +3531,11 @@ export class ConnectorApi {
     }
 }
 export class CorrelationApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -3527,12 +3553,19 @@ export class CorrelationApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public correlationsGet (timestamp?: number, userId?: number, correlation?: number, causeId?: number, effectId?: number, onsetDelay?: number, durationOfAction?: number, numberOfPairs?: number, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, optimalPearsonProduct?: number, vote?: number, statisticalSignificance?: number, causeUnit?: string, causeUnitId?: number, causeChanges?: number, effectChanges?: number, qmScore?: number, error?: string, createdAt?: string, updatedAt?: string, reversePearsonCorrelationCoefficient?: number, predictivePearsonCorrelationCoefficient?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_7;  }> {
-        let path = this.url + this.basePath + '/correlations';
-
+        const path = this.url + this.basePath + '/correlations';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3678,10 +3711,9 @@ export class CorrelationApi {
     }
 
     public correlationsPost (body?: Correlation) : Promise<{ response: http.ClientResponse; body: inline_response_200_8;  }> {
-        let path = this.url + this.basePath + '/correlations';
-
+        const path = this.url + this.basePath + '/correlations';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3724,12 +3756,10 @@ export class CorrelationApi {
     }
 
     public correlationsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_8;  }> {
-        let path = this.url + this.basePath + '/correlations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/correlations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3776,12 +3806,10 @@ export class CorrelationApi {
     }
 
     public correlationsIdPut (id: number, body?: Correlation) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/correlations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/correlations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3829,12 +3857,10 @@ export class CorrelationApi {
     }
 
     public correlationsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/correlations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/correlations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3881,7 +3907,11 @@ export class CorrelationApi {
     }
 }
 export class ConnectionApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -3899,12 +3929,19 @@ export class ConnectionApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public connectionsGet (userId?: number, connectorId?: number, connectStatus?: string, connectError?: string, updateRequestedAt?: string, updateStatus?: string, updateError?: string, lastSuccessfulUpdatedAt?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_3;  }> {
-        let path = this.url + this.basePath + '/connections';
-
+        const path = this.url + this.basePath + '/connections';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4000,10 +4037,9 @@ export class ConnectionApi {
     }
 
     public connectionsPost (body?: Connection) : Promise<{ response: http.ClientResponse; body: inline_response_200_4;  }> {
-        let path = this.url + this.basePath + '/connections';
-
+        const path = this.url + this.basePath + '/connections';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4048,12 +4084,10 @@ export class ConnectionApi {
     }
 
     public connectionsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_4;  }> {
-        let path = this.url + this.basePath + '/connections/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/connections/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4102,12 +4136,10 @@ export class ConnectionApi {
     }
 
     public connectionsIdPut (id: number, body?: Connection) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connections/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/connections/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4157,12 +4189,10 @@ export class ConnectionApi {
     }
 
     public connectionsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connections/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/connections/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4211,7 +4241,11 @@ export class ConnectionApi {
     }
 }
 export class UnitApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -4229,12 +4263,19 @@ export class UnitApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public unitsGet (clientId?: string, name?: string, abbreviatedName?: string, categoryId?: boolean, minimumValue?: number, maximumValue?: number, updated?: number, multiply?: number, add?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_17;  }> {
-        let path = this.url + this.basePath + '/units';
-
+        const path = this.url + this.basePath + '/units';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4332,10 +4373,9 @@ export class UnitApi {
     }
 
     public unitsPost (body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
-        let path = this.url + this.basePath + '/units';
-
+        const path = this.url + this.basePath + '/units';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4378,12 +4418,10 @@ export class UnitApi {
     }
 
     public unitsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
-        let path = this.url + this.basePath + '/units/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/units/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4430,12 +4468,10 @@ export class UnitApi {
     }
 
     public unitsIdPut (id: number, body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/units/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/units/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4483,12 +4519,10 @@ export class UnitApi {
     }
 
     public unitsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/units/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/units/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4535,7 +4569,11 @@ export class UnitApi {
     }
 }
 export class UserVariableApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -4553,12 +4591,19 @@ export class UserVariableApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public userVariablesGet (clientId?: string, variableId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedDailyValue?: number, maximumRecordedDailyValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_21;  }> {
-        let path = this.url + this.basePath + '/userVariables';
-
+        const path = this.url + this.basePath + '/userVariables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4816,10 +4861,9 @@ export class UserVariableApi {
     }
 
     public userVariablesPost (body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
-        let path = this.url + this.basePath + '/userVariables';
-
+        const path = this.url + this.basePath + '/userVariables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4862,12 +4906,10 @@ export class UserVariableApi {
     }
 
     public userVariablesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
-        let path = this.url + this.basePath + '/userVariables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/userVariables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4914,12 +4956,10 @@ export class UserVariableApi {
     }
 
     public userVariablesIdPut (id: number, body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/userVariables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/userVariables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4967,12 +5007,10 @@ export class UserVariableApi {
     }
 
     public userVariablesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/userVariables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/userVariables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5019,7 +5057,11 @@ export class UserVariableApi {
     }
 }
 export class SourceApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -5037,12 +5079,19 @@ export class SourceApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public sourcesGet (clientId?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_13;  }> {
-        let path = this.url + this.basePath + '/sources';
-
+        const path = this.url + this.basePath + '/sources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5112,10 +5161,9 @@ export class SourceApi {
     }
 
     public sourcesPost (body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_14;  }> {
-        let path = this.url + this.basePath + '/sources';
-
+        const path = this.url + this.basePath + '/sources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5158,12 +5206,10 @@ export class SourceApi {
     }
 
     public sourcesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_14;  }> {
-        let path = this.url + this.basePath + '/sources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/sources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5210,12 +5256,10 @@ export class SourceApi {
     }
 
     public sourcesIdPut (id: number, body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/sources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/sources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5263,12 +5307,10 @@ export class SourceApi {
     }
 
     public sourcesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/sources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/sources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5315,7 +5357,11 @@ export class SourceApi {
     }
 }
 export class VariableCategoryApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -5333,12 +5379,19 @@ export class VariableCategoryApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public variableCategoriesGet (name?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, durationOfAction?: number, onsetDelay?: number, combinationOperation?: string, updated?: number, causeOnly?: boolean, _public?: number, outcome?: boolean, createdAt?: string, updatedAt?: string, imageUrl?: string, defaultUnitId?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
-        let path = this.url + this.basePath + '/variableCategories';
-
+        const path = this.url + this.basePath + '/variableCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5452,10 +5505,9 @@ export class VariableCategoryApi {
     }
 
     public variableCategoriesPost (body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_24;  }> {
-        let path = this.url + this.basePath + '/variableCategories';
-
+        const path = this.url + this.basePath + '/variableCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5498,12 +5550,10 @@ export class VariableCategoryApi {
     }
 
     public variableCategoriesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_24;  }> {
-        let path = this.url + this.basePath + '/variableCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variableCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5550,12 +5600,10 @@ export class VariableCategoryApi {
     }
 
     public variableCategoriesIdPut (id: number, body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variableCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5603,12 +5651,10 @@ export class VariableCategoryApi {
     }
 
     public variableCategoriesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/variableCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5655,7 +5701,11 @@ export class VariableCategoryApi {
     }
 }
 export class CredentialApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -5673,12 +5723,19 @@ export class CredentialApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public credentialsGet (connectorId?: boolean, attrKey?: string, attrValue?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_9;  }> {
-        let path = this.url + this.basePath + '/credentials';
-
+        const path = this.url + this.basePath + '/credentials';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5752,10 +5809,9 @@ export class CredentialApi {
     }
 
     public credentialsPost (body?: Credential) : Promise<{ response: http.ClientResponse; body: inline_response_200_10;  }> {
-        let path = this.url + this.basePath + '/credentials';
-
+        const path = this.url + this.basePath + '/credentials';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5798,12 +5854,10 @@ export class CredentialApi {
     }
 
     public credentialsIdGet (id: number, attrKey: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_10;  }> {
-        let path = this.url + this.basePath + '/credentials/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/credentials/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5859,12 +5913,10 @@ export class CredentialApi {
     }
 
     public credentialsIdPut (id: number, attrKey: string, body?: Credential) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/credentials/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/credentials/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5921,12 +5973,10 @@ export class CredentialApi {
     }
 
     public credentialsIdDelete (id: number, attrKey: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/credentials/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/credentials/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5982,7 +6032,11 @@ export class CredentialApi {
     }
 }
 export class UnitCategoryApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -6000,12 +6054,19 @@ export class UnitCategoryApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public unitCategoriesGet (name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
-        let path = this.url + this.basePath + '/unitCategories';
-
+        const path = this.url + this.basePath + '/unitCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6071,10 +6132,9 @@ export class UnitCategoryApi {
     }
 
     public unitCategoriesPost (body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
-        let path = this.url + this.basePath + '/unitCategories';
-
+        const path = this.url + this.basePath + '/unitCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6117,12 +6177,10 @@ export class UnitCategoryApi {
     }
 
     public unitCategoriesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
-        let path = this.url + this.basePath + '/unitCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/unitCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6169,12 +6227,10 @@ export class UnitCategoryApi {
     }
 
     public unitCategoriesIdPut (id: number, body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/unitCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/unitCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6222,12 +6278,10 @@ export class UnitCategoryApi {
     }
 
     public unitCategoriesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/unitCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/unitCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6274,7 +6328,11 @@ export class UnitCategoryApi {
     }
 }
 export class VoteApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
@@ -6292,12 +6350,19 @@ export class VoteApi {
             }
         }
     }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
 
     public votesGet (clientId?: string, userId?: number, causeId?: number, effectId?: number, value?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_29;  }> {
-        let path = this.url + this.basePath + '/votes';
-
+        const path = this.url + this.basePath + '/votes';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6379,10 +6444,9 @@ export class VoteApi {
     }
 
     public votesPost (body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
-        let path = this.url + this.basePath + '/votes';
-
+        const path = this.url + this.basePath + '/votes';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6425,12 +6489,10 @@ export class VoteApi {
     }
 
     public votesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
-        let path = this.url + this.basePath + '/votes/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/votes/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6477,12 +6539,10 @@ export class VoteApi {
     }
 
     public votesIdPut (id: number, body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/votes/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/votes/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6530,12 +6590,10 @@ export class VoteApi {
     }
 
     public votesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/votes/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+        const path = this.url + this.basePath + '/votes/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
