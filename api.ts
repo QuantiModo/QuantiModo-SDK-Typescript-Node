@@ -8,6 +8,40 @@ import http = require('http');
 
 /* tslint:disable:no-unused-variable */
 
+export class MeasurementValue {
+    /**
+    * When the measurement event occurred . Use ISO 8601 datetime format
+    */
+    startTime: string;
+    /**
+    * Value for the measurement
+    */
+    value: number;
+    /**
+    * An optional note the user may include with their measurement
+    */
+    note: string;
+}
+
+export class MeasurementPost {
+    /**
+    * ID of the variable for the measurement as obtained from the GET variables endpoint
+    */
+    variableId: number;
+    /**
+    * Source ID of the app or device as obtained from the GET sources endpoint
+    */
+    sourceId: number;
+    /**
+    * Unit id for the measurement value as obtained from the GET units endpoint
+    */
+    unitId: number;
+    /**
+    * measurements
+    */
+    measurements: Array<MeasurementValue>;
+}
+
 export class AggregatedCorrelation {
     /**
     * id
@@ -117,139 +151,6 @@ export class AggregatedCorrelation {
     * Source of data for this correlation
     */
     dataSource: string;
-}
-
-export class Correlation {
-    /**
-    * id
-    */
-    id: number;
-    /**
-    * Time at which correlation was calculated
-    */
-    timestamp: number;
-    /**
-    * ID of user that owns this correlation
-    */
-    userId: number;
-    /**
-    * Pearson correlation coefficient between cause and effect measurements
-    */
-    correlation: number;
-    /**
-    * variable ID of the cause variable for which the user desires correlations
-    */
-    causeId: number;
-    /**
-    * variable ID of the effect variable for which the user desires correlations
-    */
-    effectId: number;
-    /**
-    * User estimated or default time after cause measurement before a perceivable effect is observed
-    */
-    onsetDelay: number;
-    /**
-    * Time over which the cause is expected to produce a perceivable effect following the onset delay
-    */
-    durationOfAction: number;
-    /**
-    * Number of points that went into the correlation calculation
-    */
-    numberOfPairs: number;
-    /**
-    * cause value that predicts an above average effect value (in default unit for cause variable)
-    */
-    valuePredictingHighOutcome: number;
-    /**
-    * cause value that predicts a below average effect value (in default unit for cause variable)
-    */
-    valuePredictingLowOutcome: number;
-    /**
-    * Optimal Pearson Product
-    */
-    optimalPearsonProduct: number;
-    /**
-    * Vote
-    */
-    vote: number;
-    /**
-    * A function of the effect size and sample size
-    */
-    statisticalSignificance: number;
-    /**
-    * Unit of the predictor variable
-    */
-    causeUnit: string;
-    /**
-    * Unit ID of the predictor variable
-    */
-    causeUnitId: number;
-    /**
-    * Cause changes
-    */
-    causeChanges: number;
-    /**
-    * Effect changes
-    */
-    effectChanges: number;
-    /**
-    * QM Score
-    */
-    qmScore: number;
-    /**
-    * error
-    */
-    error: string;
-    /**
-    * When the record was first created. Use ISO 8601 datetime format
-    */
-    createdAt: Date;
-    /**
-    * When the record in the database was last updated. Use ISO 8601 datetime format
-    */
-    updatedAt: Date;
-    /**
-    * Correlation when cause and effect are reversed. For any causal relationship, the forward correlation should exceed the reverse correlation
-    */
-    reversePearsonCorrelationCoefficient: number;
-    /**
-    * Predictive Pearson Correlation Coefficient
-    */
-    predictivePearsonCorrelationCoefficient: number;
-}
-
-export class MeasurementValue {
-    /**
-    * When the measurement event occurred . Use ISO 8601 datetime format
-    */
-    startTime: string;
-    /**
-    * Value for the measurement
-    */
-    value: number;
-    /**
-    * An optional note the user may include with their measurement
-    */
-    note: string;
-}
-
-export class MeasurementPost {
-    /**
-    * ID of the variable for the measurement as obtained from the GET variables endpoint
-    */
-    variableId: number;
-    /**
-    * Source ID of the app or device as obtained from the GET sources endpoint
-    */
-    sourceId: number;
-    /**
-    * Unit id for the measurement value as obtained from the GET units endpoint
-    */
-    unitId: number;
-    /**
-    * measurements
-    */
-    measurements: Array<MeasurementValue>;
 }
 
 export class CommonVariableRelationship {
@@ -425,6 +326,105 @@ export class Connector {
     updatedAt: Date;
 }
 
+export class Correlation {
+    /**
+    * id
+    */
+    id: number;
+    /**
+    * Time at which correlation was calculated
+    */
+    timestamp: number;
+    /**
+    * ID of user that owns this correlation
+    */
+    userId: number;
+    /**
+    * Pearson correlation coefficient between cause and effect measurements
+    */
+    correlation: number;
+    /**
+    * variable ID of the cause variable for which the user desires correlations
+    */
+    causeId: number;
+    /**
+    * variable ID of the effect variable for which the user desires correlations
+    */
+    effectId: number;
+    /**
+    * User estimated or default time after cause measurement before a perceivable effect is observed
+    */
+    onsetDelay: number;
+    /**
+    * Time over which the cause is expected to produce a perceivable effect following the onset delay
+    */
+    durationOfAction: number;
+    /**
+    * Number of points that went into the correlation calculation
+    */
+    numberOfPairs: number;
+    /**
+    * cause value that predicts an above average effect value (in default unit for cause variable)
+    */
+    valuePredictingHighOutcome: number;
+    /**
+    * cause value that predicts a below average effect value (in default unit for cause variable)
+    */
+    valuePredictingLowOutcome: number;
+    /**
+    * Optimal Pearson Product
+    */
+    optimalPearsonProduct: number;
+    /**
+    * Vote
+    */
+    vote: number;
+    /**
+    * A function of the effect size and sample size
+    */
+    statisticalSignificance: number;
+    /**
+    * Unit of the predictor variable
+    */
+    causeUnit: string;
+    /**
+    * Unit ID of the predictor variable
+    */
+    causeUnitId: number;
+    /**
+    * Cause changes
+    */
+    causeChanges: number;
+    /**
+    * Effect changes
+    */
+    effectChanges: number;
+    /**
+    * QM Score
+    */
+    qmScore: number;
+    /**
+    * error
+    */
+    error: string;
+    /**
+    * When the record was first created. Use ISO 8601 datetime format
+    */
+    createdAt: Date;
+    /**
+    * When the record in the database was last updated. Use ISO 8601 datetime format
+    */
+    updatedAt: Date;
+    /**
+    * Correlation when cause and effect are reversed. For any causal relationship, the forward correlation should exceed the reverse correlation
+    */
+    reversePearsonCorrelationCoefficient: number;
+    /**
+    * Predictive Pearson Correlation Coefficient
+    */
+    predictivePearsonCorrelationCoefficient: number;
+}
+
 export class Credential {
     /**
     * ID of user that owns this credential
@@ -571,6 +571,77 @@ export class Source {
     * Name of the application or device
     */
     name: string;
+    /**
+    * When the record was first created. Use ISO 8601 datetime format
+    */
+    createdAt: Date;
+    /**
+    * When the record in the database was last updated. Use ISO 8601 datetime format
+    */
+    updatedAt: Date;
+}
+
+export class TrackingReminder {
+    /**
+    * id
+    */
+    id: number;
+    /**
+    * client_id
+    */
+    clientId: string;
+    /**
+    * ID of User
+    */
+    userId: number;
+    /**
+    * Id for the variable to be tracked
+    */
+    variableId: number;
+    /**
+    * Default value to use for the measurement when tracking
+    */
+    defaultValue: number;
+    /**
+    * Earliest time of day at which reminders should appear
+    */
+    reminderStartTime: string;
+    /**
+    * Latest time of day at which reminders should appear
+    */
+    reminderEndTime: string;
+    /**
+    * String identifier for the sound to accompany the reminder
+    */
+    reminderSound: string;
+    /**
+    * Number of seconds between one reminder and the next
+    */
+    reminderFrequency: number;
+    /**
+    * True if the reminders should appear as a popup notification
+    */
+    popUp: boolean;
+    /**
+    * True if the reminders should be delivered via SMS
+    */
+    sms: boolean;
+    /**
+    * True if the reminders should be delivered via email
+    */
+    email: boolean;
+    /**
+    * True if the reminders should appear in the notification bar
+    */
+    notificationBar: boolean;
+    /**
+    * ISO 8601 timestamp for the last time a reminder was sent
+    */
+    lastReminded: Date;
+    /**
+    * ISO 8601 timestamp for the last time a measurement was received for this user and variable
+    */
+    lastTracked: Date;
     /**
     * When the record was first created. Use ISO 8601 datetime format
     */
@@ -890,6 +961,14 @@ export class UserVariable {
     * Location
     */
     location: string;
+    /**
+    * Earliest measurement start_time to be used in analysis. Use ISO 8601 datetime format
+    */
+    experimentStartTime: Date;
+    /**
+    * Latest measurement start_time to be used in analysis. Use ISO 8601 datetime format
+    */
+    experimentEndTime: Date;
     /**
     * When the record was first created. Use ISO 8601 datetime format
     */
@@ -1363,101 +1442,111 @@ export class InlineResponse20014 {
 }
 
 export class InlineResponse20015 {
-    data: Array<Update>;
+    data: Array<TrackingReminder>;
     success: boolean;
 }
 
 export class InlineResponse20016 {
-    data: Array<UserVariable>;
+    data: Array<Update>;
     success: boolean;
 }
 
 export class InlineResponse20017 {
-    data: Array<Source>;
-    success: boolean;
-}
-
-export class InlineResponse20018 {
-    data: Source;
-    success: boolean;
-}
-
-export class InlineResponse20019 {
-    data: Array<UnitCategory>;
-    success: boolean;
-}
-
-export class InlineResponse20020 {
-    data: UnitCategory;
-    success: boolean;
-}
-
-export class InlineResponse20021 {
-    data: Array<Unit>;
-    success: boolean;
-}
-
-export class InlineResponse20022 {
-    data: Unit;
-    success: boolean;
-}
-
-export class InlineResponse20023 {
-    data: Update;
-    success: boolean;
-}
-
-export class InlineResponse20024 {
     data: Array<UserVariableRelationship>;
     success: boolean;
 }
 
-export class InlineResponse20025 {
-    data: UserVariableRelationship;
+export class InlineResponse20018 {
+    data: Array<UserVariable>;
     success: boolean;
 }
 
-export class InlineResponse20026 {
-    data: UserVariable;
-    success: boolean;
-}
-
-export class InlineResponse20027 {
-    data: Array<VariableCategory>;
-    success: boolean;
-}
-
-export class InlineResponse20028 {
-    data: VariableCategory;
-    success: boolean;
-}
-
-export class InlineResponse20029 {
+export class InlineResponse20019 {
     data: Array<VariableUserSource>;
     success: boolean;
 }
 
-export class InlineResponse20030 {
-    data: VariableUserSource;
-    success: boolean;
-}
-
-export class InlineResponse20031 {
-    data: Array<Variable>;
-    success: boolean;
-}
-
-export class InlineResponse20032 {
-    data: Variable;
-    success: boolean;
-}
-
-export class InlineResponse20033 {
+export class InlineResponse20020 {
     data: Array<Vote>;
     success: boolean;
 }
 
+export class InlineResponse20021 {
+    data: Array<Source>;
+    success: boolean;
+}
+
+export class InlineResponse20022 {
+    data: Source;
+    success: boolean;
+}
+
+export class InlineResponse20023 {
+    data: TrackingReminder;
+    success: boolean;
+}
+
+export class InlineResponse20024 {
+    data: Array<UnitCategory>;
+    success: boolean;
+}
+
+export class InlineResponse20025 {
+    data: UnitCategory;
+    success: boolean;
+}
+
+export class InlineResponse20026 {
+    data: Array<Unit>;
+    success: boolean;
+}
+
+export class InlineResponse20027 {
+    data: Unit;
+    success: boolean;
+}
+
+export class InlineResponse20028 {
+    data: Update;
+    success: boolean;
+}
+
+export class InlineResponse20029 {
+    data: UserVariableRelationship;
+    success: boolean;
+}
+
+export class InlineResponse20030 {
+    data: UserVariable;
+    success: boolean;
+}
+
+export class InlineResponse20031 {
+    data: Array<VariableCategory>;
+    success: boolean;
+}
+
+export class InlineResponse20032 {
+    data: VariableCategory;
+    success: boolean;
+}
+
+export class InlineResponse20033 {
+    data: VariableUserSource;
+    success: boolean;
+}
+
 export class InlineResponse20034 {
+    data: Array<Variable>;
+    success: boolean;
+}
+
+export class InlineResponse20035 {
+    data: Variable;
+    success: boolean;
+}
+
+export class InlineResponse20036 {
     data: Vote;
     success: boolean;
 }
@@ -1561,7 +1650,7 @@ export class VariableUserSourceApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public variableUserSourcesGet (accessToken?: string, variableId?: number, userId?: number, timestamp?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_29;  }> {
+    public variableUserSourcesGet (accessToken?: string, variableId?: number, userId?: number, timestamp?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_19;  }> {
         const path = this.basePath + '/variableUserSources';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -1614,7 +1703,7 @@ export class VariableUserSourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_29;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_19;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -1656,7 +1745,7 @@ export class VariableUserSourceApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body VariableUserSource that should be stored
      */
-    public variableUserSourcesPost (accessToken?: string, body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
+    public variableUserSourcesPost (accessToken?: string, body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_33;  }> {
         const path = this.basePath + '/variableUserSources';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -1669,7 +1758,7 @@ export class VariableUserSourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_33;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -1713,7 +1802,7 @@ export class VariableUserSourceApi {
      * @param sourceId source id of VariableUserSource
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public variableUserSourcesIdGet (id: number, sourceId: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
+    public variableUserSourcesIdGet (id: number, sourceId: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_33;  }> {
         const path = this.basePath + '/variableUserSources/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -1741,7 +1830,7 @@ export class VariableUserSourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_33;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -2466,6 +2555,407 @@ export class MeasurementApi {
         return deferred.promise;
     }
 }
+export class TrackingReminderApi {
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
+    public authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get tracking reminders
+     * Users can be reminded to track certain variables at a specified frequency with a default value.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this tracking reminder
+     * @param userId ID of the user who created a reminder
+     * @param variableId Id for the variable to be tracked
+     * @param popUp True if the reminders should appear as a popup notification
+     * @param sms True if the reminders should be delivered via SMS
+     * @param email True if the reminders should be delivered via email
+     * @param notificationBar True if the reminders should appear in the notification bar
+     * @param lastReminded ISO 8601 timestamp for the last time a reminder was sent
+     * @param lastTracked ISO 8601 timestamp for the last time a measurement was received for this user and variable
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public trackingRemindersGet (accessToken?: string, clientId?: string, userId?: number, variableId?: number, popUp?: boolean, sms?: boolean, email?: boolean, notificationBar?: boolean, lastReminded?: string, lastTracked?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
+        const path = this.basePath + '/trackingReminders';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (userId !== undefined) {
+            queryParameters['user_id'] = userId;
+        }
+
+        if (variableId !== undefined) {
+            queryParameters['variable_id'] = variableId;
+        }
+
+        if (popUp !== undefined) {
+            queryParameters['pop_up'] = popUp;
+        }
+
+        if (sms !== undefined) {
+            queryParameters['sms'] = sms;
+        }
+
+        if (email !== undefined) {
+            queryParameters['email'] = email;
+        }
+
+        if (notificationBar !== undefined) {
+            queryParameters['notification_bar'] = notificationBar;
+        }
+
+        if (lastReminded !== undefined) {
+            queryParameters['last_reminded'] = lastReminded;
+        }
+
+        if (lastTracked !== undefined) {
+            queryParameters['last_tracked'] = lastTracked;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_15;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Store TrackingReminder
+     * This is to enable users to indicate their opinion on the plausibility of a causal relationship between a treatment and outcome. QuantiModo incorporates crowd-sourced plausibility estimations into their algorithm. This is done allowing user to indicate their view of the plausibility of each relationship with thumbs up/down buttons placed next to each prediction.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body TrackingReminder that should be stored
+     */
+    public trackingRemindersPost (accessToken?: string, body?: TrackingReminder) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
+        const path = this.basePath + '/trackingReminders';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_23;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'POST',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get TrackingReminder
+     * Get TrackingReminder
+     * @param id id of TrackingReminder
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public trackingRemindersIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
+        const path = this.basePath + '/trackingReminders/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling trackingRemindersIdGet');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_23;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Update TrackingReminder
+     * Update TrackingReminder
+     * @param id id of TrackingReminder
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body TrackingReminder that should be updated
+     */
+    public trackingRemindersIdPut (id: number, accessToken?: string, body?: TrackingReminder) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/trackingReminders/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling trackingRemindersIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Delete TrackingReminder
+     * Delete previously posted trackingReminder
+     * @param id id of TrackingReminder
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public trackingRemindersIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/trackingReminders/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling trackingRemindersIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'DELETE',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+}
 export class VariableApi {
     protected basePath = 'https://app.quantimo.do/api/v2';
     protected defaultHeaders : any = {};
@@ -2545,7 +3035,7 @@ export class VariableApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort records by a given field name. If the field name is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public variablesGet (accessToken?: string, id?: number, clientId?: string, parentId?: number, name?: string, variableCategoryId?: number, defaultUnitId?: number, combinationOperation?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, onsetDelay?: number, durationOfAction?: number, _public?: number, causeOnly?: boolean, mostCommonValue?: number, mostCommonUnitId?: number, standardDeviation?: number, variance?: number, mean?: number, median?: number, numberOfMeasurements?: number, numberOfUniqueValues?: number, skewness?: number, kurtosis?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, createdAt?: string, updatedAt?: string, productUrl?: string, imageUrl?: string, price?: number, numberOfUserVariables?: number, outcome?: boolean, minimumRecordedValue?: number, maximumRecordedValue?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_31;  }> {
+    public variablesGet (accessToken?: string, id?: number, clientId?: string, parentId?: number, name?: string, variableCategoryId?: number, defaultUnitId?: number, combinationOperation?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, onsetDelay?: number, durationOfAction?: number, _public?: number, causeOnly?: boolean, mostCommonValue?: number, mostCommonUnitId?: number, standardDeviation?: number, variance?: number, mean?: number, median?: number, numberOfMeasurements?: number, numberOfUniqueValues?: number, skewness?: number, kurtosis?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, createdAt?: string, updatedAt?: string, productUrl?: string, imageUrl?: string, price?: number, numberOfUserVariables?: number, outcome?: boolean, minimumRecordedValue?: number, maximumRecordedValue?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_34;  }> {
         const path = this.basePath + '/variables';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -2714,7 +3204,7 @@ export class VariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_31;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_34;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -2756,7 +3246,7 @@ export class VariableApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body Variable that should be stored
      */
-    public variablesPost (accessToken?: string, body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_32;  }> {
+    public variablesPost (accessToken?: string, body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_35;  }> {
         const path = this.basePath + '/variables';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -2769,7 +3259,7 @@ export class VariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_32;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_35;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -2812,7 +3302,7 @@ export class VariableApi {
      * @param id id of Variable
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public variablesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_32;  }> {
+    public variablesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_35;  }> {
         const path = this.basePath + '/variables/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -2831,7 +3321,7 @@ export class VariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_32;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_35;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -3042,7 +3532,7 @@ export class UpdateApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public updatesGet (accessToken?: string, userId?: number, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
+    public updatesGet (accessToken?: string, userId?: number, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
         const path = this.basePath + '/updates';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -3095,7 +3585,7 @@ export class UpdateApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_15;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -3137,7 +3627,7 @@ export class UpdateApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body Update that should be stored
      */
-    public updatesPost (accessToken?: string, body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
+    public updatesPost (accessToken?: string, body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
         const path = this.basePath + '/updates';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -3150,7 +3640,7 @@ export class UpdateApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_23;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -3193,7 +3683,7 @@ export class UpdateApi {
      * @param id id of Update
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public updatesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
+    public updatesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
         const path = this.basePath + '/updates/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -3212,7 +3702,7 @@ export class UpdateApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_23;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -4617,6 +5107,88 @@ export class OrganizationApi {
         return deferred.promise;
     }
     /**
+     * Get tracking reminders
+     * Get the variable id, frequency, and default value for the user tracking reminders
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this trackingReminder
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationTrackingRemindersGet (accessToken?: string, clientId?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
+        const path = this.basePath + '/organization/trackingReminders';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_15;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
      * Get all Updates
      * Get all Updates
      * @param accessToken Organization&#39;s OAuth2 access token
@@ -4630,7 +5202,7 @@ export class OrganizationApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public organizationUpdatesGet (accessToken?: string, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
+    public organizationUpdatesGet (accessToken?: string, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
         const path = this.basePath + '/organization/updates';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -4679,7 +5251,154 @@ export class OrganizationApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_15;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all UserVariableRelationships
+     * Get all UserVariableRelationships
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param id id
+     * @param confidenceLevel Our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param confidenceScore A quantitative representation of our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param direction Direction is positive if higher predictor values generally precede higher outcome values. Direction is negative if higher predictor values generally precede lower outcome values.
+     * @param durationOfAction Estimated number of seconds following the onset delay in which a stimulus produces a perceivable effect
+     * @param errorMessage error_message
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param outcomeVariableId Variable ID for the outcome variable
+     * @param predictorVariableId Variable ID for the predictor variable
+     * @param predictorUnitId ID for default unit of the predictor variable
+     * @param sinnRank A value representative of the relevance of this predictor relative to other predictors of this outcome.  Usually used for relevancy sorting.
+     * @param strengthLevel Can be weak, medium, or strong based on the size of the effect which the predictor appears to have on the outcome relative to other variable relationship strength scores.
+     * @param strengthScore A value represented to the size of the effect which the predictor appears to have on the outcome.
+     * @param vote vote
+     * @param valuePredictingHighOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes an above average outcome value
+     * @param valuePredictingLowOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes a below average outcome value
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationUserVariableRelationshipsGet (accessToken?: string, id?: number, confidenceLevel?: string, confidenceScore?: number, direction?: string, durationOfAction?: number, errorMessage?: string, onsetDelay?: number, outcomeVariableId?: number, predictorVariableId?: number, predictorUnitId?: number, sinnRank?: number, strengthLevel?: string, strengthScore?: number, vote?: string, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_17;  }> {
+        const path = this.basePath + '/organization/userVariableRelationships';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (id !== undefined) {
+            queryParameters['id'] = id;
+        }
+
+        if (confidenceLevel !== undefined) {
+            queryParameters['confidence_level'] = confidenceLevel;
+        }
+
+        if (confidenceScore !== undefined) {
+            queryParameters['confidence_score'] = confidenceScore;
+        }
+
+        if (direction !== undefined) {
+            queryParameters['direction'] = direction;
+        }
+
+        if (durationOfAction !== undefined) {
+            queryParameters['duration_of_action'] = durationOfAction;
+        }
+
+        if (errorMessage !== undefined) {
+            queryParameters['error_message'] = errorMessage;
+        }
+
+        if (onsetDelay !== undefined) {
+            queryParameters['onset_delay'] = onsetDelay;
+        }
+
+        if (outcomeVariableId !== undefined) {
+            queryParameters['outcome_variable_id'] = outcomeVariableId;
+        }
+
+        if (predictorVariableId !== undefined) {
+            queryParameters['predictor_variable_id'] = predictorVariableId;
+        }
+
+        if (predictorUnitId !== undefined) {
+            queryParameters['predictor_unit_id'] = predictorUnitId;
+        }
+
+        if (sinnRank !== undefined) {
+            queryParameters['sinn_rank'] = sinnRank;
+        }
+
+        if (strengthLevel !== undefined) {
+            queryParameters['strength_level'] = strengthLevel;
+        }
+
+        if (strengthScore !== undefined) {
+            queryParameters['strength_score'] = strengthScore;
+        }
+
+        if (vote !== undefined) {
+            queryParameters['vote'] = vote;
+        }
+
+        if (valuePredictingHighOutcome !== undefined) {
+            queryParameters['value_predicting_high_outcome'] = valuePredictingHighOutcome;
+        }
+
+        if (valuePredictingLowOutcome !== undefined) {
+            queryParameters['value_predicting_low_outcome'] = valuePredictingLowOutcome;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_17;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -4774,7 +5493,7 @@ export class OrganizationApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public organizationUserVariablesGet (accessToken?: string, clientId?: string, parentId?: number, variableId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastOriginalValue2?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedValue?: number, maximumRecordedValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
+    public organizationUserVariablesGet (accessToken?: string, clientId?: string, parentId?: number, variableId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastOriginalValue2?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedValue?: number, maximumRecordedValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
         const path = this.basePath + '/organization/userVariables';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -5011,7 +5730,201 @@ export class OrganizationApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all VariableUserSources
+     * Get all VariableUserSources
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param variableId ID of variable
+     * @param timestamp Time that this measurement occurred Uses epoch minute (epoch time divided by 60)
+     * @param earliestMeasurementTime Earliest measurement time
+     * @param latestMeasurementTime Latest measurement time
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationVariableUserSourcesGet (accessToken?: string, variableId?: number, timestamp?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_19;  }> {
+        const path = this.basePath + '/organization/variableUserSources';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (variableId !== undefined) {
+            queryParameters['variable_id'] = variableId;
+        }
+
+        if (timestamp !== undefined) {
+            queryParameters['timestamp'] = timestamp;
+        }
+
+        if (earliestMeasurementTime !== undefined) {
+            queryParameters['earliest_measurement_time'] = earliestMeasurementTime;
+        }
+
+        if (latestMeasurementTime !== undefined) {
+            queryParameters['latest_measurement_time'] = latestMeasurementTime;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_19;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all Votes
+     * Get all Votes
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this vote
+     * @param causeId ID of predictor variable
+     * @param effectId ID of outcome variable
+     * @param value Value of Vote. 1 is for upvote. 0 is for downvote.  Otherwise, there is no vote.
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationVotesGet (accessToken?: string, clientId?: string, causeId?: number, effectId?: number, value?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
+        const path = this.basePath + '/organization/votes';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (causeId !== undefined) {
+            queryParameters['cause_id'] = causeId;
+        }
+
+        if (effectId !== undefined) {
+            queryParameters['effect_id'] = effectId;
+        }
+
+        if (value !== undefined) {
+            queryParameters['value'] = value;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -6399,7 +7312,7 @@ export class UnitApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public unitsGet (accessToken?: string, clientId?: string, name?: string, abbreviatedName?: string, categoryId?: number, minimumValue?: number, maximumValue?: number, updated?: number, defaultUnitId?: number, multiply?: number, add?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_21;  }> {
+    public unitsGet (accessToken?: string, clientId?: string, name?: string, abbreviatedName?: string, categoryId?: number, minimumValue?: number, maximumValue?: number, updated?: number, defaultUnitId?: number, multiply?: number, add?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
         const path = this.basePath + '/units';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -6472,7 +7385,7 @@ export class UnitApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_21;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_26;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -6514,7 +7427,7 @@ export class UnitApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body Unit that should be stored
      */
-    public unitsPost (accessToken?: string, body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
+    public unitsPost (accessToken?: string, body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_27;  }> {
         const path = this.basePath + '/units';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -6527,7 +7440,7 @@ export class UnitApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_27;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -6570,7 +7483,7 @@ export class UnitApi {
      * @param id id of Unit
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public unitsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
+    public unitsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_27;  }> {
         const path = this.basePath + '/units/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -6589,7 +7502,7 @@ export class UnitApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_27;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -6847,7 +7760,7 @@ export class UserVariableApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public userVariablesGet (accessToken?: string, clientId?: string, parentId?: number, variableId?: number, userId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastOriginalValue2?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedValue?: number, maximumRecordedValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
+    public userVariablesGet (accessToken?: string, clientId?: string, parentId?: number, variableId?: number, userId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastOriginalValue2?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedValue?: number, maximumRecordedValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
         const path = this.basePath + '/userVariables';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -7088,7 +8001,7 @@ export class UserVariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -7130,7 +8043,7 @@ export class UserVariableApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body UserVariable that should be stored
      */
-    public userVariablesPost (accessToken?: string, body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
+    public userVariablesPost (accessToken?: string, body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
         const path = this.basePath + '/userVariables';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -7143,7 +8056,7 @@ export class UserVariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_26;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -7186,7 +8099,7 @@ export class UserVariableApi {
      * @param id id of UserVariable
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public userVariablesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
+    public userVariablesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
         const path = this.basePath + '/userVariables/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -7205,7 +8118,7 @@ export class UserVariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_26;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -7413,7 +8326,7 @@ export class SourceApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public sourcesGet (accessToken?: string, clientId?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_17;  }> {
+    public sourcesGet (accessToken?: string, clientId?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_21;  }> {
         const path = this.basePath + '/sources';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -7454,7 +8367,7 @@ export class SourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_17;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_21;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -7496,7 +8409,7 @@ export class SourceApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body Source that should be stored
      */
-    public sourcesPost (accessToken?: string, body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
+    public sourcesPost (accessToken?: string, body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
         const path = this.basePath + '/sources';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -7509,7 +8422,7 @@ export class SourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -7552,7 +8465,7 @@ export class SourceApi {
      * @param id id of Source
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public sourcesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
+    public sourcesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
         const path = this.basePath + '/sources/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -7571,7 +8484,7 @@ export class SourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -7790,7 +8703,7 @@ export class VariableCategoryApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public variableCategoriesGet (accessToken?: string, name?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, durationOfAction?: number, onsetDelay?: number, combinationOperation?: string, updated?: number, causeOnly?: boolean, _public?: number, outcome?: boolean, createdAt?: string, updatedAt?: string, imageUrl?: string, defaultUnitId?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_27;  }> {
+    public variableCategoriesGet (accessToken?: string, name?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, durationOfAction?: number, onsetDelay?: number, combinationOperation?: string, updated?: number, causeOnly?: boolean, _public?: number, outcome?: boolean, createdAt?: string, updatedAt?: string, imageUrl?: string, defaultUnitId?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_31;  }> {
         const path = this.basePath + '/variableCategories';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -7875,7 +8788,7 @@ export class VariableCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_27;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_31;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -7917,7 +8830,7 @@ export class VariableCategoryApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body VariableCategory that should be stored
      */
-    public variableCategoriesPost (accessToken?: string, body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
+    public variableCategoriesPost (accessToken?: string, body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_32;  }> {
         const path = this.basePath + '/variableCategories';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -7930,7 +8843,7 @@ export class VariableCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_32;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -7973,7 +8886,7 @@ export class VariableCategoryApi {
      * @param id id of VariableCategory
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public variableCategoriesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
+    public variableCategoriesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_32;  }> {
         const path = this.basePath + '/variableCategories/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -7992,7 +8905,7 @@ export class VariableCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_32;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -8213,7 +9126,7 @@ export class UserVariableRelationshipApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public userVariableRelationshipsGet (accessToken?: string, id?: number, confidenceLevel?: string, confidenceScore?: number, direction?: string, durationOfAction?: number, errorMessage?: string, onsetDelay?: number, outcomeVariableId?: number, predictorVariableId?: number, predictorUnitId?: number, sinnRank?: number, strengthLevel?: string, strengthScore?: number, userId?: number, vote?: string, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_24;  }> {
+    public userVariableRelationshipsGet (accessToken?: string, id?: number, confidenceLevel?: string, confidenceScore?: number, direction?: string, durationOfAction?: number, errorMessage?: string, onsetDelay?: number, outcomeVariableId?: number, predictorVariableId?: number, predictorUnitId?: number, sinnRank?: number, strengthLevel?: string, strengthScore?: number, userId?: number, vote?: string, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_17;  }> {
         const path = this.basePath + '/userVariableRelationships';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -8306,7 +9219,7 @@ export class UserVariableRelationshipApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_24;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_17;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -8348,7 +9261,7 @@ export class UserVariableRelationshipApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body UserVariableRelationship that should be stored
      */
-    public userVariableRelationshipsPost (accessToken?: string, body?: UserVariableRelationship) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
+    public userVariableRelationshipsPost (accessToken?: string, body?: UserVariableRelationship) : Promise<{ response: http.ClientResponse; body: inline_response_200_29;  }> {
         const path = this.basePath + '/userVariableRelationships';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -8361,7 +9274,7 @@ export class UserVariableRelationshipApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_25;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_29;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -8404,7 +9317,7 @@ export class UserVariableRelationshipApi {
      * @param id id of UserVariableRelationship
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public userVariableRelationshipsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
+    public userVariableRelationshipsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_29;  }> {
         const path = this.basePath + '/userVariableRelationships/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -8423,7 +9336,7 @@ export class UserVariableRelationshipApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_25;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_29;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -9036,7 +9949,7 @@ export class UnitCategoryApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public unitCategoriesGet (accessToken?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_19;  }> {
+    public unitCategoriesGet (accessToken?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_24;  }> {
         const path = this.basePath + '/unitCategories';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -9073,7 +9986,7 @@ export class UnitCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_19;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_24;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -9115,7 +10028,7 @@ export class UnitCategoryApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body UnitCategory that should be stored
      */
-    public unitCategoriesPost (accessToken?: string, body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
+    public unitCategoriesPost (accessToken?: string, body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
         const path = this.basePath + '/unitCategories';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -9128,7 +10041,7 @@ export class UnitCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_25;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -9171,7 +10084,7 @@ export class UnitCategoryApi {
      * @param id id of UnitCategory
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public unitCategoriesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
+    public unitCategoriesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
         const path = this.basePath + '/unitCategories/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -9190,7 +10103,7 @@ export class UnitCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_25;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -9401,7 +10314,7 @@ export class VoteApi {
      * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
      * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
      */
-    public votesGet (accessToken?: string, clientId?: string, userId?: number, causeId?: number, effectId?: number, value?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_33;  }> {
+    public votesGet (accessToken?: string, clientId?: string, userId?: number, causeId?: number, effectId?: number, value?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
         const path = this.basePath + '/votes';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -9454,7 +10367,7 @@ export class VoteApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_33;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -9496,7 +10409,7 @@ export class VoteApi {
      * @param accessToken User&#39;s OAuth2 access token
      * @param body Vote that should be stored
      */
-    public votesPost (accessToken?: string, body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_34;  }> {
+    public votesPost (accessToken?: string, body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_36;  }> {
         const path = this.basePath + '/votes';
         let queryParameters: any = {};
         let headerParams: any = this.extendObj({}, this.defaultHeaders);
@@ -9509,7 +10422,7 @@ export class VoteApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_34;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_36;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -9552,7 +10465,7 @@ export class VoteApi {
      * @param id id of Vote
      * @param accessToken User&#39;s OAuth2 access token
      */
-    public votesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_34;  }> {
+    public votesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_36;  }> {
         const path = this.basePath + '/votes/{id}'
             .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
@@ -9571,7 +10484,7 @@ export class VoteApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_34;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_36;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
