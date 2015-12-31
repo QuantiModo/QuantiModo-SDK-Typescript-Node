@@ -10,26 +10,30 @@ import http = require('http');
 
 export class MeasurementValue {
     /**
-    * start_time
+    * When the measurement event occurred . Use ISO 8601 datetime format
     */
-    startTime: number;
+    startTime: string;
     /**
-    * value
+    * Value for the measurement
     */
     value: number;
+    /**
+    * An optional note the user may include with their measurement
+    */
+    note: string;
 }
 
 export class MeasurementPost {
     /**
-    * variable_id
+    * ID of the variable for the measurement as obtained from the GET variables endpoint
     */
     variableId: number;
     /**
-    * source_id
+    * Source ID of the app or device as obtained from the GET sources endpoint
     */
     sourceId: number;
     /**
-    * unit_id
+    * Unit id for the measurement value as obtained from the GET units endpoint
     */
     unitId: number;
     /**
@@ -44,105 +48,188 @@ export class AggregatedCorrelation {
     */
     id: number;
     /**
-    * correlation
+    * Pearson correlation coefficient between cause and effect measurements
     */
     correlation: number;
     /**
-    * cause_id
+    * variable ID of the cause variable for which the user desires correlations
     */
     causeId: number;
     /**
-    * effect_id
+    * variable ID of the effect variable for which the user desires correlations
     */
     effectId: number;
     /**
-    * onset_delay
+    * User estimated or default time after cause measurement before a perceivable effect is observed
     */
     onsetDelay: number;
+    /**
+    * Time over which the cause is expected to produce a perceivable effect following the onset delay
+    */
+    durationOfAction: number;
+    /**
+    * Number of points that went into the correlation calculation
+    */
+    numberOfPairs: number;
+    /**
+    * cause value that predicts an above average effect value (in default unit for cause variable)
+    */
+    valuePredictingHighOutcome: number;
+    /**
+    * cause value that predicts a below average effect value (in default unit for cause variable)
+    */
+    valuePredictingLowOutcome: number;
+    /**
+    * Optimal Pearson Product
+    */
+    optimalPearsonProduct: number;
+    /**
+    * Vote
+    */
+    vote: number;
+    /**
+    * Number of Users by which correlation is aggregated
+    */
+    numberOfUsers: number;
+    /**
+    * Number of Correlations by which correlation is aggregated
+    */
+    numberOfCorrelations: number;
+    /**
+    * A function of the effect size and sample size
+    */
+    statisticalSignificance: number;
+    /**
+    * Unit of the predictor variable
+    */
+    causeUnit: string;
+    /**
+    * Unit ID of the predictor variable
+    */
+    causeUnitId: number;
+    /**
+    * Cause changes
+    */
+    causeChanges: number;
+    /**
+    * Effect changes
+    */
+    effectChanges: number;
+    /**
+    * Aggregated QM Score
+    */
+    aggregateQmScore: number;
+    /**
+    * When the record was first created. Use ISO 8601 datetime format
+    */
+    createdAt: Date;
+    /**
+    * When the record in the database was last updated. Use ISO 8601 datetime format
+    */
+    updatedAt: Date;
+    /**
+    * Status
+    */
+    status: string;
+    /**
+    * Error Message
+    */
+    errorMessage: string;
+    /**
+    * Last Successful update time
+    */
+    lastSuccessfulUpdateTime: Date;
+    /**
+    * Correlation when cause and effect are reversed. For any causal relationship, the forward correlation should exceed the reverse correlation
+    */
+    reversePearsonCorrelationCoefficient: number;
+    /**
+    * Predictive Pearson Correlation Coefficient
+    */
+    predictivePearsonCorrelationCoefficient: number;
+    /**
+    * Source of data for this correlation
+    */
+    dataSource: string;
+}
+
+export class CommonVariableRelationship {
+    /**
+    * id
+    */
+    id: number;
+    /**
+    * Our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+    */
+    confidenceLevel: string;
+    /**
+    * A quantitative representation of our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+    */
+    confidenceScore: number;
+    /**
+    * Direction is positive if higher predictor values generally precede higher outcome values. Direction is negative if higher predictor values generally precede lower outcome values.
+    */
+    direction: string;
     /**
     * duration_of_action
     */
     durationOfAction: number;
     /**
-    * number_of_pairs
-    */
-    numberOfPairs: number;
-    /**
-    * value_predicting_high_outcome
-    */
-    valuePredictingHighOutcome: number;
-    /**
-    * value_predicting_low_outcome
-    */
-    valuePredictingLowOutcome: number;
-    /**
-    * optimal_pearson_product
-    */
-    optimalPearsonProduct: number;
-    /**
-    * vote
-    */
-    vote: number;
-    /**
-    * number_of_users
-    */
-    numberOfUsers: number;
-    /**
-    * number_of_correlations
-    */
-    numberOfCorrelations: number;
-    /**
-    * statistical_significance
-    */
-    statisticalSignificance: number;
-    /**
-    * cause_unit
-    */
-    causeUnit: string;
-    /**
-    * cause_unit_id
-    */
-    causeUnitId: number;
-    /**
-    * cause_changes
-    */
-    causeChanges: number;
-    /**
-    * effect_changes
-    */
-    effectChanges: number;
-    /**
-    * aggregate_qm_score
-    */
-    aggregateQmScore: number;
-    /**
-    * created_at
-    */
-    createdAt: Date;
-    /**
-    * updated_at
-    */
-    updatedAt: Date;
-    /**
-    * status
-    */
-    status: string;
-    /**
     * error_message
     */
     errorMessage: string;
     /**
-    * last_successful_update_time
+    * User estimated (or default number of seconds) after cause measurement before a perceivable effect is observed
     */
-    lastSuccessfulUpdateTime: Date;
+    onsetDelay: number;
     /**
-    * reverse_pearson_correlation_coefficient
+    * Variable ID for the outcome variable
     */
-    reversePearsonCorrelationCoefficient: number;
+    outcomeVariableId: number;
     /**
-    * predictive_pearson_correlation_coefficient
+    * Variable ID for the predictor variable
     */
-    predictivePearsonCorrelationCoefficient: number;
+    predictorVariableId: number;
+    /**
+    * ID for default unit of the predictor variable
+    */
+    predictorUnitId: number;
+    /**
+    * A value representative of the relevance of this predictor relative to other predictors of this outcome.  Usually used for relevancy sorting.
+    */
+    sinnRank: number;
+    /**
+    * A value represented to the size of the effect which the predictor appears to have on the outcome.
+    */
+    strengthScore: number;
+    /**
+    * Can be weak, medium, or strong based on the size of the effect which the predictor appears to have on the outcome relative to other variable relationship strength scores.
+    */
+    strengthLevel: string;
+    /**
+    * Number of users who feel that there is a plausible causal relationship between the predictor and outcome variables.
+    */
+    upVotes: number;
+    /**
+    * Number of users who do not feel that there is a plausible causal relationship between the predictor and outcome variables.
+    */
+    downVotes: number;
+    /**
+    * Value for the predictor variable (in it's default unit) which typically precedes an above average outcome value
+    */
+    valuePredictingHighOutcome: number;
+    /**
+    * Value for the predictor variable (in it's default unit) which typically precedes a below average outcome value
+    */
+    valuePredictingLowOutcome: number;
+    /**
+    * Number of users whose data was aggregated to obtain this relationship
+    */
+    numberOfUsers: number;
+    /**
+    * Source of data for this common variable relationship
+    */
+    dataSource: string;
 }
 
 export class Connection {
@@ -151,43 +238,43 @@ export class Connection {
     */
     id: number;
     /**
-    * user_id
+    * ID of user that owns this correlation
     */
     userId: number;
     /**
-    * connector_id
+    * The id for the connector data source for which the connection is connected
     */
     connectorId: number;
     /**
-    * connect_status
+    * Indicates whether a connector is currently connected to a service for a user.
     */
     connectStatus: string;
     /**
-    * connect_error
+    * Error message if there is a problem with authorizing this connection.
     */
     connectError: string;
     /**
-    * update_requested_at
+    * Time at which an update was requested by a user.
     */
     updateRequestedAt: Date;
     /**
-    * update_status
+    * Indicates whether a connector is currently updated.
     */
     updateStatus: string;
     /**
-    * update_error
+    * Indicates if there was an error during the update.
     */
     updateError: string;
     /**
-    * last_successful_updated_at
+    * The time at which the connector was last successfully updated.
     */
     lastSuccessfulUpdatedAt: Date;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -198,11 +285,11 @@ export class Connector {
     */
     id: number;
     /**
-    * Connector lowercase system name
+    * Lowercase system name for the data source
     */
     name: string;
     /**
-    * Connector pretty display name
+    * Pretty display name for the data source
     */
     displayName: string;
     /**
@@ -214,21 +301,29 @@ export class Connector {
     */
     getItUrl: string;
     /**
-    * Short description
+    * Short description of the service (such as the categories it tracks)
     */
     shortDescription: string;
     /**
-    * Long description
+    * Longer paragraph description of the data provider
     */
     longDescription: string;
     /**
-    * enabled
+    * Set to 1 if the connector should be returned when listing connectors
     */
     enabled: boolean;
     /**
-    * oauth
+    * Set to 1 if the connector uses OAuth authentication as opposed to username/password
     */
     oauth: boolean;
+    /**
+    * When the record was first created. Use ISO 8601 datetime format
+    */
+    createdAt: Date;
+    /**
+    * When the record in the database was last updated. Use ISO 8601 datetime format
+    */
+    updatedAt: Date;
 }
 
 export class Correlation {
@@ -289,11 +384,11 @@ export class Correlation {
     */
     statisticalSignificance: number;
     /**
-    * Unit of Cause
+    * Unit of the predictor variable
     */
     causeUnit: string;
     /**
-    * Unit ID of Cause
+    * Unit ID of the predictor variable
     */
     causeUnitId: number;
     /**
@@ -313,11 +408,11 @@ export class Correlation {
     */
     error: string;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
     /**
@@ -332,23 +427,27 @@ export class Correlation {
 
 export class Credential {
     /**
-    * connector_id
+    * ID of user that owns this credential
+    */
+    userId: number;
+    /**
+    * The id for the connector data source from which the credential was obtained
     */
     connectorId: number;
     /**
-    * attr_key
+    * Attribute name such as token, userid, username, or password
     */
     attrKey: string;
     /**
-    * attr_value
+    * Encrypted value for the attribute specified
     */
     attrValue: string;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -367,7 +466,7 @@ export class Measurement {
     */
     clientId: string;
     /**
-    * Connector ID
+    * The id for the connector data source from which the measurement was obtained
     */
     connectorId: number;
     /**
@@ -379,19 +478,19 @@ export class Measurement {
     */
     sourceId: number;
     /**
-    * Start Time for the measurement event in ISO 8601
+    * Start Time for the measurement event. Use ISO 8601
     */
-    startTime: number;
+    startTime: string;
     /**
-    * Converted measurement value in requested unit
+    * The value of the measurement after conversion to the default unit for that variable
     */
     value: number;
     /**
-    * Unit ID of measurement as requested in GET request
+    * The default unit for the variable
     */
     unitId: number;
     /**
-    * Original value
+    * Value of measurement as originally posted (before conversion to default unit)
     */
     originalValue: number;
     /**
@@ -399,19 +498,19 @@ export class Measurement {
     */
     originalUnitId: number;
     /**
-    * duration of measurement in seconds
+    * Duration of the event being measurement in seconds
     */
     duration: number;
     /**
-    * Note of measurement
+    * An optional note the user may include with their measurement
     */
     note: string;
     /**
-    * latitude
+    * Latitude at which the measurement was taken
     */
     latitude: number;
     /**
-    * longitude
+    * Longitude at which the measurement was taken
     */
     longitude: number;
     /**
@@ -419,11 +518,11 @@ export class Measurement {
     */
     location: string;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
     /**
@@ -450,11 +549,11 @@ export class MeasurementExport {
     */
     errorMessage: string;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -473,11 +572,82 @@ export class Source {
     */
     name: string;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
+    */
+    updatedAt: Date;
+}
+
+export class TrackingReminder {
+    /**
+    * id
+    */
+    id: number;
+    /**
+    * client_id
+    */
+    clientId: string;
+    /**
+    * ID of User
+    */
+    userId: number;
+    /**
+    * Id for the variable to be tracked
+    */
+    variableId: number;
+    /**
+    * Default value to use for the measurement when tracking
+    */
+    defaultValue: number;
+    /**
+    * Earliest time of day at which reminders should appear
+    */
+    reminderStartTime: string;
+    /**
+    * Latest time of day at which reminders should appear
+    */
+    reminderEndTime: string;
+    /**
+    * String identifier for the sound to accompany the reminder
+    */
+    reminderSound: string;
+    /**
+    * Number of seconds between one reminder and the next
+    */
+    reminderFrequency: number;
+    /**
+    * True if the reminders should appear as a popup notification
+    */
+    popUp: boolean;
+    /**
+    * True if the reminders should be delivered via SMS
+    */
+    sms: boolean;
+    /**
+    * True if the reminders should be delivered via email
+    */
+    email: boolean;
+    /**
+    * True if the reminders should appear in the notification bar
+    */
+    notificationBar: boolean;
+    /**
+    * ISO 8601 timestamp for the last time a reminder was sent
+    */
+    lastReminded: Date;
+    /**
+    * ISO 8601 timestamp for the last time a measurement was received for this user and variable
+    */
+    lastTracked: Date;
+    /**
+    * When the record was first created. Use ISO 8601 datetime format
+    */
+    createdAt: Date;
+    /**
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -504,11 +674,11 @@ export class Unit {
     */
     categoryId: number;
     /**
-    * Unit minimum value
+    * Minimum value permitted for this unit
     */
     minimumValue: number;
     /**
-    * Unit maximum value
+    * Maximum value permitted for this unit
     */
     maximumValue: number;
     /**
@@ -516,11 +686,11 @@ export class Unit {
     */
     updated: number;
     /**
-    * ID of default unit
+    * ID of default unit for this units category
     */
     defaultUnitId: number;
     /**
-    * Value multiplied to
+    * Value multiplied to convert to default unit in this unit category
     */
     multiply: number;
     /**
@@ -528,11 +698,11 @@ export class Unit {
     */
     add: number;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -547,11 +717,11 @@ export class UnitCategory {
     */
     name: string;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -574,11 +744,11 @@ export class UnitConversion {
     */
     value: number;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -609,11 +779,11 @@ export class Update {
     */
     message: string;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -623,6 +793,10 @@ export class UserVariable {
     * ID of the parent variable if this variable has any parent
     */
     parentId: number;
+    /**
+    * User ID
+    */
+    userId: number;
     /**
     * client_id
     */
@@ -736,9 +910,9 @@ export class UserVariable {
     */
     variance: number;
     /**
-    * Minimum recorded daily value of this variable
+    * Minimum recorded value of this variable
     */
-    minimumRecordedDailyValue: number;
+    minimumRecordedValue: number;
     /**
     * Maximum recorded daily value of this variable
     */
@@ -788,11 +962,19 @@ export class UserVariable {
     */
     location: string;
     /**
-    * created_at
+    * Earliest measurement start_time to be used in analysis. Use ISO 8601 datetime format
+    */
+    experimentStartTime: Date;
+    /**
+    * Latest measurement start_time to be used in analysis. Use ISO 8601 datetime format
+    */
+    experimentEndTime: Date;
+    /**
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
     /**
@@ -829,6 +1011,77 @@ export class UserVariable {
     latestFillingTime: number;
 }
 
+export class UserVariableRelationship {
+    /**
+    * id
+    */
+    id: number;
+    /**
+    * Our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+    */
+    confidenceLevel: string;
+    /**
+    * A quantitative representation of our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+    */
+    confidenceScore: number;
+    /**
+    * Direction is positive if higher predictor values generally precede higher outcome values. Direction is negative if higher predictor values generally precede lower outcome values.
+    */
+    direction: string;
+    /**
+    * Number of seconds over which the predictor variable event is expected to produce a perceivable effect following the onset delay
+    */
+    durationOfAction: number;
+    /**
+    * error_message
+    */
+    errorMessage: string;
+    /**
+    * User estimated (or default number of seconds) after cause measurement before a perceivable effect is observed
+    */
+    onsetDelay: number;
+    /**
+    * Variable ID for the outcome variable
+    */
+    outcomeVariableId: number;
+    /**
+    * Variable ID for the predictor variable
+    */
+    predictorVariableId: number;
+    /**
+    * ID for default unit of the predictor variable
+    */
+    predictorUnitId: number;
+    /**
+    * A value representative of the relevance of this predictor relative to other predictors of this outcome.  Usually used for relevancy sorting.
+    */
+    sinnRank: number;
+    /**
+    * Can be weak, medium, or strong based on the size of the effect which the predictor appears to have on the outcome relative to other variable relationship strength scores.
+    */
+    strengthLevel: string;
+    /**
+    * A value represented to the size of the effect which the predictor appears to have on the outcome.
+    */
+    strengthScore: number;
+    /**
+    * user_id
+    */
+    userId: number;
+    /**
+    * vote
+    */
+    vote: string;
+    /**
+    * Value for the predictor variable (in it's default unit) which typically precedes an above average outcome value
+    */
+    valuePredictingHighOutcome: number;
+    /**
+    * Value for the predictor variable (in it's default unit) which typically precedes a below average outcome value
+    */
+    valuePredictingLowOutcome: number;
+}
+
 export class Variable {
     /**
     * id
@@ -839,15 +1092,15 @@ export class Variable {
     */
     clientId: string;
     /**
-    * parent_id
+    * ID of the parent variable if this variable has any parent
     */
     parentId: number;
     /**
-    * Name of the variable
+    * User-defined variable display name
     */
     name: string;
     /**
-    * Category of the variable
+    * Variable category ID
     */
     variableCategoryId: number;
     /**
@@ -855,75 +1108,75 @@ export class Variable {
     */
     defaultUnitId: number;
     /**
-    * How to combine values of this variable (for instance, to see a summary of the values over a month) 0 for sum OR 1 for mean
+    * How to combine values of this variable (for instance, to see a summary of the values over a month) SUM or MEAN
     */
     combinationOperation: string;
     /**
-    * filling_value
+    * Value for replacing null measurements
     */
     fillingValue: number;
     /**
-    * maximum_allowed_value
+    * Maximum reasonable value for this variable (uses default unit)
     */
     maximumAllowedValue: number;
     /**
-    * minimum_allowed_value
+    * Minimum reasonable value for this variable (uses default unit)
     */
     minimumAllowedValue: number;
     /**
-    * onset_delay
+    * How long it takes for a measurement in this variable to take effect
     */
     onsetDelay: number;
     /**
-    * duration_of_action
+    * How long the effect of a measurement in this variable lasts
     */
     durationOfAction: number;
     /**
-    * public
+    * Is variable public
     */
     _public: number;
     /**
-    * cause_only
+    * A value of 1 indicates that this variable is generally a cause in a causal relationship.  An example of a causeOnly variable would be a variable such as Cloud Cover which would generally not be influenced by the behaviour of the user
     */
     causeOnly: boolean;
     /**
-    * most_common_value
+    * Most common value
     */
     mostCommonValue: number;
     /**
-    * most_common_unit_id
+    * Most common Unit
     */
     mostCommonUnitId: number;
     /**
-    * standard_deviation
+    * Standard Deviation
     */
     standardDeviation: number;
     /**
-    * variance
+    * Variance
     */
     variance: number;
     /**
-    * mean
+    * Mean
     */
     mean: number;
     /**
-    * median
+    * Median
     */
     median: number;
     /**
-    * number_of_measurements
+    * Number of measurements
     */
     numberOfMeasurements: number;
     /**
-    * number_of_unique_values
+    * Number of unique values
     */
     numberOfUniqueValues: number;
     /**
-    * skewness
+    * Skewness
     */
     skewness: number;
     /**
-    * kurtosis
+    * Kurtosis
     */
     kurtosis: number;
     /**
@@ -935,43 +1188,43 @@ export class Variable {
     */
     errorMessage: string;
     /**
-    * last_successful_update_time
+    * When this variable or its settings were last updated
     */
     lastSuccessfulUpdateTime: Date;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
     /**
-    * product_url
+    * Product URL
     */
     productUrl: string;
     /**
-    * image_url
+    * Image URL
     */
     imageUrl: string;
     /**
-    * price
+    * Price
     */
     price: number;
     /**
-    * number_of_user_variables
+    * Number of variables
     */
     numberOfUserVariables: number;
     /**
-    * outcome
+    * Outcome variables (those with `outcome` == 1) are variables for which a human would generally want to identify the influencing factors.  These include symptoms of illness, physique, mood, cognitive performance, etc.  Generally correlation calculations are only performed on outcome variables.
     */
     outcome: boolean;
     /**
-    * minimum_recorded_value
+    * Minimum recorded value of this variable
     */
     minimumRecordedValue: number;
     /**
-    * maximum_recorded_value
+    * Maximum recorded value of this variable
     */
     maximumRecordedValue: number;
 }
@@ -1026,11 +1279,11 @@ export class VariableCategory {
     */
     outcome: boolean;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
     /**
@@ -1069,11 +1322,11 @@ export class VariableUserSource {
     */
     latestMeasurementTime: number;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -1092,7 +1345,7 @@ export class Vote {
     */
     userId: number;
     /**
-    * ID of cause variable
+    * ID of the predictor variable
     */
     causeId: number;
     /**
@@ -1104,11 +1357,11 @@ export class Vote {
     */
     value: number;
     /**
-    * created_at
+    * When the record was first created. Use ISO 8601 datetime format
     */
     createdAt: Date;
     /**
-    * updated_at
+    * When the record in the database was last updated. Use ISO 8601 datetime format
     */
     updatedAt: Date;
 }
@@ -1129,141 +1382,171 @@ export class InlineResponse2002 {
 }
 
 export class InlineResponse2003 {
-    data: Array<Connection>;
+    data: Array<CommonVariableRelationship>;
     success: boolean;
 }
 
 export class InlineResponse2004 {
-    data: Connection;
+    data: CommonVariableRelationship;
     success: boolean;
 }
 
 export class InlineResponse2005 {
-    data: Array<Connector>;
+    data: Array<Connection>;
     success: boolean;
 }
 
 export class InlineResponse2006 {
-    data: Connector;
+    data: Connection;
     success: boolean;
 }
 
 export class InlineResponse2007 {
-    data: Array<Correlation>;
+    data: Array<Connector>;
     success: boolean;
 }
 
 export class InlineResponse2008 {
-    data: Correlation;
+    data: Connector;
     success: boolean;
 }
 
 export class InlineResponse2009 {
-    data: Array<Credential>;
+    data: Array<Correlation>;
     success: boolean;
 }
 
 export class InlineResponse20010 {
-    data: Credential;
+    data: Correlation;
     success: boolean;
 }
 
 export class InlineResponse20011 {
-    data: Array<Measurement>;
+    data: Array<Credential>;
     success: boolean;
 }
 
 export class InlineResponse20012 {
-    data: Measurement;
+    data: Credential;
     success: boolean;
 }
 
 export class InlineResponse20013 {
-    data: Array<Source>;
+    data: Array<Measurement>;
     success: boolean;
 }
 
 export class InlineResponse20014 {
-    data: Source;
+    data: Measurement;
     success: boolean;
 }
 
 export class InlineResponse20015 {
-    data: Array<UnitCategory>;
+    data: Array<TrackingReminder>;
     success: boolean;
 }
 
 export class InlineResponse20016 {
-    data: UnitCategory;
-    success: boolean;
-}
-
-export class InlineResponse20017 {
-    data: Array<Unit>;
-    success: boolean;
-}
-
-export class InlineResponse20018 {
-    data: Unit;
-    success: boolean;
-}
-
-export class InlineResponse20019 {
     data: Array<Update>;
     success: boolean;
 }
 
-export class InlineResponse20020 {
-    data: Update;
+export class InlineResponse20017 {
+    data: Array<UserVariableRelationship>;
     success: boolean;
 }
 
-export class InlineResponse20021 {
+export class InlineResponse20018 {
     data: Array<UserVariable>;
     success: boolean;
 }
 
-export class InlineResponse20022 {
-    data: UserVariable;
-    success: boolean;
-}
-
-export class InlineResponse20023 {
-    data: Array<VariableCategory>;
-    success: boolean;
-}
-
-export class InlineResponse20024 {
-    data: VariableCategory;
-    success: boolean;
-}
-
-export class InlineResponse20025 {
+export class InlineResponse20019 {
     data: Array<VariableUserSource>;
     success: boolean;
 }
 
-export class InlineResponse20026 {
-    data: VariableUserSource;
-    success: boolean;
-}
-
-export class InlineResponse20027 {
-    data: Array<Variable>;
-    success: boolean;
-}
-
-export class InlineResponse20028 {
-    data: Variable;
-    success: boolean;
-}
-
-export class InlineResponse20029 {
+export class InlineResponse20020 {
     data: Array<Vote>;
     success: boolean;
 }
 
+export class InlineResponse20021 {
+    data: Array<Source>;
+    success: boolean;
+}
+
+export class InlineResponse20022 {
+    data: Source;
+    success: boolean;
+}
+
+export class InlineResponse20023 {
+    data: TrackingReminder;
+    success: boolean;
+}
+
+export class InlineResponse20024 {
+    data: Array<UnitCategory>;
+    success: boolean;
+}
+
+export class InlineResponse20025 {
+    data: UnitCategory;
+    success: boolean;
+}
+
+export class InlineResponse20026 {
+    data: Array<Unit>;
+    success: boolean;
+}
+
+export class InlineResponse20027 {
+    data: Unit;
+    success: boolean;
+}
+
+export class InlineResponse20028 {
+    data: Update;
+    success: boolean;
+}
+
+export class InlineResponse20029 {
+    data: UserVariableRelationship;
+    success: boolean;
+}
+
 export class InlineResponse20030 {
+    data: UserVariable;
+    success: boolean;
+}
+
+export class InlineResponse20031 {
+    data: Array<VariableCategory>;
+    success: boolean;
+}
+
+export class InlineResponse20032 {
+    data: VariableCategory;
+    success: boolean;
+}
+
+export class InlineResponse20033 {
+    data: VariableUserSource;
+    success: boolean;
+}
+
+export class InlineResponse20034 {
+    data: Array<Variable>;
+    success: boolean;
+}
+
+export class InlineResponse20035 {
+    data: Variable;
+    success: boolean;
+}
+
+export class InlineResponse20036 {
     data: Vote;
     success: boolean;
 }
@@ -1302,8 +1585,10 @@ class ApiKeyAuth implements Authentication {
 }
 
 class OAuth implements Authentication {
+    public accessToken: string;
+
     applyToRequest(requestOptions: request.Options): void {
-        // TODO: support oauth
+        requestOptions.headers["Authorization"] = "Bearer " + this.accessToken;
     }
 }
 
@@ -1316,14 +1601,18 @@ class VoidAuth implements Authentication {
 }
 
 export class VariableUserSourceApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -1335,13 +1624,42 @@ export class VariableUserSourceApi {
         }
     }
 
-    public variableUserSourcesGet (variableId?: number, userId?: number, timestamp?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
-        let path = this.url + this.basePath + '/variableUserSources';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all VariableUserSources
+     * Get all VariableUserSources
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param variableId ID of variable
+     * @param userId ID of User
+     * @param timestamp Time that this measurement occurred Uses epoch minute (epoch time divided by 60)
+     * @param earliestMeasurementTime Earliest measurement time
+     * @param latestMeasurementTime Latest measurement time
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public variableUserSourcesGet (accessToken?: string, variableId?: number, userId?: number, timestamp?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_19;  }> {
+        const path = this.basePath + '/variableUserSources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (variableId !== undefined) {
             queryParameters['variable_id'] = variableId;
@@ -1353,6 +1671,14 @@ export class VariableUserSourceApi {
 
         if (timestamp !== undefined) {
             queryParameters['timestamp'] = timestamp;
+        }
+
+        if (earliestMeasurementTime !== undefined) {
+            queryParameters['earliest_measurement_time'] = earliestMeasurementTime;
+        }
+
+        if (latestMeasurementTime !== undefined) {
+            queryParameters['latest_measurement_time'] = latestMeasurementTime;
         }
 
         if (createdAt !== undefined) {
@@ -1377,7 +1703,7 @@ export class VariableUserSourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_25;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_19;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -1386,6 +1712,8 @@ export class VariableUserSourceApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -1411,18 +1739,26 @@ export class VariableUserSourceApi {
 
         return deferred.promise;
     }
-
-    public variableUserSourcesPost (body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
-        let path = this.url + this.basePath + '/variableUserSources';
-
+    /**
+     * Store VariableUserSource
+     * Store VariableUserSource
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body VariableUserSource that should be stored
+     */
+    public variableUserSourcesPost (accessToken?: string, body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_33;  }> {
+        const path = this.basePath + '/variableUserSources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_26;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_33;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -1433,6 +1769,8 @@ export class VariableUserSourceApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -1457,14 +1795,18 @@ export class VariableUserSourceApi {
 
         return deferred.promise;
     }
-
-    public variableUserSourcesIdGet (id: number, sourceId: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
-        let path = this.url + this.basePath + '/variableUserSources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get VariableUserSource
+     * Get VariableUserSource
+     * @param id id of VariableUserSource
+     * @param sourceId source id of VariableUserSource
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public variableUserSourcesIdGet (id: number, sourceId: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_33;  }> {
+        const path = this.basePath + '/variableUserSources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1478,13 +1820,17 @@ export class VariableUserSourceApi {
             throw new Error('Missing required parameter sourceId when calling variableUserSourcesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         if (sourceId !== undefined) {
             queryParameters['source_id'] = sourceId;
         }
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_26;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_33;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -1493,6 +1839,8 @@ export class VariableUserSourceApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -1518,14 +1866,19 @@ export class VariableUserSourceApi {
 
         return deferred.promise;
     }
-
-    public variableUserSourcesIdPut (id: number, sourceId: number, body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableUserSources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update VariableUserSource
+     * Update VariableUserSource
+     * @param id variable_id of VariableUserSource
+     * @param sourceId source id of VariableUserSource
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body VariableUserSource that should be updated
+     */
+    public variableUserSourcesIdPut (id: number, sourceId: number, accessToken?: string, body?: VariableUserSource) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/variableUserSources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1537,6 +1890,10 @@ export class VariableUserSourceApi {
         // verify required parameter 'sourceId' is set
         if (!sourceId) {
             throw new Error('Missing required parameter sourceId when calling variableUserSourcesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         if (sourceId !== undefined) {
@@ -1556,6 +1913,8 @@ export class VariableUserSourceApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -1580,14 +1939,18 @@ export class VariableUserSourceApi {
 
         return deferred.promise;
     }
-
-    public variableUserSourcesIdDelete (id: number, sourceId: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableUserSources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete VariableUserSource
+     * Delete VariableUserSource
+     * @param id variable_id of VariableUserSource
+     * @param sourceId source id of VariableUserSource
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public variableUserSourcesIdDelete (id: number, sourceId: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/variableUserSources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1599,6 +1962,10 @@ export class VariableUserSourceApi {
         // verify required parameter 'sourceId' is set
         if (!sourceId) {
             throw new Error('Missing required parameter sourceId when calling variableUserSourcesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         if (sourceId !== undefined) {
@@ -1616,6 +1983,8 @@ export class VariableUserSourceApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -1643,14 +2012,18 @@ export class VariableUserSourceApi {
     }
 }
 export class MeasurementApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -1662,13 +2035,53 @@ export class MeasurementApi {
         }
     }
 
-    public measurementsGet (userId?: number, clientId?: string, connectorId?: number, variableId?: number, startTime?: number, value?: number, originalValue?: number, duration?: number, note?: string, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, error?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_11;  }> {
-        let path = this.url + this.basePath + '/measurements';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get measurements for this user
+     * Measurements are any value that can be recorded like daily steps, a mood rating, or apples eaten.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param userId ID of user that owns this measurement
+     * @param clientId The ID of the client application which originally stored the measurement
+     * @param connectorId The id for the connector data source from which the measurement was obtained
+     * @param variableId ID of the variable for which we are creating the measurement records
+     * @param sourceId Application or device used to record the measurement values
+     * @param startTime start time for the measurement event. Use ISO 8601 datetime format
+     * @param value The value of the measurement after conversion to the default unit for that variable
+     * @param unitId The default unit id for the variable
+     * @param originalValue Unconverted value of measurement as originally posted (before conversion to default unit)
+     * @param originalUnitId Unit id of the measurement as originally submitted
+     * @param duration Duration of the event being measurement in seconds
+     * @param note An optional note the user may include with their measurement
+     * @param latitude Latitude at which the measurement was taken
+     * @param longitude Longitude at which the measurement was taken
+     * @param location Optional human readable name for the location where the measurement was recorded
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param error An error message if there is a problem with the measurement
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public measurementsGet (accessToken?: string, userId?: number, clientId?: string, connectorId?: number, variableId?: number, sourceId?: number, startTime?: string, value?: number, unitId?: number, originalValue?: number, originalUnitId?: number, duration?: number, note?: string, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, error?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_13;  }> {
+        const path = this.basePath + '/measurements';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (userId !== undefined) {
             queryParameters['user_id'] = userId;
@@ -1686,6 +2099,10 @@ export class MeasurementApi {
             queryParameters['variable_id'] = variableId;
         }
 
+        if (sourceId !== undefined) {
+            queryParameters['source_id'] = sourceId;
+        }
+
         if (startTime !== undefined) {
             queryParameters['start_time'] = startTime;
         }
@@ -1694,8 +2111,16 @@ export class MeasurementApi {
             queryParameters['value'] = value;
         }
 
+        if (unitId !== undefined) {
+            queryParameters['unit_id'] = unitId;
+        }
+
         if (originalValue !== undefined) {
             queryParameters['original_value'] = originalValue;
+        }
+
+        if (originalUnitId !== undefined) {
+            queryParameters['original_unit_id'] = originalUnitId;
         }
 
         if (duration !== undefined) {
@@ -1744,7 +2169,7 @@ export class MeasurementApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_11;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_13;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -1753,6 +2178,8 @@ export class MeasurementApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -1778,18 +2205,26 @@ export class MeasurementApi {
 
         return deferred.promise;
     }
-
-    public measurementsPost (body?: MeasurementPost) : Promise<{ response: http.ClientResponse; body: inline_response_200_11;  }> {
-        let path = this.url + this.basePath + '/measurements';
-
+    /**
+     * Post a new set or update existing measurements to the database
+     * You can submit or update multiple measurements in a measurements sub-array.  If the variable these measurements correspond to does not already exist in the database, it will be automatically added.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Measurement that should be stored
+     */
+    public measurementsPost (accessToken?: string, body?: MeasurementPost) : Promise<{ response: http.ClientResponse; body: inline_response_200_13;  }> {
+        const path = this.basePath + '/measurements';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_11;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_13;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -1800,6 +2235,8 @@ export class MeasurementApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -1824,14 +2261,21 @@ export class MeasurementApi {
 
         return deferred.promise;
     }
-
-    public measurementsCsvGet () : Promise<{ response: http.ClientResponse; body: any;  }> {
-        let path = this.url + this.basePath + '/measurements/csv';
-
+    /**
+     * Get Measurements CSV
+     * Download a CSV containing all user measurements
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public measurementsCsvGet (accessToken?: string) : Promise<{ response: http.ClientResponse; body: any;  }> {
+        const path = this.basePath + '/measurements/csv';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         let useFormData = false;
 
@@ -1845,6 +2289,8 @@ export class MeasurementApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -1869,14 +2315,21 @@ export class MeasurementApi {
 
         return deferred.promise;
     }
-
-    public measurementsRequestCsvPost () : Promise<{ response: http.ClientResponse; body: number;  }> {
-        let path = this.url + this.basePath + '/measurements/request_csv';
-
+    /**
+     * Post Request for Measurements CSV
+     * Use this endpoint to schedule a CSV export containing all user measurements to be emailed to the user within 24 hours.
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public measurementsRequestCsvPost (accessToken?: string) : Promise<{ response: http.ClientResponse; body: number;  }> {
+        const path = this.basePath + '/measurements/request_csv';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         let useFormData = false;
 
@@ -1890,6 +2343,8 @@ export class MeasurementApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -1914,14 +2369,17 @@ export class MeasurementApi {
 
         return deferred.promise;
     }
-
-    public measurementsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_12;  }> {
-        let path = this.url + this.basePath + '/measurements/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Measurement
+     * Get Measurement
+     * @param id id of Measurement
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public measurementsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_14;  }> {
+        const path = this.basePath + '/measurements/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -1930,9 +2388,13 @@ export class MeasurementApi {
             throw new Error('Missing required parameter id when calling measurementsIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_12;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_14;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -1942,6 +2404,8 @@ export class MeasurementApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -1966,20 +2430,28 @@ export class MeasurementApi {
 
         return deferred.promise;
     }
-
-    public measurementsIdPut (id: number, body?: Measurement) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/measurements/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Measurement
+     * Update Measurement
+     * @param id id of Measurement
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Measurement that should be updated
+     */
+    public measurementsIdPut (id: number, accessToken?: string, body?: Measurement) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/measurements/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling measurementsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -1995,6 +2467,8 @@ export class MeasurementApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2019,20 +2493,27 @@ export class MeasurementApi {
 
         return deferred.promise;
     }
-
-    public measurementsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/measurements/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Measurement
+     * Delete Measurement
+     * @param id id of Measurement
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public measurementsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/measurements/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling measurementsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -2046,6 +2527,409 @@ export class MeasurementApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+}
+export class TrackingReminderApi {
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
+    public authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get tracking reminders
+     * Users can be reminded to track certain variables at a specified frequency with a default value.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this tracking reminder
+     * @param userId ID of the user who created a reminder
+     * @param variableId Id for the variable to be tracked
+     * @param popUp True if the reminders should appear as a popup notification
+     * @param sms True if the reminders should be delivered via SMS
+     * @param email True if the reminders should be delivered via email
+     * @param notificationBar True if the reminders should appear in the notification bar
+     * @param lastReminded ISO 8601 timestamp for the last time a reminder was sent
+     * @param lastTracked ISO 8601 timestamp for the last time a measurement was received for this user and variable
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public trackingRemindersGet (accessToken?: string, clientId?: string, userId?: number, variableId?: number, popUp?: boolean, sms?: boolean, email?: boolean, notificationBar?: boolean, lastReminded?: string, lastTracked?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
+        const path = this.basePath + '/trackingReminders';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (userId !== undefined) {
+            queryParameters['user_id'] = userId;
+        }
+
+        if (variableId !== undefined) {
+            queryParameters['variable_id'] = variableId;
+        }
+
+        if (popUp !== undefined) {
+            queryParameters['pop_up'] = popUp;
+        }
+
+        if (sms !== undefined) {
+            queryParameters['sms'] = sms;
+        }
+
+        if (email !== undefined) {
+            queryParameters['email'] = email;
+        }
+
+        if (notificationBar !== undefined) {
+            queryParameters['notification_bar'] = notificationBar;
+        }
+
+        if (lastReminded !== undefined) {
+            queryParameters['last_reminded'] = lastReminded;
+        }
+
+        if (lastTracked !== undefined) {
+            queryParameters['last_tracked'] = lastTracked;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_15;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Store TrackingReminder
+     * This is to enable users to indicate their opinion on the plausibility of a causal relationship between a treatment and outcome. QuantiModo incorporates crowd-sourced plausibility estimations into their algorithm. This is done allowing user to indicate their view of the plausibility of each relationship with thumbs up/down buttons placed next to each prediction.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body TrackingReminder that should be stored
+     */
+    public trackingRemindersPost (accessToken?: string, body?: TrackingReminder) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
+        const path = this.basePath + '/trackingReminders';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_23;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'POST',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get TrackingReminder
+     * Get TrackingReminder
+     * @param id id of TrackingReminder
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public trackingRemindersIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
+        const path = this.basePath + '/trackingReminders/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling trackingRemindersIdGet');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_23;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Update TrackingReminder
+     * Update TrackingReminder
+     * @param id id of TrackingReminder
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body TrackingReminder that should be updated
+     */
+    public trackingRemindersIdPut (id: number, accessToken?: string, body?: TrackingReminder) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/trackingReminders/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling trackingRemindersIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Delete TrackingReminder
+     * Delete previously posted trackingReminder
+     * @param id id of TrackingReminder
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public trackingRemindersIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/trackingReminders/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling trackingRemindersIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'DELETE',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -2073,14 +2957,18 @@ export class MeasurementApi {
     }
 }
 export class VariableApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -2092,13 +2980,71 @@ export class VariableApi {
         }
     }
 
-    public variablesGet (id?: number, clientId?: string, parentId?: number, name?: string, variableCategoryId?: number, defaultUnitId?: number, combinationOperation?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, onsetDelay?: number, durationOfAction?: number, _public?: number, causeOnly?: boolean, mostCommonValue?: number, mostCommonUnitId?: number, standardDeviation?: number, variance?: number, mean?: number, median?: number, numberOfMeasurements?: number, numberOfUniqueValues?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, createdAt?: string, updatedAt?: string, productUrl?: string, imageUrl?: string, price?: number, numberOfUserVariables?: number, outcome?: boolean, minimumRecordedValue?: number, maximumRecordedValue?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_27;  }> {
-        let path = this.url + this.basePath + '/variables';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all Variables
+     * Get all Variables
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param id id
+     * @param clientId The ID of the client application which last created or updated this common variable
+     * @param parentId ID of the parent variable if this variable has any parent
+     * @param name User-defined variable display name
+     * @param variableCategoryId Variable category ID
+     * @param defaultUnitId ID of the default unit for the variable
+     * @param combinationOperation How to combine values of this variable (for instance, to see a summary of the values over a month) SUM or MEAN
+     * @param fillingValue Value for replacing null measurements
+     * @param maximumAllowedValue Maximum reasonable value for this variable (uses default unit)
+     * @param minimumAllowedValue Minimum reasonable value for this variable (uses default unit)
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param durationOfAction Estimated number of seconds following the onset delay in which a stimulus produces a perceivable effect
+     * @param _public Is variable public
+     * @param causeOnly A value of 1 indicates that this variable is generally a cause in a causal relationship.  An example of a causeOnly variable would be a variable such as Cloud Cover which would generally not be influenced by the behaviour of the user
+     * @param mostCommonValue Most common value
+     * @param mostCommonUnitId Most common Unit
+     * @param standardDeviation Standard Deviation
+     * @param variance Average variance for this variable based on all user data
+     * @param mean Mean for this variable based on all user data
+     * @param median Median for this variable based on all user data
+     * @param numberOfMeasurements Number of measurements for this variable based on all user data
+     * @param numberOfUniqueValues Number of unique values for this variable based on all user data
+     * @param skewness Skewness for this variable based on all user data
+     * @param kurtosis Kurtosis for this variable based on all user data
+     * @param status status
+     * @param errorMessage error_message
+     * @param lastSuccessfulUpdateTime When this variable or its settings were last updated
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param productUrl Product URL
+     * @param imageUrl Image URL
+     * @param price Price
+     * @param numberOfUserVariables Number of users who have data for this variable
+     * @param outcome Outcome variables (those with `outcome` == 1) are variables for which a human would generally want to identify the influencing factors.  These include symptoms of illness, physique, mood, cognitive performance, etc.  Generally correlation calculations are only performed on outcome variables.
+     * @param minimumRecordedValue Minimum recorded value of this variable based on all user data
+     * @param maximumRecordedValue Maximum recorded value of this variable based on all user data
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort records by a given field name. If the field name is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public variablesGet (accessToken?: string, id?: number, clientId?: string, parentId?: number, name?: string, variableCategoryId?: number, defaultUnitId?: number, combinationOperation?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, onsetDelay?: number, durationOfAction?: number, _public?: number, causeOnly?: boolean, mostCommonValue?: number, mostCommonUnitId?: number, standardDeviation?: number, variance?: number, mean?: number, median?: number, numberOfMeasurements?: number, numberOfUniqueValues?: number, skewness?: number, kurtosis?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, createdAt?: string, updatedAt?: string, productUrl?: string, imageUrl?: string, price?: number, numberOfUserVariables?: number, outcome?: boolean, minimumRecordedValue?: number, maximumRecordedValue?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_34;  }> {
+        const path = this.basePath + '/variables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (id !== undefined) {
             queryParameters['id'] = id;
@@ -2196,18 +3142,6 @@ export class VariableApi {
             queryParameters['kurtosis'] = kurtosis;
         }
 
-        if (latitude !== undefined) {
-            queryParameters['latitude'] = latitude;
-        }
-
-        if (longitude !== undefined) {
-            queryParameters['longitude'] = longitude;
-        }
-
-        if (location !== undefined) {
-            queryParameters['location'] = location;
-        }
-
         if (status !== undefined) {
             queryParameters['status'] = status;
         }
@@ -2270,7 +3204,7 @@ export class VariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_27;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_34;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -2279,6 +3213,8 @@ export class VariableApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -2304,18 +3240,26 @@ export class VariableApi {
 
         return deferred.promise;
     }
-
-    public variablesPost (body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
-        let path = this.url + this.basePath + '/variables';
-
+    /**
+     * Store Variable
+     * Allows the client to create a new variable in the `variables` table.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Variable that should be stored
+     */
+    public variablesPost (accessToken?: string, body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_35;  }> {
+        const path = this.basePath + '/variables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_35;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -2326,6 +3270,8 @@ export class VariableApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2350,14 +3296,17 @@ export class VariableApi {
 
         return deferred.promise;
     }
-
-    public variablesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
-        let path = this.url + this.basePath + '/variables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Variable
+     * Get Variable
+     * @param id id of Variable
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public variablesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_35;  }> {
+        const path = this.basePath + '/variables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2366,9 +3315,13 @@ export class VariableApi {
             throw new Error('Missing required parameter id when calling variablesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_35;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -2378,6 +3331,8 @@ export class VariableApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2402,20 +3357,28 @@ export class VariableApi {
 
         return deferred.promise;
     }
-
-    public variablesIdPut (id: number, body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Variable
+     * Update Variable
+     * @param id id of Variable
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Variable that should be updated
+     */
+    public variablesIdPut (id: number, accessToken?: string, body?: Variable) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/variables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling variablesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -2431,6 +3394,8 @@ export class VariableApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2455,20 +3420,27 @@ export class VariableApi {
 
         return deferred.promise;
     }
-
-    public variablesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Variable
+     * Delete Variable
+     * @param id id of Variable
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public variablesIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/variables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling variablesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -2482,6 +3454,8 @@ export class VariableApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -2509,14 +3483,18 @@ export class VariableApi {
     }
 }
 export class UpdateApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -2528,13 +3506,42 @@ export class UpdateApi {
         }
     }
 
-    public updatesGet (userId?: number, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_19;  }> {
-        let path = this.url + this.basePath + '/updates';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all Updates
+     * Get all Updates
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param userId user_id
+     * @param connectorId connector_id
+     * @param numberOfMeasurements number_of_measurements
+     * @param success success
+     * @param message message
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public updatesGet (accessToken?: string, userId?: number, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
+        const path = this.basePath + '/updates';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (userId !== undefined) {
             queryParameters['user_id'] = userId;
@@ -2578,7 +3585,7 @@ export class UpdateApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_19;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -2587,6 +3594,8 @@ export class UpdateApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -2612,18 +3621,26 @@ export class UpdateApi {
 
         return deferred.promise;
     }
-
-    public updatesPost (body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
-        let path = this.url + this.basePath + '/updates';
-
+    /**
+     * Store Update
+     * Store Update
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Update that should be stored
+     */
+    public updatesPost (accessToken?: string, body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
+        const path = this.basePath + '/updates';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -2634,6 +3651,8 @@ export class UpdateApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2658,14 +3677,17 @@ export class UpdateApi {
 
         return deferred.promise;
     }
-
-    public updatesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
-        let path = this.url + this.basePath + '/updates/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Update
+     * Get Update
+     * @param id id of Update
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public updatesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_28;  }> {
+        const path = this.basePath + '/updates/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -2674,9 +3696,13 @@ export class UpdateApi {
             throw new Error('Missing required parameter id when calling updatesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_28;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -2686,6 +3712,8 @@ export class UpdateApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2710,20 +3738,28 @@ export class UpdateApi {
 
         return deferred.promise;
     }
-
-    public updatesIdPut (id: number, body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/updates/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Update
+     * Update Update
+     * @param id id of Update
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Update that should be updated
+     */
+    public updatesIdPut (id: number, accessToken?: string, body?: Update) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/updates/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling updatesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -2739,6 +3775,8 @@ export class UpdateApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2763,20 +3801,27 @@ export class UpdateApi {
 
         return deferred.promise;
     }
-
-    public updatesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/updates/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Update
+     * Delete Update
+     * @param id id of Update
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public updatesIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/updates/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling updatesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -2790,6 +3835,8 @@ export class UpdateApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -2817,14 +3864,18 @@ export class UpdateApi {
     }
 }
 export class AggregatedCorrelationApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -2836,13 +3887,59 @@ export class AggregatedCorrelationApi {
         }
     }
 
-    public aggregatedCorrelationsGet (correlation?: number, causeId?: number, effectId?: number, onsetDelay?: number, durationOfAction?: number, numberOfPairs?: number, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, optimalPearsonProduct?: number, vote?: number, numberOfUsers?: number, numberOfCorrelations?: number, statisticalSignificance?: number, causeUnit?: string, causeUnitId?: number, causeChanges?: number, effectChanges?: number, aggregateQmScore?: number, createdAt?: string, updatedAt?: string, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, reversePearsonCorrelationCoefficient?: number, predictivePearsonCorrelationCoefficient?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all AggregatedCorrelations
+     * Get all AggregatedCorrelations
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param correlation Pearson correlation coefficient between cause and effect measurements
+     * @param causeId Variable ID of the predictor variable for which the user desires correlations
+     * @param effectId Variable ID of the outcome variable for which the user desires correlations
+     * @param onsetDelay User estimated (or default number of seconds) after cause measurement before a perceivable effect is observed
+     * @param durationOfAction Number of seconds over which the predictor variable event is expected to produce a perceivable effect following the onset delay
+     * @param numberOfPairs Number of predictor/outcome data points used in the analysis
+     * @param valuePredictingHighOutcome Predictor daily aggregated measurement value that predicts an above average effect measurement value (in default unit for predictor variable)
+     * @param valuePredictingLowOutcome Predictor daily aggregated measurement value that predicts a below average effect measurement value (in default unit for outcome variable)
+     * @param optimalPearsonProduct Optimal Pearson Product
+     * @param numberOfUsers Number of users whose data was used in this aggregation
+     * @param numberOfCorrelations Number of correlational analyses used in this aggregation
+     * @param statisticalSignificance A function of the effect size and sample size
+     * @param causeUnit Abbreviated unit name for the predictor variable
+     * @param causeUnitId Unit ID for the predictor variable
+     * @param causeChanges Number of times that the predictor time series changes
+     * @param effectChanges Number of times that the predictor time series changes
+     * @param aggregateQmScore Aggregated QM Score which is directly proportional with the relevance of each predictor or outcome
+     * @param createdAt Date at which the analysis was first performed
+     * @param updatedAt Date at which the analysis was last updated
+     * @param status Indicates whether an analysis is up to date (UPDATED), needs to be updated (WAITING), or had an error (ERROR)
+     * @param errorMessage Message describing any problems encountered during the analysis
+     * @param lastSuccessfulUpdateTime Last Successful update time
+     * @param reversePearsonCorrelationCoefficient Correlation when cause and effect are reversed. For any causal relationship, the forward correlation should exceed the reverse correlation
+     * @param predictivePearsonCorrelationCoefficient Predictive Pearson Correlation Coefficient
+     * @param limit Limit the number of results returned
+     * @param offset Records from give Offset
+     * @param sort Sort records by given field
+     */
+    public aggregatedCorrelationsGet (accessToken?: string, correlation?: number, causeId?: number, effectId?: number, onsetDelay?: number, durationOfAction?: number, numberOfPairs?: number, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, optimalPearsonProduct?: number, numberOfUsers?: number, numberOfCorrelations?: number, statisticalSignificance?: number, causeUnit?: string, causeUnitId?: number, causeChanges?: number, effectChanges?: number, aggregateQmScore?: number, createdAt?: string, updatedAt?: string, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, reversePearsonCorrelationCoefficient?: number, predictivePearsonCorrelationCoefficient?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200;  }> {
+        const path = this.basePath + '/aggregatedCorrelations';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (correlation !== undefined) {
             queryParameters['correlation'] = correlation;
@@ -2878,10 +3975,6 @@ export class AggregatedCorrelationApi {
 
         if (optimalPearsonProduct !== undefined) {
             queryParameters['optimal_pearson_product'] = optimalPearsonProduct;
-        }
-
-        if (vote !== undefined) {
-            queryParameters['vote'] = vote;
         }
 
         if (numberOfUsers !== undefined) {
@@ -2968,6 +4061,8 @@ export class AggregatedCorrelationApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -2992,14 +4087,22 @@ export class AggregatedCorrelationApi {
 
         return deferred.promise;
     }
-
-    public aggregatedCorrelationsPost (body?: AggregatedCorrelation) : Promise<{ response: http.ClientResponse; body: inline_response_200_1;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations';
-
+    /**
+     * Store AggregatedCorrelation
+     * Store AggregatedCorrelation
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body AggregatedCorrelation that should be stored
+     */
+    public aggregatedCorrelationsPost (accessToken?: string, body?: AggregatedCorrelation) : Promise<{ response: http.ClientResponse; body: inline_response_200_1;  }> {
+        const path = this.basePath + '/aggregatedCorrelations';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         let useFormData = false;
 
@@ -3014,6 +4117,8 @@ export class AggregatedCorrelationApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -3038,20 +4143,27 @@ export class AggregatedCorrelationApi {
 
         return deferred.promise;
     }
-
-    public aggregatedCorrelationsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_1;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get AggregatedCorrelation
+     * Get AggregatedCorrelation
+     * @param id id of AggregatedCorrelation
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public aggregatedCorrelationsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_1;  }> {
+        const path = this.basePath + '/aggregatedCorrelations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling aggregatedCorrelationsIdGet');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -3066,6 +4178,8 @@ export class AggregatedCorrelationApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -3090,20 +4204,28 @@ export class AggregatedCorrelationApi {
 
         return deferred.promise;
     }
-
-    public aggregatedCorrelationsIdPut (id: number, body?: AggregatedCorrelation) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update AggregatedCorrelation
+     * Update AggregatedCorrelation
+     * @param id id of AggregatedCorrelation
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body AggregatedCorrelation that should be updated
+     */
+    public aggregatedCorrelationsIdPut (id: number, accessToken?: string, body?: AggregatedCorrelation) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/aggregatedCorrelations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling aggregatedCorrelationsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -3119,6 +4241,8 @@ export class AggregatedCorrelationApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -3143,20 +4267,27 @@ export class AggregatedCorrelationApi {
 
         return deferred.promise;
     }
-
-    public aggregatedCorrelationsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/aggregatedCorrelations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete AggregatedCorrelation
+     * Delete AggregatedCorrelation
+     * @param id id of AggregatedCorrelation
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public aggregatedCorrelationsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/aggregatedCorrelations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling aggregatedCorrelationsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -3170,6 +4301,8 @@ export class AggregatedCorrelationApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -3197,14 +4330,18 @@ export class AggregatedCorrelationApi {
     }
 }
 export class ConnectorApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -3216,13 +4353,43 @@ export class ConnectorApi {
         }
     }
 
-    public connectorsGet (name?: string, displayName?: string, image?: string, getItUrl?: string, shortDescription?: string, longDescription?: string, enabled?: boolean, oauth?: boolean, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_5;  }> {
-        let path = this.url + this.basePath + '/connectors';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get list of Connectors
+     * A connector pulls data from other data providers using their API or a screenscraper. Returns a list of all available connectors and information about them such as their id, name, whether the user has provided access, logo url, connection instructions, and the update history.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param name Lowercase system name for the data source
+     * @param displayName Pretty display name for the data source
+     * @param image URL to the image of the connector logo
+     * @param getItUrl URL to a site where one can get this device or application
+     * @param shortDescription Short description of the service (such as the categories it tracks)
+     * @param longDescription Longer paragraph description of the data provider
+     * @param enabled Set to 1 if the connector should be returned when listing connectors
+     * @param oauth Set to 1 if the connector uses OAuth authentication as opposed to username/password
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public connectorsGet (accessToken?: string, name?: string, displayName?: string, image?: string, getItUrl?: string, shortDescription?: string, longDescription?: string, enabled?: boolean, oauth?: boolean, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_7;  }> {
+        const path = this.basePath + '/connectors';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (name !== undefined) {
             queryParameters['name'] = name;
@@ -3254,6 +4421,397 @@ export class ConnectorApi {
 
         if (oauth !== undefined) {
             queryParameters['oauth'] = oauth;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_7;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Store Connector
+     * Store Connector
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Connector that should be stored
+     */
+    public connectorsPost (accessToken?: string, body?: Connector) : Promise<{ response: http.ClientResponse; body: inline_response_200_8;  }> {
+        const path = this.basePath + '/connectors';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_8;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'POST',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get connector info for user
+     * Returns information about the connector such as the connector id, whether or not is connected for this user (i.e. we have a token or credentials), and its update history for the user.
+     * @param id id of Connector
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public connectorsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_8;  }> {
+        const path = this.basePath + '/connectors/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling connectorsIdGet');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_8;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Update Connector
+     * Update Connector
+     * @param id id of Connector
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Connector that should be updated
+     */
+    public connectorsIdPut (id: number, accessToken?: string, body?: Connector) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/connectors/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling connectorsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Delete Connector
+     * Delete Connector
+     * @param id id of Connector
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public connectorsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/connectors/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling connectorsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'DELETE',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+}
+export class OrganizationApi {
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
+    public authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all Connections
+     * Get all Connections
+     * @param accessToken Organization&#39;s OAuth2 access token
+     * @param connectorId The id for the connector data source for which the connection is connected
+     * @param connectStatus Indicates whether a connector is currently connected to a service for a user.
+     * @param connectError Error message if there is a problem with authorizing this connection.
+     * @param updateRequestedAt Time at which an update was requested by a user.
+     * @param updateStatus Indicates whether a connector is currently updated.
+     * @param updateError Indicates if there was an error during the update.
+     * @param lastSuccessfulUpdatedAt The time at which the connector was last successfully updated.
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationConnectionsGet (accessToken?: string, connectorId?: number, connectStatus?: string, connectError?: string, updateRequestedAt?: string, updateStatus?: string, updateError?: string, lastSuccessfulUpdatedAt?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_5;  }> {
+        const path = this.basePath + '/organization/connections';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (connectorId !== undefined) {
+            queryParameters['connector_id'] = connectorId;
+        }
+
+        if (connectStatus !== undefined) {
+            queryParameters['connect_status'] = connectStatus;
+        }
+
+        if (connectError !== undefined) {
+            queryParameters['connect_error'] = connectError;
+        }
+
+        if (updateRequestedAt !== undefined) {
+            queryParameters['update_requested_at'] = updateRequestedAt;
+        }
+
+        if (updateStatus !== undefined) {
+            queryParameters['update_status'] = updateStatus;
+        }
+
+        if (updateError !== undefined) {
+            queryParameters['update_error'] = updateError;
+        }
+
+        if (lastSuccessfulUpdatedAt !== undefined) {
+            queryParameters['last_successful_updated_at'] = lastSuccessfulUpdatedAt;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
         }
 
         if (limit !== undefined) {
@@ -3304,71 +4862,65 @@ export class ConnectorApi {
 
         return deferred.promise;
     }
-
-    public connectorsPost (body?: Connector) : Promise<{ response: http.ClientResponse; body: inline_response_200_6;  }> {
-        let path = this.url + this.basePath + '/connectors';
-
+    /**
+     * Get all Credentials
+     * Get all Credentials
+     * @param accessToken Organization&#39;s OAuth2 access token
+     * @param connectorId The id for the connector data source from which the credential was obtained
+     * @param attrKey Attribute name such as token, userid, username, or password
+     * @param attrValue Encrypted value for the attribute specified
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationCredentialsGet (accessToken?: string, connectorId?: number, attrKey?: string, attrValue?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_11;  }> {
+        const path = this.basePath + '/organization/credentials';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
-        let useFormData = false;
-
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_6;  }>();
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: path,
-            json: true,
-            body: body,
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
+        if (connectorId !== undefined) {
+            queryParameters['connector_id'] = connectorId;
         }
 
-        request(requestOptions, (error, response, body) => {
-            if (error) {
-                deferred.reject(error);
-            } else {
-                if (response.statusCode >= 200 && response.statusCode <= 299) {
-                    deferred.resolve({ response: response, body: body });
-                } else {
-                    deferred.reject({ response: response, body: body });
-                }
-            }
-        });
+        if (attrKey !== undefined) {
+            queryParameters['attr_key'] = attrKey;
+        }
 
-        return deferred.promise;
-    }
+        if (attrValue !== undefined) {
+            queryParameters['attr_value'] = attrValue;
+        }
 
-    public connectorsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_6;  }> {
-        let path = this.url + this.basePath + '/connectors/{id}';
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
 
-        path = path.replace('{' + 'id' + '}', String(id));
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
 
-        let queryParameters: any = {};
-        let headerParams: any = {};
-        let formParams: any = {};
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
 
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
 
-        // verify required parameter 'id' is set
-        if (!id) {
-            throw new Error('Missing required parameter id when calling connectorsIdGet');
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
         }
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_6;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_11;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -3402,33 +4954,132 @@ export class ConnectorApi {
 
         return deferred.promise;
     }
-
-    public connectorsIdPut (id: number, body?: Connector) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connectors/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get measurements for all users using your application
+     * Measurements are any value that can be recorded like daily steps, a mood rating, or apples eaten.
+     * @param accessToken Organization&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which originally stored the measurement
+     * @param connectorId The id for the connector data source from which the measurement was obtained
+     * @param variableId ID of the variable for which we are creating the measurement records
+     * @param sourceId Application or device used to record the measurement values
+     * @param startTime start time for the measurement event. Use ISO 8601 datetime format
+     * @param value The value of the measurement after conversion to the default unit for that variable
+     * @param unitId The default unit id for the variable
+     * @param originalValue Unconverted value of measurement as originally posted (before conversion to default unit)
+     * @param originalUnitId Unit id of the measurement as originally submitted
+     * @param duration Duration of the event being measurement in seconds
+     * @param note An optional note the user may include with their measurement
+     * @param latitude Latitude at which the measurement was taken
+     * @param longitude Longitude at which the measurement was taken
+     * @param location Optional human readable name for the location where the measurement was recorded
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param error An error message if there is a problem with the measurement
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationMeasurementsGet (accessToken?: string, clientId?: string, connectorId?: number, variableId?: number, sourceId?: number, startTime?: string, value?: number, unitId?: number, originalValue?: number, originalUnitId?: number, duration?: number, note?: string, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, error?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_13;  }> {
+        const path = this.basePath + '/organization/measurements';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
-        // verify required parameter 'id' is set
-        if (!id) {
-            throw new Error('Missing required parameter id when calling connectorsIdPut');
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (connectorId !== undefined) {
+            queryParameters['connector_id'] = connectorId;
+        }
+
+        if (variableId !== undefined) {
+            queryParameters['variable_id'] = variableId;
+        }
+
+        if (sourceId !== undefined) {
+            queryParameters['source_id'] = sourceId;
+        }
+
+        if (startTime !== undefined) {
+            queryParameters['start_time'] = startTime;
+        }
+
+        if (value !== undefined) {
+            queryParameters['value'] = value;
+        }
+
+        if (unitId !== undefined) {
+            queryParameters['unit_id'] = unitId;
+        }
+
+        if (originalValue !== undefined) {
+            queryParameters['original_value'] = originalValue;
+        }
+
+        if (originalUnitId !== undefined) {
+            queryParameters['original_unit_id'] = originalUnitId;
+        }
+
+        if (duration !== undefined) {
+            queryParameters['duration'] = duration;
+        }
+
+        if (note !== undefined) {
+            queryParameters['note'] = note;
+        }
+
+        if (latitude !== undefined) {
+            queryParameters['latitude'] = latitude;
+        }
+
+        if (longitude !== undefined) {
+            queryParameters['longitude'] = longitude;
+        }
+
+        if (location !== undefined) {
+            queryParameters['location'] = location;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (error !== undefined) {
+            queryParameters['error'] = error;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
         }
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_13;  }>();
 
         let requestOptions: request.Options = {
-            method: 'PUT',
+            method: 'GET',
             qs: queryParameters,
             headers: headerParams,
             uri: path,
             json: true,
-            body: body,
         }
 
         this.authentications.default.applyToRequest(requestOptions);
@@ -3455,28 +5106,828 @@ export class ConnectorApi {
 
         return deferred.promise;
     }
-
-    public connectorsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connectors/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get tracking reminders
+     * Get the variable id, frequency, and default value for the user tracking reminders
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this trackingReminder
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationTrackingRemindersGet (accessToken?: string, clientId?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
+        const path = this.basePath + '/organization/trackingReminders';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
-        // verify required parameter 'id' is set
-        if (!id) {
-            throw new Error('Missing required parameter id when calling connectorsIdDelete');
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
         }
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_15;  }>();
 
         let requestOptions: request.Options = {
-            method: 'DELETE',
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all Updates
+     * Get all Updates
+     * @param accessToken Organization&#39;s OAuth2 access token
+     * @param connectorId connector_id
+     * @param numberOfMeasurements number_of_measurements
+     * @param success success
+     * @param message message
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationUpdatesGet (accessToken?: string, connectorId?: number, numberOfMeasurements?: number, success?: boolean, message?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
+        const path = this.basePath + '/organization/updates';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (connectorId !== undefined) {
+            queryParameters['connector_id'] = connectorId;
+        }
+
+        if (numberOfMeasurements !== undefined) {
+            queryParameters['number_of_measurements'] = numberOfMeasurements;
+        }
+
+        if (success !== undefined) {
+            queryParameters['success'] = success;
+        }
+
+        if (message !== undefined) {
+            queryParameters['message'] = message;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all UserVariableRelationships
+     * Get all UserVariableRelationships
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param id id
+     * @param confidenceLevel Our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param confidenceScore A quantitative representation of our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param direction Direction is positive if higher predictor values generally precede higher outcome values. Direction is negative if higher predictor values generally precede lower outcome values.
+     * @param durationOfAction Estimated number of seconds following the onset delay in which a stimulus produces a perceivable effect
+     * @param errorMessage error_message
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param outcomeVariableId Variable ID for the outcome variable
+     * @param predictorVariableId Variable ID for the predictor variable
+     * @param predictorUnitId ID for default unit of the predictor variable
+     * @param sinnRank A value representative of the relevance of this predictor relative to other predictors of this outcome.  Usually used for relevancy sorting.
+     * @param strengthLevel Can be weak, medium, or strong based on the size of the effect which the predictor appears to have on the outcome relative to other variable relationship strength scores.
+     * @param strengthScore A value represented to the size of the effect which the predictor appears to have on the outcome.
+     * @param vote vote
+     * @param valuePredictingHighOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes an above average outcome value
+     * @param valuePredictingLowOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes a below average outcome value
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationUserVariableRelationshipsGet (accessToken?: string, id?: number, confidenceLevel?: string, confidenceScore?: number, direction?: string, durationOfAction?: number, errorMessage?: string, onsetDelay?: number, outcomeVariableId?: number, predictorVariableId?: number, predictorUnitId?: number, sinnRank?: number, strengthLevel?: string, strengthScore?: number, vote?: string, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_17;  }> {
+        const path = this.basePath + '/organization/userVariableRelationships';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (id !== undefined) {
+            queryParameters['id'] = id;
+        }
+
+        if (confidenceLevel !== undefined) {
+            queryParameters['confidence_level'] = confidenceLevel;
+        }
+
+        if (confidenceScore !== undefined) {
+            queryParameters['confidence_score'] = confidenceScore;
+        }
+
+        if (direction !== undefined) {
+            queryParameters['direction'] = direction;
+        }
+
+        if (durationOfAction !== undefined) {
+            queryParameters['duration_of_action'] = durationOfAction;
+        }
+
+        if (errorMessage !== undefined) {
+            queryParameters['error_message'] = errorMessage;
+        }
+
+        if (onsetDelay !== undefined) {
+            queryParameters['onset_delay'] = onsetDelay;
+        }
+
+        if (outcomeVariableId !== undefined) {
+            queryParameters['outcome_variable_id'] = outcomeVariableId;
+        }
+
+        if (predictorVariableId !== undefined) {
+            queryParameters['predictor_variable_id'] = predictorVariableId;
+        }
+
+        if (predictorUnitId !== undefined) {
+            queryParameters['predictor_unit_id'] = predictorUnitId;
+        }
+
+        if (sinnRank !== undefined) {
+            queryParameters['sinn_rank'] = sinnRank;
+        }
+
+        if (strengthLevel !== undefined) {
+            queryParameters['strength_level'] = strengthLevel;
+        }
+
+        if (strengthScore !== undefined) {
+            queryParameters['strength_score'] = strengthScore;
+        }
+
+        if (vote !== undefined) {
+            queryParameters['vote'] = vote;
+        }
+
+        if (valuePredictingHighOutcome !== undefined) {
+            queryParameters['value_predicting_high_outcome'] = valuePredictingHighOutcome;
+        }
+
+        if (valuePredictingLowOutcome !== undefined) {
+            queryParameters['value_predicting_low_outcome'] = valuePredictingLowOutcome;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_17;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all UserVariables
+     * Get all UserVariables
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this user variable
+     * @param parentId ID of the parent variable if this variable has any parent
+     * @param variableId ID of variable
+     * @param defaultUnitId D of unit to use for this variable
+     * @param minimumAllowedValue Minimum reasonable value for this variable (uses default unit)
+     * @param maximumAllowedValue Maximum reasonable value for this variable (uses default unit)
+     * @param fillingValue Value for replacing null measurements
+     * @param joinWith The Variable this Variable should be joined with. If the variable is joined with some other variable then it is not shown to user in the list of variables
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param durationOfAction Estimated duration of time following the onset delay in which a stimulus produces a perceivable effect
+     * @param variableCategoryId ID of variable category
+     * @param updated updated
+     * @param _public Is variable public
+     * @param causeOnly A value of 1 indicates that this variable is generally a cause in a causal relationship.  An example of a causeOnly variable would be a variable such as Cloud Cover which would generally not be influenced by the behaviour of the user
+     * @param fillingType 0 -&gt; No filling, 1 -&gt; Use filling-value
+     * @param numberOfMeasurements Number of measurements
+     * @param numberOfProcessedMeasurements Number of processed measurements
+     * @param measurementsAtLastAnalysis Number of measurements at last analysis
+     * @param lastUnitId ID of last Unit
+     * @param lastOriginalUnitId ID of last original Unit
+     * @param lastOriginalValue Last original value which is stored
+     * @param lastValue Last Value
+     * @param lastOriginalValue2 Last original value which is stored
+     * @param lastSourceId ID of last source
+     * @param numberOfCorrelations Number of correlations for this variable
+     * @param status status
+     * @param errorMessage error_message
+     * @param lastSuccessfulUpdateTime When this variable or its settings were last updated
+     * @param standardDeviation Standard deviation
+     * @param variance Variance
+     * @param minimumRecordedValue Minimum recorded value of this variable
+     * @param maximumRecordedValue Maximum recorded value of this variable
+     * @param mean Mean
+     * @param median Median
+     * @param mostCommonUnitId Most common Unit ID
+     * @param mostCommonValue Most common value
+     * @param numberOfUniqueDailyValues Number of unique daily values
+     * @param numberOfChanges Number of changes
+     * @param skewness Skewness
+     * @param kurtosis Kurtosis
+     * @param latitude Latitude
+     * @param longitude Longitude
+     * @param location Location
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param outcome Outcome variables (those with `outcome` == 1) are variables for which a human would generally want to identify the influencing factors.  These include symptoms of illness, physique, mood, cognitive performance, etc.  Generally correlation calculations are only performed on outcome variables
+     * @param sources Comma-separated list of source names to limit variables to those sources
+     * @param earliestSourceTime Earliest source time
+     * @param latestSourceTime Latest source time
+     * @param earliestMeasurementTime Earliest measurement time
+     * @param latestMeasurementTime Latest measurement time
+     * @param earliestFillingTime Earliest filling time
+     * @param latestFillingTime Latest filling time
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationUserVariablesGet (accessToken?: string, clientId?: string, parentId?: number, variableId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastOriginalValue2?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedValue?: number, maximumRecordedValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
+        const path = this.basePath + '/organization/userVariables';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (parentId !== undefined) {
+            queryParameters['parent_id'] = parentId;
+        }
+
+        if (variableId !== undefined) {
+            queryParameters['variable_id'] = variableId;
+        }
+
+        if (defaultUnitId !== undefined) {
+            queryParameters['default_unit_id'] = defaultUnitId;
+        }
+
+        if (minimumAllowedValue !== undefined) {
+            queryParameters['minimum_allowed_value'] = minimumAllowedValue;
+        }
+
+        if (maximumAllowedValue !== undefined) {
+            queryParameters['maximum_allowed_value'] = maximumAllowedValue;
+        }
+
+        if (fillingValue !== undefined) {
+            queryParameters['filling_value'] = fillingValue;
+        }
+
+        if (joinWith !== undefined) {
+            queryParameters['join_with'] = joinWith;
+        }
+
+        if (onsetDelay !== undefined) {
+            queryParameters['onset_delay'] = onsetDelay;
+        }
+
+        if (durationOfAction !== undefined) {
+            queryParameters['duration_of_action'] = durationOfAction;
+        }
+
+        if (variableCategoryId !== undefined) {
+            queryParameters['variable_category_id'] = variableCategoryId;
+        }
+
+        if (updated !== undefined) {
+            queryParameters['updated'] = updated;
+        }
+
+        if (_public !== undefined) {
+            queryParameters['public'] = _public;
+        }
+
+        if (causeOnly !== undefined) {
+            queryParameters['cause_only'] = causeOnly;
+        }
+
+        if (fillingType !== undefined) {
+            queryParameters['filling_type'] = fillingType;
+        }
+
+        if (numberOfMeasurements !== undefined) {
+            queryParameters['number_of_measurements'] = numberOfMeasurements;
+        }
+
+        if (numberOfProcessedMeasurements !== undefined) {
+            queryParameters['number_of_processed_measurements'] = numberOfProcessedMeasurements;
+        }
+
+        if (measurementsAtLastAnalysis !== undefined) {
+            queryParameters['measurements_at_last_analysis'] = measurementsAtLastAnalysis;
+        }
+
+        if (lastUnitId !== undefined) {
+            queryParameters['last_unit_id'] = lastUnitId;
+        }
+
+        if (lastOriginalUnitId !== undefined) {
+            queryParameters['last_original_unit_id'] = lastOriginalUnitId;
+        }
+
+        if (lastOriginalValue !== undefined) {
+            queryParameters['last_original_value'] = lastOriginalValue;
+        }
+
+        if (lastValue !== undefined) {
+            queryParameters['last_value'] = lastValue;
+        }
+
+        if (lastOriginalValue2 !== undefined) {
+            queryParameters['last_original_value'] = lastOriginalValue2;
+        }
+
+        if (lastSourceId !== undefined) {
+            queryParameters['last_source_id'] = lastSourceId;
+        }
+
+        if (numberOfCorrelations !== undefined) {
+            queryParameters['number_of_correlations'] = numberOfCorrelations;
+        }
+
+        if (status !== undefined) {
+            queryParameters['status'] = status;
+        }
+
+        if (errorMessage !== undefined) {
+            queryParameters['error_message'] = errorMessage;
+        }
+
+        if (lastSuccessfulUpdateTime !== undefined) {
+            queryParameters['last_successful_update_time'] = lastSuccessfulUpdateTime;
+        }
+
+        if (standardDeviation !== undefined) {
+            queryParameters['standard_deviation'] = standardDeviation;
+        }
+
+        if (variance !== undefined) {
+            queryParameters['variance'] = variance;
+        }
+
+        if (minimumRecordedValue !== undefined) {
+            queryParameters['minimum_recorded_value'] = minimumRecordedValue;
+        }
+
+        if (maximumRecordedValue !== undefined) {
+            queryParameters['maximum_recorded_value'] = maximumRecordedValue;
+        }
+
+        if (mean !== undefined) {
+            queryParameters['mean'] = mean;
+        }
+
+        if (median !== undefined) {
+            queryParameters['median'] = median;
+        }
+
+        if (mostCommonUnitId !== undefined) {
+            queryParameters['most_common_unit_id'] = mostCommonUnitId;
+        }
+
+        if (mostCommonValue !== undefined) {
+            queryParameters['most_common_value'] = mostCommonValue;
+        }
+
+        if (numberOfUniqueDailyValues !== undefined) {
+            queryParameters['number_of_unique_daily_values'] = numberOfUniqueDailyValues;
+        }
+
+        if (numberOfChanges !== undefined) {
+            queryParameters['number_of_changes'] = numberOfChanges;
+        }
+
+        if (skewness !== undefined) {
+            queryParameters['skewness'] = skewness;
+        }
+
+        if (kurtosis !== undefined) {
+            queryParameters['kurtosis'] = kurtosis;
+        }
+
+        if (latitude !== undefined) {
+            queryParameters['latitude'] = latitude;
+        }
+
+        if (longitude !== undefined) {
+            queryParameters['longitude'] = longitude;
+        }
+
+        if (location !== undefined) {
+            queryParameters['location'] = location;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (outcome !== undefined) {
+            queryParameters['outcome'] = outcome;
+        }
+
+        if (sources !== undefined) {
+            queryParameters['sources'] = sources;
+        }
+
+        if (earliestSourceTime !== undefined) {
+            queryParameters['earliest_source_time'] = earliestSourceTime;
+        }
+
+        if (latestSourceTime !== undefined) {
+            queryParameters['latest_source_time'] = latestSourceTime;
+        }
+
+        if (earliestMeasurementTime !== undefined) {
+            queryParameters['earliest_measurement_time'] = earliestMeasurementTime;
+        }
+
+        if (latestMeasurementTime !== undefined) {
+            queryParameters['latest_measurement_time'] = latestMeasurementTime;
+        }
+
+        if (earliestFillingTime !== undefined) {
+            queryParameters['earliest_filling_time'] = earliestFillingTime;
+        }
+
+        if (latestFillingTime !== undefined) {
+            queryParameters['latest_filling_time'] = latestFillingTime;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all VariableUserSources
+     * Get all VariableUserSources
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param variableId ID of variable
+     * @param timestamp Time that this measurement occurred Uses epoch minute (epoch time divided by 60)
+     * @param earliestMeasurementTime Earliest measurement time
+     * @param latestMeasurementTime Latest measurement time
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationVariableUserSourcesGet (accessToken?: string, variableId?: number, timestamp?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_19;  }> {
+        const path = this.basePath + '/organization/variableUserSources';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (variableId !== undefined) {
+            queryParameters['variable_id'] = variableId;
+        }
+
+        if (timestamp !== undefined) {
+            queryParameters['timestamp'] = timestamp;
+        }
+
+        if (earliestMeasurementTime !== undefined) {
+            queryParameters['earliest_measurement_time'] = earliestMeasurementTime;
+        }
+
+        if (latestMeasurementTime !== undefined) {
+            queryParameters['latest_measurement_time'] = latestMeasurementTime;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_19;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get all Votes
+     * Get all Votes
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this vote
+     * @param causeId ID of predictor variable
+     * @param effectId ID of outcome variable
+     * @param value Value of Vote. 1 is for upvote. 0 is for downvote.  Otherwise, there is no vote.
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public organizationVotesGet (accessToken?: string, clientId?: string, causeId?: number, effectId?: number, value?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
+        const path = this.basePath + '/organization/votes';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (clientId !== undefined) {
+            queryParameters['client_id'] = clientId;
+        }
+
+        if (causeId !== undefined) {
+            queryParameters['cause_id'] = causeId;
+        }
+
+        if (effectId !== undefined) {
+            queryParameters['effect_id'] = effectId;
+        }
+
+        if (value !== undefined) {
+            queryParameters['value'] = value;
+        }
+
+        if (createdAt !== undefined) {
+            queryParameters['created_at'] = createdAt;
+        }
+
+        if (updatedAt !== undefined) {
+            queryParameters['updated_at'] = updatedAt;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
             qs: queryParameters,
             headers: headerParams,
             uri: path,
@@ -3508,15 +5959,19 @@ export class ConnectorApi {
         return deferred.promise;
     }
 }
-export class CorrelationApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+export class CommonVariableRelationshipApi {
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -3528,13 +5983,499 @@ export class CorrelationApi {
         }
     }
 
-    public correlationsGet (timestamp?: number, userId?: number, correlation?: number, causeId?: number, effectId?: number, onsetDelay?: number, durationOfAction?: number, numberOfPairs?: number, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, optimalPearsonProduct?: number, vote?: number, statisticalSignificance?: number, causeUnit?: string, causeUnitId?: number, causeChanges?: number, effectChanges?: number, qmScore?: number, error?: string, createdAt?: string, updatedAt?: string, reversePearsonCorrelationCoefficient?: number, predictivePearsonCorrelationCoefficient?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_7;  }> {
-        let path = this.url + this.basePath + '/correlations';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all CommonVariableRelationships
+     * Get all CommonVariableRelationships
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param id id
+     * @param confidenceLevel Our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param confidenceScore A quantitative representation of our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param direction Direction is positive if higher predictor values generally precede higher outcome values. Direction is negative if higher predictor values generally precede lower outcome values.
+     * @param durationOfAction Estimated number of seconds following the onset delay in which a stimulus produces a perceivable effect
+     * @param errorMessage error_message
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param outcomeVariableId Variable ID for the outcome variable
+     * @param predictorVariableId Variable ID for the predictor variable
+     * @param predictorUnitId ID for default unit of the predictor variable
+     * @param sinnRank A value representative of the relevance of this predictor relative to other predictors of this outcome.  Usually used for relevancy sorting.
+     * @param strengthScore A value represented to the size of the effect which the predictor appears to have on the outcome.
+     * @param strengthLevel Can be weak, medium, or strong based on the size of the effect which the predictor appears to have on the outcome relative to other variable relationship strength scores.
+     * @param upVotes Number of users who feel that there is a plausible causal relationship between the predictor and outcome variables.
+     * @param downVotes Number of users who do not feel that there is a plausible causal relationship between the predictor and outcome variables.
+     * @param valuePredictingHighOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes an above average outcome value
+     * @param valuePredictingLowOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes a below average outcome value
+     * @param numberOfUsers Number of users whose data was aggregated to obtain this relationship
+     * @param dataSource data_source
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public commonVariableRelationshipsGet (accessToken?: string, id?: number, confidenceLevel?: string, confidenceScore?: number, direction?: string, durationOfAction?: number, errorMessage?: string, onsetDelay?: number, outcomeVariableId?: number, predictorVariableId?: number, predictorUnitId?: number, sinnRank?: number, strengthScore?: number, strengthLevel?: string, upVotes?: number, downVotes?: number, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, numberOfUsers?: number, dataSource?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_3;  }> {
+        const path = this.basePath + '/commonVariableRelationships';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (id !== undefined) {
+            queryParameters['id'] = id;
+        }
+
+        if (confidenceLevel !== undefined) {
+            queryParameters['confidence_level'] = confidenceLevel;
+        }
+
+        if (confidenceScore !== undefined) {
+            queryParameters['confidence_score'] = confidenceScore;
+        }
+
+        if (direction !== undefined) {
+            queryParameters['direction'] = direction;
+        }
+
+        if (durationOfAction !== undefined) {
+            queryParameters['duration_of_action'] = durationOfAction;
+        }
+
+        if (errorMessage !== undefined) {
+            queryParameters['error_message'] = errorMessage;
+        }
+
+        if (onsetDelay !== undefined) {
+            queryParameters['onset_delay'] = onsetDelay;
+        }
+
+        if (outcomeVariableId !== undefined) {
+            queryParameters['outcome_variable_id'] = outcomeVariableId;
+        }
+
+        if (predictorVariableId !== undefined) {
+            queryParameters['predictor_variable_id'] = predictorVariableId;
+        }
+
+        if (predictorUnitId !== undefined) {
+            queryParameters['predictor_unit_id'] = predictorUnitId;
+        }
+
+        if (sinnRank !== undefined) {
+            queryParameters['sinn_rank'] = sinnRank;
+        }
+
+        if (strengthScore !== undefined) {
+            queryParameters['strength_score'] = strengthScore;
+        }
+
+        if (strengthLevel !== undefined) {
+            queryParameters['strength_level'] = strengthLevel;
+        }
+
+        if (upVotes !== undefined) {
+            queryParameters['up_votes'] = upVotes;
+        }
+
+        if (downVotes !== undefined) {
+            queryParameters['down_votes'] = downVotes;
+        }
+
+        if (valuePredictingHighOutcome !== undefined) {
+            queryParameters['value_predicting_high_outcome'] = valuePredictingHighOutcome;
+        }
+
+        if (valuePredictingLowOutcome !== undefined) {
+            queryParameters['value_predicting_low_outcome'] = valuePredictingLowOutcome;
+        }
+
+        if (numberOfUsers !== undefined) {
+            queryParameters['number_of_users'] = numberOfUsers;
+        }
+
+        if (dataSource !== undefined) {
+            queryParameters['data_source'] = dataSource;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_3;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Store CommonVariableRelationship
+     * Store CommonVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body CommonVariableRelationship that should be stored
+     */
+    public commonVariableRelationshipsPost (accessToken?: string, body?: CommonVariableRelationship) : Promise<{ response: http.ClientResponse; body: inline_response_200_4;  }> {
+        const path = this.basePath + '/commonVariableRelationships';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_4;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'POST',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get CommonVariableRelationship
+     * Get CommonVariableRelationship
+     * @param id id of CommonVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public commonVariableRelationshipsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_4;  }> {
+        const path = this.basePath + '/commonVariableRelationships/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling commonVariableRelationshipsIdGet');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_4;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Update CommonVariableRelationship
+     * Update CommonVariableRelationship
+     * @param id id of CommonVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body CommonVariableRelationship that should be updated
+     */
+    public commonVariableRelationshipsIdPut (id: number, accessToken?: string, body?: CommonVariableRelationship) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/commonVariableRelationships/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling commonVariableRelationshipsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Delete CommonVariableRelationship
+     * Delete CommonVariableRelationship
+     * @param id id of CommonVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public commonVariableRelationshipsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/commonVariableRelationships/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling commonVariableRelationshipsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'DELETE',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+}
+export class CorrelationApi {
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
+    public authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all Correlations
+     * Get all Correlations
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param timestamp Time at which correlation was calculated
+     * @param userId ID of user that owns this correlation
+     * @param correlation Pearson correlation coefficient between cause and effect measurements
+     * @param causeId variable ID of the predictor variable for which the user desires correlations
+     * @param effectId variable ID of the outcome variable for which the user desires correlations
+     * @param onsetDelay User estimated or default time after cause measurement before a perceivable effect is observed
+     * @param durationOfAction Time over which the cause is expected to produce a perceivable effect following the onset delay
+     * @param numberOfPairs Number of points that went into the correlation calculation
+     * @param valuePredictingHighOutcome cause value that predicts an above average effect value (in default unit for predictor variable)
+     * @param valuePredictingLowOutcome cause value that predicts a below average effect value (in default unit for predictor variable)
+     * @param optimalPearsonProduct Optimal Pearson Product
+     * @param vote Vote
+     * @param statisticalSignificance A function of the effect size and sample size
+     * @param causeUnit Unit of the predictor variable
+     * @param causeUnitId Unit ID of the predictor variable
+     * @param causeChanges Cause changes
+     * @param effectChanges Effect changes
+     * @param qmScore QM Score
+     * @param error error
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record in the database was last updated. Use ISO 8601 datetime format
+     * @param reversePearsonCorrelationCoefficient Correlation when cause and effect are reversed. For any causal relationship, the forward correlation should exceed the reverse correlation
+     * @param predictivePearsonCorrelationCoefficient Predictive Pearson Correlation Coefficient
+     * @param limit Limit the number of results returned
+     * @param offset Records from give Offset
+     * @param sort Sort records by given field
+     */
+    public correlationsGet (accessToken?: string, timestamp?: number, userId?: number, correlation?: number, causeId?: number, effectId?: number, onsetDelay?: number, durationOfAction?: number, numberOfPairs?: number, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, optimalPearsonProduct?: number, vote?: number, statisticalSignificance?: number, causeUnit?: string, causeUnitId?: number, causeChanges?: number, effectChanges?: number, qmScore?: number, error?: string, createdAt?: string, updatedAt?: string, reversePearsonCorrelationCoefficient?: number, predictivePearsonCorrelationCoefficient?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_9;  }> {
+        const path = this.basePath + '/correlations';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (timestamp !== undefined) {
             queryParameters['timestamp'] = timestamp;
@@ -3642,7 +6583,7 @@ export class CorrelationApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_7;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_9;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -3651,6 +6592,8 @@ export class CorrelationApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -3676,18 +6619,26 @@ export class CorrelationApi {
 
         return deferred.promise;
     }
-
-    public correlationsPost (body?: Correlation) : Promise<{ response: http.ClientResponse; body: inline_response_200_8;  }> {
-        let path = this.url + this.basePath + '/correlations';
-
+    /**
+     * Store Correlation
+     * Store Correlation
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Correlation that should be stored
+     */
+    public correlationsPost (accessToken?: string, body?: Correlation) : Promise<{ response: http.ClientResponse; body: inline_response_200_10;  }> {
+        const path = this.basePath + '/correlations';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_8;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_10;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -3698,6 +6649,8 @@ export class CorrelationApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -3722,14 +6675,17 @@ export class CorrelationApi {
 
         return deferred.promise;
     }
-
-    public correlationsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_8;  }> {
-        let path = this.url + this.basePath + '/correlations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Correlation Details
+     * Get Correlation
+     * @param id id of Correlation
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public correlationsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_10;  }> {
+        const path = this.basePath + '/correlations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -3738,9 +6694,13 @@ export class CorrelationApi {
             throw new Error('Missing required parameter id when calling correlationsIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_8;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_10;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -3750,6 +6710,8 @@ export class CorrelationApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -3774,20 +6736,28 @@ export class CorrelationApi {
 
         return deferred.promise;
     }
-
-    public correlationsIdPut (id: number, body?: Correlation) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/correlations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Correlation
+     * Update Correlation
+     * @param id id of Correlation
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Correlation that should be updated
+     */
+    public correlationsIdPut (id: number, accessToken?: string, body?: Correlation) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/correlations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling correlationsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -3803,6 +6773,8 @@ export class CorrelationApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -3827,20 +6799,27 @@ export class CorrelationApi {
 
         return deferred.promise;
     }
-
-    public correlationsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/correlations/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Correlation
+     * Delete Correlation
+     * @param id id of Correlation
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public correlationsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/correlations/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling correlationsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -3854,6 +6833,8 @@ export class CorrelationApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -3881,14 +6862,18 @@ export class CorrelationApi {
     }
 }
 export class ConnectionApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -3900,13 +6885,45 @@ export class ConnectionApi {
         }
     }
 
-    public connectionsGet (userId?: number, connectorId?: number, connectStatus?: string, connectError?: string, updateRequestedAt?: string, updateStatus?: string, updateError?: string, lastSuccessfulUpdatedAt?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_3;  }> {
-        let path = this.url + this.basePath + '/connections';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all Connections
+     * Get all Connections
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param userId ID of user that owns this correlation
+     * @param connectorId The id for the connector data source for which the connection is connected
+     * @param connectStatus Indicates whether a connector is currently connected to a service for a user.
+     * @param connectError Error message if there is a problem with authorizing this connection.
+     * @param updateRequestedAt Time at which an update was requested by a user.
+     * @param updateStatus Indicates whether a connector is currently updated.
+     * @param updateError Indicates if there was an error during the update.
+     * @param lastSuccessfulUpdatedAt The time at which the connector was last successfully updated.
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public connectionsGet (accessToken?: string, userId?: number, connectorId?: number, connectStatus?: string, connectError?: string, updateRequestedAt?: string, updateStatus?: string, updateError?: string, lastSuccessfulUpdatedAt?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_5;  }> {
+        const path = this.basePath + '/connections';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (userId !== undefined) {
             queryParameters['user_id'] = userId;
@@ -3962,7 +6979,7 @@ export class ConnectionApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_3;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_5;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -3998,18 +7015,26 @@ export class ConnectionApi {
 
         return deferred.promise;
     }
-
-    public connectionsPost (body?: Connection) : Promise<{ response: http.ClientResponse; body: inline_response_200_4;  }> {
-        let path = this.url + this.basePath + '/connections';
-
+    /**
+     * Store Connection
+     * Store Connection
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Connection that should be stored
+     */
+    public connectionsPost (accessToken?: string, body?: Connection) : Promise<{ response: http.ClientResponse; body: inline_response_200_6;  }> {
+        const path = this.basePath + '/connections';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_4;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_6;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -4046,14 +7071,17 @@ export class ConnectionApi {
 
         return deferred.promise;
     }
-
-    public connectionsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_4;  }> {
-        let path = this.url + this.basePath + '/connections/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Connection
+     * Get Connection
+     * @param id id of Connection
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public connectionsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_6;  }> {
+        const path = this.basePath + '/connections/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4062,9 +7090,13 @@ export class ConnectionApi {
             throw new Error('Missing required parameter id when calling connectionsIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_4;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_6;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -4100,20 +7132,28 @@ export class ConnectionApi {
 
         return deferred.promise;
     }
-
-    public connectionsIdPut (id: number, body?: Connection) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connections/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Connection
+     * Update Connection
+     * @param id id of Connection
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Connection that should be updated
+     */
+    public connectionsIdPut (id: number, accessToken?: string, body?: Connection) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/connections/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling connectionsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -4155,20 +7195,27 @@ export class ConnectionApi {
 
         return deferred.promise;
     }
-
-    public connectionsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/connections/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Connection
+     * Delete Connection
+     * @param id id of Connection
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public connectionsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/connections/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling connectionsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -4211,14 +7258,18 @@ export class ConnectionApi {
     }
 }
 export class UnitApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -4230,13 +7281,47 @@ export class UnitApi {
         }
     }
 
-    public unitsGet (clientId?: string, name?: string, abbreviatedName?: string, categoryId?: boolean, minimumValue?: number, maximumValue?: number, updated?: number, multiply?: number, add?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_17;  }> {
-        let path = this.url + this.basePath + '/units';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all available units
+     * Get all available units
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this unit
+     * @param name Unit name
+     * @param abbreviatedName Unit abbreviation
+     * @param categoryId Unit category ID
+     * @param minimumValue Minimum value permitted for this unit
+     * @param maximumValue Maximum value permitted for this unit
+     * @param updated updated
+     * @param defaultUnitId ID of default unit for this units category
+     * @param multiply Value multiplied to convert to default unit in this unit category
+     * @param add Value which should be added to convert to default unit
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public unitsGet (accessToken?: string, clientId?: string, name?: string, abbreviatedName?: string, categoryId?: number, minimumValue?: number, maximumValue?: number, updated?: number, defaultUnitId?: number, multiply?: number, add?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_26;  }> {
+        const path = this.basePath + '/units';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (clientId !== undefined) {
             queryParameters['client_id'] = clientId;
@@ -4264,6 +7349,10 @@ export class UnitApi {
 
         if (updated !== undefined) {
             queryParameters['updated'] = updated;
+        }
+
+        if (defaultUnitId !== undefined) {
+            queryParameters['default_unit_id'] = defaultUnitId;
         }
 
         if (multiply !== undefined) {
@@ -4296,7 +7385,7 @@ export class UnitApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_17;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_26;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -4305,6 +7394,8 @@ export class UnitApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -4330,18 +7421,26 @@ export class UnitApi {
 
         return deferred.promise;
     }
-
-    public unitsPost (body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
-        let path = this.url + this.basePath + '/units';
-
+    /**
+     * Store Unit
+     * Store Unit
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Unit that should be stored
+     */
+    public unitsPost (accessToken?: string, body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_27;  }> {
+        const path = this.basePath + '/units';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_27;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -4352,6 +7451,8 @@ export class UnitApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -4376,14 +7477,17 @@ export class UnitApi {
 
         return deferred.promise;
     }
-
-    public unitsIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
-        let path = this.url + this.basePath + '/units/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Unit
+     * Get Unit
+     * @param id id of Unit
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public unitsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_27;  }> {
+        const path = this.basePath + '/units/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4392,9 +7496,13 @@ export class UnitApi {
             throw new Error('Missing required parameter id when calling unitsIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_27;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -4404,6 +7512,8 @@ export class UnitApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -4428,20 +7538,28 @@ export class UnitApi {
 
         return deferred.promise;
     }
-
-    public unitsIdPut (id: number, body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/units/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Unit
+     * Update Unit
+     * @param id id of Unit
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Unit that should be updated
+     */
+    public unitsIdPut (id: number, accessToken?: string, body?: Unit) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/units/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling unitsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -4457,6 +7575,8 @@ export class UnitApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -4481,20 +7601,27 @@ export class UnitApi {
 
         return deferred.promise;
     }
-
-    public unitsIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/units/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Unit
+     * Delete Unit
+     * @param id id of Unit
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public unitsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/units/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling unitsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -4508,6 +7635,8 @@ export class UnitApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -4535,14 +7664,18 @@ export class UnitApi {
     }
 }
 export class UserVariableApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -4554,20 +7687,104 @@ export class UserVariableApi {
         }
     }
 
-    public userVariablesGet (clientId?: string, variableId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedDailyValue?: number, maximumRecordedDailyValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_21;  }> {
-        let path = this.url + this.basePath + '/userVariables';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all UserVariables
+     * Get all UserVariables
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this user variable
+     * @param parentId ID of the parent variable if this variable has any parent
+     * @param variableId ID of variable
+     * @param userId User ID
+     * @param defaultUnitId D of unit to use for this variable
+     * @param minimumAllowedValue Minimum reasonable value for this variable (uses default unit)
+     * @param maximumAllowedValue Maximum reasonable value for this variable (uses default unit)
+     * @param fillingValue Value for replacing null measurements
+     * @param joinWith The Variable this Variable should be joined with. If the variable is joined with some other variable then it is not shown to user in the list of variables
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param durationOfAction Estimated duration of time following the onset delay in which a stimulus produces a perceivable effect
+     * @param variableCategoryId ID of variable category
+     * @param updated updated
+     * @param _public Is variable public
+     * @param causeOnly A value of 1 indicates that this variable is generally a cause in a causal relationship.  An example of a causeOnly variable would be a variable such as Cloud Cover which would generally not be influenced by the behaviour of the user
+     * @param fillingType 0 -&gt; No filling, 1 -&gt; Use filling-value
+     * @param numberOfMeasurements Number of measurements
+     * @param numberOfProcessedMeasurements Number of processed measurements
+     * @param measurementsAtLastAnalysis Number of measurements at last analysis
+     * @param lastUnitId ID of last Unit
+     * @param lastOriginalUnitId ID of last original Unit
+     * @param lastOriginalValue Last original value which is stored
+     * @param lastValue Last Value
+     * @param lastOriginalValue2 Last original value which is stored
+     * @param lastSourceId ID of last source
+     * @param numberOfCorrelations Number of correlations for this variable
+     * @param status status
+     * @param errorMessage error_message
+     * @param lastSuccessfulUpdateTime When this variable or its settings were last updated
+     * @param standardDeviation Standard deviation
+     * @param variance Variance
+     * @param minimumRecordedValue Minimum recorded value of this variable
+     * @param maximumRecordedValue Maximum recorded value of this variable
+     * @param mean Mean
+     * @param median Median
+     * @param mostCommonUnitId Most common Unit ID
+     * @param mostCommonValue Most common value
+     * @param numberOfUniqueDailyValues Number of unique daily values
+     * @param numberOfChanges Number of changes
+     * @param skewness Skewness
+     * @param kurtosis Kurtosis
+     * @param latitude Latitude
+     * @param longitude Longitude
+     * @param location Location
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param outcome Outcome variables (those with `outcome` == 1) are variables for which a human would generally want to identify the influencing factors.  These include symptoms of illness, physique, mood, cognitive performance, etc.  Generally correlation calculations are only performed on outcome variables
+     * @param sources Comma-separated list of source names to limit variables to those sources
+     * @param earliestSourceTime Earliest source time
+     * @param latestSourceTime Latest source time
+     * @param earliestMeasurementTime Earliest measurement time
+     * @param latestMeasurementTime Latest measurement time
+     * @param earliestFillingTime Earliest filling time
+     * @param latestFillingTime Latest filling time
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public userVariablesGet (accessToken?: string, clientId?: string, parentId?: number, variableId?: number, userId?: number, defaultUnitId?: number, minimumAllowedValue?: number, maximumAllowedValue?: number, fillingValue?: number, joinWith?: number, onsetDelay?: number, durationOfAction?: number, variableCategoryId?: number, updated?: number, _public?: number, causeOnly?: boolean, fillingType?: string, numberOfMeasurements?: number, numberOfProcessedMeasurements?: number, measurementsAtLastAnalysis?: number, lastUnitId?: number, lastOriginalUnitId?: number, lastOriginalValue?: number, lastValue?: number, lastOriginalValue2?: number, lastSourceId?: number, numberOfCorrelations?: number, status?: string, errorMessage?: string, lastSuccessfulUpdateTime?: string, standardDeviation?: number, variance?: number, minimumRecordedValue?: number, maximumRecordedValue?: number, mean?: number, median?: number, mostCommonUnitId?: number, mostCommonValue?: number, numberOfUniqueDailyValues?: number, numberOfChanges?: number, skewness?: number, kurtosis?: number, latitude?: number, longitude?: number, location?: string, createdAt?: string, updatedAt?: string, outcome?: boolean, sources?: string, earliestSourceTime?: number, latestSourceTime?: number, earliestMeasurementTime?: number, latestMeasurementTime?: number, earliestFillingTime?: number, latestFillingTime?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_18;  }> {
+        const path = this.basePath + '/userVariables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (clientId !== undefined) {
             queryParameters['client_id'] = clientId;
         }
 
+        if (parentId !== undefined) {
+            queryParameters['parent_id'] = parentId;
+        }
+
         if (variableId !== undefined) {
             queryParameters['variable_id'] = variableId;
+        }
+
+        if (userId !== undefined) {
+            queryParameters['user_id'] = userId;
         }
 
         if (defaultUnitId !== undefined) {
@@ -4646,6 +7863,10 @@ export class UserVariableApi {
             queryParameters['last_value'] = lastValue;
         }
 
+        if (lastOriginalValue2 !== undefined) {
+            queryParameters['last_original_value'] = lastOriginalValue2;
+        }
+
         if (lastSourceId !== undefined) {
             queryParameters['last_source_id'] = lastSourceId;
         }
@@ -4674,12 +7895,12 @@ export class UserVariableApi {
             queryParameters['variance'] = variance;
         }
 
-        if (minimumRecordedDailyValue !== undefined) {
-            queryParameters['minimum_recorded_daily_value'] = minimumRecordedDailyValue;
+        if (minimumRecordedValue !== undefined) {
+            queryParameters['minimum_recorded_value'] = minimumRecordedValue;
         }
 
-        if (maximumRecordedDailyValue !== undefined) {
-            queryParameters['maximum_recorded_daily_value'] = maximumRecordedDailyValue;
+        if (maximumRecordedValue !== undefined) {
+            queryParameters['maximum_recorded_value'] = maximumRecordedValue;
         }
 
         if (mean !== undefined) {
@@ -4780,7 +8001,7 @@ export class UserVariableApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_21;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_18;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -4789,6 +8010,8 @@ export class UserVariableApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -4814,18 +8037,26 @@ export class UserVariableApi {
 
         return deferred.promise;
     }
-
-    public userVariablesPost (body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
-        let path = this.url + this.basePath + '/userVariables';
-
+    /**
+     * Store UserVariable
+     * Users can change things like the display name for a variable. They can also change the parameters used in analysis of that variable such as the expected duration of action for a variable to have an effect, the estimated delay before the onset of action. In order to filter out erroneous data, they are able to set the maximum and minimum reasonable daily values for a variable.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body UserVariable that should be stored
+     */
+    public userVariablesPost (accessToken?: string, body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
+        const path = this.basePath + '/userVariables';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -4836,6 +8067,8 @@ export class UserVariableApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -4860,14 +8093,17 @@ export class UserVariableApi {
 
         return deferred.promise;
     }
-
-    public userVariablesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
-        let path = this.url + this.basePath + '/userVariables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get UserVariable
+     * Get UserVariable
+     * @param id id of UserVariable
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public userVariablesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
+        const path = this.basePath + '/userVariables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -4876,9 +8112,13 @@ export class UserVariableApi {
             throw new Error('Missing required parameter id when calling userVariablesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -4888,6 +8128,8 @@ export class UserVariableApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -4912,20 +8154,28 @@ export class UserVariableApi {
 
         return deferred.promise;
     }
-
-    public userVariablesIdPut (id: number, body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/userVariables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update UserVariable
+     * Update UserVariable
+     * @param id id of UserVariable
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body UserVariable that should be updated
+     */
+    public userVariablesIdPut (id: number, accessToken?: string, body?: UserVariable) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/userVariables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling userVariablesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -4941,6 +8191,8 @@ export class UserVariableApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -4965,20 +8217,27 @@ export class UserVariableApi {
 
         return deferred.promise;
     }
-
-    public userVariablesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/userVariables/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete UserVariable
+     * Delete UserVariable
+     * @param id id of UserVariable
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public userVariablesIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/userVariables/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling userVariablesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -4992,6 +8251,8 @@ export class UserVariableApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5019,14 +8280,18 @@ export class UserVariableApi {
     }
 }
 export class SourceApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -5038,13 +8303,39 @@ export class SourceApi {
         }
     }
 
-    public sourcesGet (clientId?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_13;  }> {
-        let path = this.url + this.basePath + '/sources';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get measurement sources
+     * Returns a list of all the apps from which measurement data is obtained.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this source
+     * @param name Name of the application or device
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public sourcesGet (accessToken?: string, clientId?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_21;  }> {
+        const path = this.basePath + '/sources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (clientId !== undefined) {
             queryParameters['client_id'] = clientId;
@@ -5076,7 +8367,7 @@ export class SourceApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_13;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_21;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -5085,6 +8376,8 @@ export class SourceApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5110,18 +8403,26 @@ export class SourceApi {
 
         return deferred.promise;
     }
-
-    public sourcesPost (body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_14;  }> {
-        let path = this.url + this.basePath + '/sources';
-
+    /**
+     * Add a data source
+     * Add a life-tracking app or device to the QuantiModo list of data sources.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Source that should be stored
+     */
+    public sourcesPost (accessToken?: string, body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
+        const path = this.basePath + '/sources';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_14;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -5132,6 +8433,8 @@ export class SourceApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5156,14 +8459,17 @@ export class SourceApi {
 
         return deferred.promise;
     }
-
-    public sourcesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_14;  }> {
-        let path = this.url + this.basePath + '/sources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Source
+     * Get Source
+     * @param id id of Source
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public sourcesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_22;  }> {
+        const path = this.basePath + '/sources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5172,9 +8478,13 @@ export class SourceApi {
             throw new Error('Missing required parameter id when calling sourcesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_14;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_22;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -5184,6 +8494,8 @@ export class SourceApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5208,20 +8520,28 @@ export class SourceApi {
 
         return deferred.promise;
     }
-
-    public sourcesIdPut (id: number, body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/sources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Source
+     * Update Source
+     * @param id id of Source
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Source that should be updated
+     */
+    public sourcesIdPut (id: number, accessToken?: string, body?: Source) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/sources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling sourcesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -5237,6 +8557,8 @@ export class SourceApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5261,20 +8583,27 @@ export class SourceApi {
 
         return deferred.promise;
     }
-
-    public sourcesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/sources/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Source
+     * Delete Source
+     * @param id id of Source
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public sourcesIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/sources/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling sourcesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -5288,6 +8617,8 @@ export class SourceApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5315,14 +8646,18 @@ export class SourceApi {
     }
 }
 export class VariableCategoryApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -5334,13 +8669,50 @@ export class VariableCategoryApi {
         }
     }
 
-    public variableCategoriesGet (name?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, durationOfAction?: number, onsetDelay?: number, combinationOperation?: string, updated?: number, causeOnly?: boolean, _public?: number, outcome?: boolean, createdAt?: string, updatedAt?: string, imageUrl?: string, defaultUnitId?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_23;  }> {
-        let path = this.url + this.basePath + '/variableCategories';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all VariableCategories
+     * The variable categories include Activity, Causes of Illness, Cognitive Performance, Conditions, Environment, Foods, Location, Miscellaneous, Mood, Nutrition, Physical Activity, Physique, Sleep, Social Interactions, Symptoms, Treatments, Vital Signs, and Work.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param name Name of the category
+     * @param fillingValue Value for replacing null measurements
+     * @param maximumAllowedValue Maximum recorded value of this category
+     * @param minimumAllowedValue Minimum recorded value of this category
+     * @param durationOfAction Estimated number of seconds following the onset delay in which a stimulus produces a perceivable effect
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param combinationOperation How to combine values of this variable (for instance, to see a summary of the values over a month) SUM or MEAN
+     * @param updated updated
+     * @param causeOnly A value of 1 indicates that this category is generally a cause in a causal relationship.  An example of a causeOnly category would be a category such as Work which would generally not be influenced by the behaviour of the user
+     * @param _public Is category public
+     * @param outcome outcome
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param imageUrl Image URL
+     * @param defaultUnitId ID of the default unit for the category
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public variableCategoriesGet (accessToken?: string, name?: string, fillingValue?: number, maximumAllowedValue?: number, minimumAllowedValue?: number, durationOfAction?: number, onsetDelay?: number, combinationOperation?: string, updated?: number, causeOnly?: boolean, _public?: number, outcome?: boolean, createdAt?: string, updatedAt?: string, imageUrl?: string, defaultUnitId?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_31;  }> {
+        const path = this.basePath + '/variableCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (name !== undefined) {
             queryParameters['name'] = name;
@@ -5416,7 +8788,7 @@ export class VariableCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_23;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_31;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -5425,6 +8797,8 @@ export class VariableCategoryApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5450,18 +8824,26 @@ export class VariableCategoryApi {
 
         return deferred.promise;
     }
-
-    public variableCategoriesPost (body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_24;  }> {
-        let path = this.url + this.basePath + '/variableCategories';
-
+    /**
+     * Store VariableCategory
+     * Store VariableCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body VariableCategory that should be stored
+     */
+    public variableCategoriesPost (accessToken?: string, body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_32;  }> {
+        const path = this.basePath + '/variableCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_24;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_32;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -5472,6 +8854,8 @@ export class VariableCategoryApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5496,14 +8880,17 @@ export class VariableCategoryApi {
 
         return deferred.promise;
     }
-
-    public variableCategoriesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_24;  }> {
-        let path = this.url + this.basePath + '/variableCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get VariableCategory
+     * Get VariableCategory
+     * @param id id of VariableCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public variableCategoriesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_32;  }> {
+        const path = this.basePath + '/variableCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5512,9 +8899,13 @@ export class VariableCategoryApi {
             throw new Error('Missing required parameter id when calling variableCategoriesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_24;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_32;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -5524,6 +8915,8 @@ export class VariableCategoryApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5548,20 +8941,28 @@ export class VariableCategoryApi {
 
         return deferred.promise;
     }
-
-    public variableCategoriesIdPut (id: number, body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update VariableCategory
+     * Update VariableCategory
+     * @param id id of VariableCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body VariableCategory that should be updated
+     */
+    public variableCategoriesIdPut (id: number, accessToken?: string, body?: VariableCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/variableCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling variableCategoriesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -5577,6 +8978,8 @@ export class VariableCategoryApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5601,20 +9004,27 @@ export class VariableCategoryApi {
 
         return deferred.promise;
     }
-
-    public variableCategoriesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/variableCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete VariableCategory
+     * Delete VariableCategory
+     * @param id id of VariableCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public variableCategoriesIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/variableCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling variableCategoriesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -5628,6 +9038,439 @@ export class VariableCategoryApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+}
+export class UserVariableRelationshipApi {
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
+    public authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all UserVariableRelationships
+     * Get all UserVariableRelationships
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param id id
+     * @param confidenceLevel Our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param confidenceScore A quantitative representation of our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
+     * @param direction Direction is positive if higher predictor values generally precede higher outcome values. Direction is negative if higher predictor values generally precede lower outcome values.
+     * @param durationOfAction Estimated number of seconds following the onset delay in which a stimulus produces a perceivable effect
+     * @param errorMessage error_message
+     * @param onsetDelay Estimated number of seconds that pass before a stimulus produces a perceivable effect
+     * @param outcomeVariableId Variable ID for the outcome variable
+     * @param predictorVariableId Variable ID for the predictor variable
+     * @param predictorUnitId ID for default unit of the predictor variable
+     * @param sinnRank A value representative of the relevance of this predictor relative to other predictors of this outcome.  Usually used for relevancy sorting.
+     * @param strengthLevel Can be weak, medium, or strong based on the size of the effect which the predictor appears to have on the outcome relative to other variable relationship strength scores.
+     * @param strengthScore A value represented to the size of the effect which the predictor appears to have on the outcome.
+     * @param userId user_id
+     * @param vote vote
+     * @param valuePredictingHighOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes an above average outcome value
+     * @param valuePredictingLowOutcome Value for the predictor variable (in it&#39;s default unit) which typically precedes a below average outcome value
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public userVariableRelationshipsGet (accessToken?: string, id?: number, confidenceLevel?: string, confidenceScore?: number, direction?: string, durationOfAction?: number, errorMessage?: string, onsetDelay?: number, outcomeVariableId?: number, predictorVariableId?: number, predictorUnitId?: number, sinnRank?: number, strengthLevel?: string, strengthScore?: number, userId?: number, vote?: string, valuePredictingHighOutcome?: number, valuePredictingLowOutcome?: number, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_17;  }> {
+        const path = this.basePath + '/userVariableRelationships';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (id !== undefined) {
+            queryParameters['id'] = id;
+        }
+
+        if (confidenceLevel !== undefined) {
+            queryParameters['confidence_level'] = confidenceLevel;
+        }
+
+        if (confidenceScore !== undefined) {
+            queryParameters['confidence_score'] = confidenceScore;
+        }
+
+        if (direction !== undefined) {
+            queryParameters['direction'] = direction;
+        }
+
+        if (durationOfAction !== undefined) {
+            queryParameters['duration_of_action'] = durationOfAction;
+        }
+
+        if (errorMessage !== undefined) {
+            queryParameters['error_message'] = errorMessage;
+        }
+
+        if (onsetDelay !== undefined) {
+            queryParameters['onset_delay'] = onsetDelay;
+        }
+
+        if (outcomeVariableId !== undefined) {
+            queryParameters['outcome_variable_id'] = outcomeVariableId;
+        }
+
+        if (predictorVariableId !== undefined) {
+            queryParameters['predictor_variable_id'] = predictorVariableId;
+        }
+
+        if (predictorUnitId !== undefined) {
+            queryParameters['predictor_unit_id'] = predictorUnitId;
+        }
+
+        if (sinnRank !== undefined) {
+            queryParameters['sinn_rank'] = sinnRank;
+        }
+
+        if (strengthLevel !== undefined) {
+            queryParameters['strength_level'] = strengthLevel;
+        }
+
+        if (strengthScore !== undefined) {
+            queryParameters['strength_score'] = strengthScore;
+        }
+
+        if (userId !== undefined) {
+            queryParameters['user_id'] = userId;
+        }
+
+        if (vote !== undefined) {
+            queryParameters['vote'] = vote;
+        }
+
+        if (valuePredictingHighOutcome !== undefined) {
+            queryParameters['value_predicting_high_outcome'] = valuePredictingHighOutcome;
+        }
+
+        if (valuePredictingLowOutcome !== undefined) {
+            queryParameters['value_predicting_low_outcome'] = valuePredictingLowOutcome;
+        }
+
+        if (limit !== undefined) {
+            queryParameters['limit'] = limit;
+        }
+
+        if (offset !== undefined) {
+            queryParameters['offset'] = offset;
+        }
+
+        if (sort !== undefined) {
+            queryParameters['sort'] = sort;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_17;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Store UserVariableRelationship
+     * Store UserVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body UserVariableRelationship that should be stored
+     */
+    public userVariableRelationshipsPost (accessToken?: string, body?: UserVariableRelationship) : Promise<{ response: http.ClientResponse; body: inline_response_200_29;  }> {
+        const path = this.basePath + '/userVariableRelationships';
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_29;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'POST',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Get UserVariableRelationship
+     * Get UserVariableRelationship
+     * @param id id of UserVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public userVariableRelationshipsIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_29;  }> {
+        const path = this.basePath + '/userVariableRelationships/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling userVariableRelationshipsIdGet');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_29;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'GET',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Update UserVariableRelationship
+     * Update UserVariableRelationship
+     * @param id id of UserVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body UserVariableRelationship that should be updated
+     */
+    public userVariableRelationshipsIdPut (id: number, accessToken?: string, body?: UserVariableRelationship) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/userVariableRelationships/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling userVariableRelationshipsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'PUT',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+            body: body,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
+        this.authentications.default.applyToRequest(requestOptions);
+
+        if (Object.keys(formParams).length) {
+            if (useFormData) {
+                (<any>requestOptions).formData = formParams;
+            } else {
+                requestOptions.form = formParams;
+            }
+        }
+
+        request(requestOptions, (error, response, body) => {
+            if (error) {
+                deferred.reject(error);
+            } else {
+                if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    deferred.resolve({ response: response, body: body });
+                } else {
+                    deferred.reject({ response: response, body: body });
+                }
+            }
+        });
+
+        return deferred.promise;
+    }
+    /**
+     * Delete UserVariableRelationship
+     * Delete UserVariableRelationship
+     * @param id id of UserVariableRelationship
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public userVariableRelationshipsIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/userVariableRelationships/{id}'
+            .replace('{' + 'id' + '}', String(id));
+        let queryParameters: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
+        let formParams: any = {};
+
+
+        // verify required parameter 'id' is set
+        if (!id) {
+            throw new Error('Missing required parameter id when calling userVariableRelationshipsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        let useFormData = false;
+
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_2;  }>();
+
+        let requestOptions: request.Options = {
+            method: 'DELETE',
+            qs: queryParameters,
+            headers: headerParams,
+            uri: path,
+            json: true,
+        }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5655,14 +9498,18 @@ export class VariableCategoryApi {
     }
 }
 export class CredentialApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -5674,13 +9521,45 @@ export class CredentialApi {
         }
     }
 
-    public credentialsGet (connectorId?: boolean, attrKey?: string, attrValue?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_9;  }> {
-        let path = this.url + this.basePath + '/credentials';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all Credentials
+     * Get all Credentials
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param userId ID of user that owns this credential
+     * @param connectorId The id for the connector data source from which the credential was obtained
+     * @param attrKey Attribute name such as token, userid, username, or password
+     * @param attrValue Encrypted value for the attribute specified
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public credentialsGet (accessToken?: string, userId?: number, connectorId?: number, attrKey?: string, attrValue?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_11;  }> {
+        const path = this.basePath + '/credentials';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
+        if (userId !== undefined) {
+            queryParameters['user_id'] = userId;
+        }
 
         if (connectorId !== undefined) {
             queryParameters['connector_id'] = connectorId;
@@ -5716,7 +9595,7 @@ export class CredentialApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_9;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_11;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -5725,6 +9604,8 @@ export class CredentialApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5750,18 +9631,26 @@ export class CredentialApi {
 
         return deferred.promise;
     }
-
-    public credentialsPost (body?: Credential) : Promise<{ response: http.ClientResponse; body: inline_response_200_10;  }> {
-        let path = this.url + this.basePath + '/credentials';
-
+    /**
+     * Store Credential
+     * Store Credential
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Credential that should be stored
+     */
+    public credentialsPost (accessToken?: string, body?: Credential) : Promise<{ response: http.ClientResponse; body: inline_response_200_12;  }> {
+        const path = this.basePath + '/credentials';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_10;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_12;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -5772,6 +9661,8 @@ export class CredentialApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5796,14 +9687,18 @@ export class CredentialApi {
 
         return deferred.promise;
     }
-
-    public credentialsIdGet (id: number, attrKey: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_10;  }> {
-        let path = this.url + this.basePath + '/credentials/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Credential
+     * Get Credential
+     * @param id connector id
+     * @param attrKey attrKey
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public credentialsIdGet (id: number, attrKey: string, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_12;  }> {
+        const path = this.basePath + '/credentials/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5817,13 +9712,17 @@ export class CredentialApi {
             throw new Error('Missing required parameter attrKey when calling credentialsIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         if (attrKey !== undefined) {
             queryParameters['attrKey'] = attrKey;
         }
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_10;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_12;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -5832,6 +9731,8 @@ export class CredentialApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5857,14 +9758,19 @@ export class CredentialApi {
 
         return deferred.promise;
     }
-
-    public credentialsIdPut (id: number, attrKey: string, body?: Credential) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/credentials/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Credential
+     * Update Credential
+     * @param id connector id
+     * @param attrKey attrKey
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Credential that should be updated
+     */
+    public credentialsIdPut (id: number, attrKey: string, accessToken?: string, body?: Credential) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/credentials/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5876,6 +9782,10 @@ export class CredentialApi {
         // verify required parameter 'attrKey' is set
         if (!attrKey) {
             throw new Error('Missing required parameter attrKey when calling credentialsIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         if (attrKey !== undefined) {
@@ -5895,6 +9805,8 @@ export class CredentialApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -5919,14 +9831,18 @@ export class CredentialApi {
 
         return deferred.promise;
     }
-
-    public credentialsIdDelete (id: number, attrKey: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/credentials/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Credential
+     * Delete Credential
+     * @param id connector id
+     * @param attrKey attrKey
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public credentialsIdDelete (id: number, attrKey: string, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/credentials/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -5938,6 +9854,10 @@ export class CredentialApi {
         // verify required parameter 'attrKey' is set
         if (!attrKey) {
             throw new Error('Missing required parameter attrKey when calling credentialsIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         if (attrKey !== undefined) {
@@ -5955,6 +9875,8 @@ export class CredentialApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -5982,14 +9904,18 @@ export class CredentialApi {
     }
 }
 export class UnitCategoryApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -6001,13 +9927,38 @@ export class UnitCategoryApi {
         }
     }
 
-    public unitCategoriesGet (name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_15;  }> {
-        let path = this.url + this.basePath + '/unitCategories';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get unit categories
+     * Get a list of the categories of measurement units such as &#39;Distance&#39;, &#39;Duration&#39;, &#39;Energy&#39;, &#39;Frequency&#39;, &#39;Miscellany&#39;, &#39;Pressure&#39;, &#39;Proportion&#39;, &#39;Rating&#39;, &#39;Temperature&#39;, &#39;Volume&#39;, and &#39;Weight&#39;.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param name Unit category name
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public unitCategoriesGet (accessToken?: string, name?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_24;  }> {
+        const path = this.basePath + '/unitCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (name !== undefined) {
             queryParameters['name'] = name;
@@ -6035,7 +9986,7 @@ export class UnitCategoryApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_15;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_24;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -6044,6 +9995,8 @@ export class UnitCategoryApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -6069,18 +10022,26 @@ export class UnitCategoryApi {
 
         return deferred.promise;
     }
-
-    public unitCategoriesPost (body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
-        let path = this.url + this.basePath + '/unitCategories';
-
+    /**
+     * Store UnitCategory
+     * Store UnitCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body UnitCategory that should be stored
+     */
+    public unitCategoriesPost (accessToken?: string, body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
+        const path = this.basePath + '/unitCategories';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_25;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -6091,6 +10052,8 @@ export class UnitCategoryApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -6115,14 +10078,17 @@ export class UnitCategoryApi {
 
         return deferred.promise;
     }
-
-    public unitCategoriesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_16;  }> {
-        let path = this.url + this.basePath + '/unitCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get UnitCategory
+     * Get UnitCategory
+     * @param id id of UnitCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public unitCategoriesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_25;  }> {
+        const path = this.basePath + '/unitCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6131,9 +10097,13 @@ export class UnitCategoryApi {
             throw new Error('Missing required parameter id when calling unitCategoriesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_16;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_25;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -6143,6 +10113,8 @@ export class UnitCategoryApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -6167,20 +10139,28 @@ export class UnitCategoryApi {
 
         return deferred.promise;
     }
-
-    public unitCategoriesIdPut (id: number, body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/unitCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update UnitCategory
+     * Update UnitCategory
+     * @param id id of UnitCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body UnitCategory that should be updated
+     */
+    public unitCategoriesIdPut (id: number, accessToken?: string, body?: UnitCategory) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/unitCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling unitCategoriesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -6196,6 +10176,8 @@ export class UnitCategoryApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -6220,20 +10202,27 @@ export class UnitCategoryApi {
 
         return deferred.promise;
     }
-
-    public unitCategoriesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/unitCategories/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete UnitCategory
+     * Delete UnitCategory
+     * @param id id of UnitCategory
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public unitCategoriesIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/unitCategories/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling unitCategoriesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -6247,6 +10236,8 @@ export class UnitCategoryApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -6274,14 +10265,18 @@ export class UnitCategoryApi {
     }
 }
 export class VoteApi {
-    private basePath = 'https://app.quantimo.do/api/v2';
+    protected basePath = 'https://app.quantimo.do/api/v2';
+    protected defaultHeaders : any = {};
+
+
+
     public authentications = {
         'default': <Authentication>new VoidAuth(),
         'quantimodo_oauth2': new OAuth(),
     }
 
-    constructor(url: string, basePath?: string);
-    constructor(private url: string, basePathOrUsername: string, password?: string, basePath?: string) {
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
         if (password) {
             if (basePath) {
                 this.basePath = basePath;
@@ -6293,13 +10288,42 @@ export class VoteApi {
         }
     }
 
-    public votesGet (clientId?: string, userId?: number, causeId?: number, effectId?: number, value?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_29;  }> {
-        let path = this.url + this.basePath + '/votes';
-
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    private extendObj<T1,T2>(objA: T1, objB: T2) {
+        for(let key in objB){
+            if(objB.hasOwnProperty(key)){
+                objA[key] = objB[key];
+            }
+        }
+        return <T1&T2>objA;
+    }
+    /**
+     * Get all Votes
+     * Get all Votes
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param clientId The ID of the client application which last created or updated this vote
+     * @param userId ID of the user who voted
+     * @param causeId ID of predictor variable
+     * @param effectId ID of outcome variable
+     * @param value Value of Vote. 1 is for upvote. 0 is for downvote.  Otherwise, there is no vote.
+     * @param createdAt When the record was first created. Use ISO 8601 datetime format
+     * @param updatedAt When the record was last updated. Use ISO 8601 datetime format
+     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     */
+    public votesGet (accessToken?: string, clientId?: string, userId?: number, causeId?: number, effectId?: number, value?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_20;  }> {
+        const path = this.basePath + '/votes';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
 
         if (clientId !== undefined) {
             queryParameters['client_id'] = clientId;
@@ -6343,7 +10367,7 @@ export class VoteApi {
 
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_29;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_20;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -6352,6 +10376,8 @@ export class VoteApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
@@ -6377,18 +10403,26 @@ export class VoteApi {
 
         return deferred.promise;
     }
-
-    public votesPost (body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
-        let path = this.url + this.basePath + '/votes';
-
+    /**
+     * Store Vote
+     * This is to enable users to indicate their opinion on the plausibility of a causal relationship between a treatment and outcome. QuantiModo incorporates crowd-sourced plausibility estimations into their algorithm. This is done allowing user to indicate their view of the plausibility of each relationship with thumbs up/down buttons placed next to each prediction.
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Vote that should be stored
+     */
+    public votesPost (accessToken?: string, body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_36;  }> {
+        const path = this.basePath + '/votes';
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_36;  }>();
 
         let requestOptions: request.Options = {
             method: 'POST',
@@ -6399,6 +10433,8 @@ export class VoteApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -6423,14 +10459,17 @@ export class VoteApi {
 
         return deferred.promise;
     }
-
-    public votesIdGet (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_30;  }> {
-        let path = this.url + this.basePath + '/votes/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Get Vote
+     * Get Vote
+     * @param id id of Vote
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public votesIdGet (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_36;  }> {
+        const path = this.basePath + '/votes/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
@@ -6439,9 +10478,13 @@ export class VoteApi {
             throw new Error('Missing required parameter id when calling votesIdGet');
         }
 
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
+        }
+
         let useFormData = false;
 
-        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_30;  }>();
+        let deferred = promise.defer<{ response: http.ClientResponse; body: inline_response_200_36;  }>();
 
         let requestOptions: request.Options = {
             method: 'GET',
@@ -6451,6 +10494,8 @@ export class VoteApi {
             json: true,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -6475,20 +10520,28 @@ export class VoteApi {
 
         return deferred.promise;
     }
-
-    public votesIdPut (id: number, body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/votes/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Update Vote
+     * Update Vote
+     * @param id id of Vote
+     * @param accessToken User&#39;s OAuth2 access token
+     * @param body Vote that should be updated
+     */
+    public votesIdPut (id: number, accessToken?: string, body?: Vote) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/votes/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling votesIdPut');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -6504,6 +10557,8 @@ export class VoteApi {
             body: body,
         }
 
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+
         this.authentications.default.applyToRequest(requestOptions);
 
         if (Object.keys(formParams).length) {
@@ -6528,20 +10583,27 @@ export class VoteApi {
 
         return deferred.promise;
     }
-
-    public votesIdDelete (id: number) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
-        let path = this.url + this.basePath + '/votes/{id}';
-
-        path = path.replace('{' + 'id' + '}', String(id));
-
+    /**
+     * Delete Vote
+     * Delete previously posted vote
+     * @param id id of Vote
+     * @param accessToken User&#39;s OAuth2 access token
+     */
+    public votesIdDelete (id: number, accessToken?: string) : Promise<{ response: http.ClientResponse; body: inline_response_200_2;  }> {
+        const path = this.basePath + '/votes/{id}'
+            .replace('{' + 'id' + '}', String(id));
         let queryParameters: any = {};
-        let headerParams: any = {};
+        let headerParams: any = this.extendObj({}, this.defaultHeaders);
         let formParams: any = {};
 
 
         // verify required parameter 'id' is set
         if (!id) {
             throw new Error('Missing required parameter id when calling votesIdDelete');
+        }
+
+        if (accessToken !== undefined) {
+            queryParameters['access_token'] = accessToken;
         }
 
         let useFormData = false;
@@ -6555,6 +10617,8 @@ export class VoteApi {
             uri: path,
             json: true,
         }
+
+        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
 
         this.authentications.default.applyToRequest(requestOptions);
 
