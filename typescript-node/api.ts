@@ -1,6 +1,6 @@
 /**
- * QuantiModo
- * QuantiModo makes it easy to retrieve normalized user data from a wide array of devices and applications. [Learn about QuantiModo](https://quantimo.do), check out our [docs](https://github.com/QuantiModo/docs) or contact us at [help.quantimo.do](https://help.quantimo.do). 
+ * quantimodo
+ * We make it easy to retrieve and analyze normalized user data from a wide array of devices and applications. Check out our [docs and sdk's](https://github.com/QuantiModo/docs) or [contact us](https://help.quantimo.do).
  *
  * OpenAPI spec version: 2.0
  * 
@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-import request = require('request');
+import localVarRequest = require('request');
 import http = require('http');
 import Promise = require('bluebird');
 
@@ -33,153 +33,894 @@ let defaultBasePath = 'https://app.quantimo.do/api';
 // ===============================================
 
 /* tslint:disable:no-unused-variable */
+let primitives = [
+                    "string",
+                    "boolean",
+                    "double",
+                    "integer",
+                    "long",
+                    "float",
+                    "number",
+                    "any"
+                 ];
+
+class ObjectSerializer {
+
+    public static findCorrectType(data: any, expectedType: string) {
+        if (data == undefined) {
+            return expectedType;
+        } else if (primitives.indexOf(expectedType.toLowerCase()) !== -1) {
+            return expectedType;
+        } else if (expectedType === "Date") {
+            return expectedType;
+        } else {
+            if (enumsMap[expectedType]) {
+                return expectedType;
+            }
+
+            if (!typeMap[expectedType]) {
+                return expectedType; // w/e we don't know the type
+            }
+
+            // Check the discriminator
+            let discriminatorProperty = typeMap[expectedType].discriminator;
+            if (discriminatorProperty == null) {
+                return expectedType; // the type does not have a discriminator. use it.
+            } else {
+                if (data[discriminatorProperty]) {
+                    return data[discriminatorProperty]; // use the type given in the discriminator
+                } else {
+                    return expectedType; // discriminator was not present (or an empty string)
+                }
+            }
+        }
+    }
+
+    public static serialize(data: any, type: string) {
+        if (data == undefined) {
+            return data;
+        } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
+            return data;
+        } else if (type.lastIndexOf("Array<", 0) === 0) { // string.startsWith pre es6
+            let subType: string = type.replace("Array<", ""); // Array<Type> => Type>
+            subType = subType.substring(0, subType.length - 1); // Type> => Type
+            let transformedData: any[] = [];
+            for (let index in data) {
+                let date = data[index];
+                transformedData.push(ObjectSerializer.serialize(date, subType));
+            }
+            return transformedData;
+        } else if (type === "Date") {
+            return data.toString();
+        } else {
+            if (enumsMap[type]) {
+                return data;
+            }
+            if (!typeMap[type]) { // in case we dont know the type
+                return data;
+            }
+
+            // get the map for the correct type.
+            let attributeTypes = typeMap[type].getAttributeTypeMap();
+            let instance: {[index: string]: any} = {};
+            for (let index in attributeTypes) {
+                let attributeType = attributeTypes[index];
+                instance[attributeType.baseName] = ObjectSerializer.serialize(data[attributeType.name], attributeType.type);
+            }
+            return instance;
+        }
+    }
+
+    public static deserialize(data: any, type: string) {
+        // polymorphism may change the actual type.
+        type = ObjectSerializer.findCorrectType(data, type);
+        if (data == undefined) {
+            return data;
+        } else if (primitives.indexOf(type.toLowerCase()) !== -1) {
+            return data;
+        } else if (type.lastIndexOf("Array<", 0) === 0) { // string.startsWith pre es6
+            let subType: string = type.replace("Array<", ""); // Array<Type> => Type>
+            subType = subType.substring(0, subType.length - 1); // Type> => Type
+            let transformedData: any[] = [];
+            for (let index in data) {
+                let date = data[index];
+                transformedData.push(ObjectSerializer.deserialize(date, subType));
+            }
+            return transformedData;
+        } else if (type === "Date") {
+            return new Date(data);
+        } else {
+            if (enumsMap[type]) {// is Enum
+                return data;
+            }
+
+            if (!typeMap[type]) { // dont know the type
+                return data;
+            }
+            let instance = new typeMap[type]();
+            let attributeTypes = typeMap[type].getAttributeTypeMap();
+            for (let index in attributeTypes) {
+                let attributeType = attributeTypes[index];
+                instance[attributeType.name] = ObjectSerializer.deserialize(data[attributeType.baseName], attributeType.type);
+            }
+            return instance;
+        }
+    }
+}
+
+export class AppSettings {
+    /**
+    * 
+    */
+    'additionalSettings': any;
+    /**
+    * 
+    */
+    'appDescription': string;
+    /**
+    * 
+    */
+    'appDesign': any;
+    /**
+    * 
+    */
+    'appDisplayName': string;
+    /**
+    * 
+    */
+    'appStatus': any;
+    /**
+    * 
+    */
+    'appType': string;
+    /**
+    * 
+    */
+    'buildEnabled': string;
+    /**
+    * 
+    */
+    'clientId': string;
+    /**
+    * 
+    */
+    'clientSecret': string;
+    /**
+    * 
+    */
+    'collaborators': Array<User>;
+    /**
+    * 
+    */
+    'createdAt': string;
+    /**
+    * 
+    */
+    'userId': string;
+    /**
+    * 
+    */
+    'users': Array<User>;
+    /**
+    * 
+    */
+    'redirectUri': string;
+    /**
+    * 
+    */
+    'companyName': string;
+    /**
+    * 
+    */
+    'homepageUrl': string;
+    /**
+    * 
+    */
+    'iconUrl': string;
+    /**
+    * 
+    */
+    'longDescription': string;
+    /**
+    * 
+    */
+    'splashScreen': string;
+    /**
+    * 
+    */
+    'textLogo': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "additionalSettings",
+            "baseName": "additionalSettings",
+            "type": "any"
+        },
+        {
+            "name": "appDescription",
+            "baseName": "appDescription",
+            "type": "string"
+        },
+        {
+            "name": "appDesign",
+            "baseName": "appDesign",
+            "type": "any"
+        },
+        {
+            "name": "appDisplayName",
+            "baseName": "appDisplayName",
+            "type": "string"
+        },
+        {
+            "name": "appStatus",
+            "baseName": "appStatus",
+            "type": "any"
+        },
+        {
+            "name": "appType",
+            "baseName": "appType",
+            "type": "string"
+        },
+        {
+            "name": "buildEnabled",
+            "baseName": "buildEnabled",
+            "type": "string"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "clientSecret",
+            "baseName": "clientSecret",
+            "type": "string"
+        },
+        {
+            "name": "collaborators",
+            "baseName": "collaborators",
+            "type": "Array<User>"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "string"
+        },
+        {
+            "name": "users",
+            "baseName": "users",
+            "type": "Array<User>"
+        },
+        {
+            "name": "redirectUri",
+            "baseName": "redirectUri",
+            "type": "string"
+        },
+        {
+            "name": "companyName",
+            "baseName": "companyName",
+            "type": "string"
+        },
+        {
+            "name": "homepageUrl",
+            "baseName": "homepageUrl",
+            "type": "string"
+        },
+        {
+            "name": "iconUrl",
+            "baseName": "iconUrl",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "longDescription",
+            "type": "string"
+        },
+        {
+            "name": "splashScreen",
+            "baseName": "splashScreen",
+            "type": "string"
+        },
+        {
+            "name": "textLogo",
+            "baseName": "textLogo",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AppSettings.attributeTypeMap;
+    }
+}
+
+export class AppSettingsResponse {
+    'appSettings': AppSettings;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "appSettings",
+            "baseName": "appSettings",
+            "type": "AppSettings"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AppSettingsResponse.attributeTypeMap;
+    }
+}
+
+export class AuthorizedClients {
+    /**
+    * Applications with access to user measurements for all variables
+    */
+    'apps': Array<AppSettings>;
+    /**
+    * Individuals such as physicians or family members with access to user measurements for all variables
+    */
+    'individuals': Array<AppSettings>;
+    /**
+    * Studies with access to generally anonymous user measurements for a specific predictor and outcome variable
+    */
+    'studies': Array<AppSettings>;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "apps",
+            "baseName": "apps",
+            "type": "Array<AppSettings>"
+        },
+        {
+            "name": "individuals",
+            "baseName": "individuals",
+            "type": "Array<AppSettings>"
+        },
+        {
+            "name": "studies",
+            "baseName": "studies",
+            "type": "Array<AppSettings>"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return AuthorizedClients.attributeTypeMap;
+    }
+}
+
+export class Button {
+    /**
+    * Ex: https://local.quantimo.do
+    */
+    'link': string;
+    /**
+    * Ex: Connect
+    */
+    'text': string;
+    /**
+    * Ex: ion-refresh
+    */
+    'ionIcon': string;
+    /**
+    * Ex: #f2f2f2
+    */
+    'color': string;
+    /**
+    * Ex: connect
+    */
+    'additionalInformation': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "link",
+            "baseName": "link",
+            "type": "string"
+        },
+        {
+            "name": "text",
+            "baseName": "text",
+            "type": "string"
+        },
+        {
+            "name": "ionIcon",
+            "baseName": "ionIcon",
+            "type": "string"
+        },
+        {
+            "name": "color",
+            "baseName": "color",
+            "type": "string"
+        },
+        {
+            "name": "additionalInformation",
+            "baseName": "additionalInformation",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Button.attributeTypeMap;
+    }
+}
+
+export class Chart {
+    /**
+    *  Highcharts config that can be used if you have highcharts.js included on the page
+    */
+    'highchartConfig': any;
+    /**
+    * Ex: correlationScatterPlot
+    */
+    'chartId': string;
+    /**
+    * Ex: Overall Mood following Sleep Duration (R = -0.173)
+    */
+    'chartTitle': string;
+    /**
+    * Ex: The chart above indicates that an increase in Sleep Duration is usually followed by an decrease in Overall Mood.
+    */
+    'explanation': string;
+    /**
+    * Url to a static svg of the chart
+    */
+    'svgUrl': string;
+    /**
+    * SVG string than can be embedded directly in HTML
+    */
+    'svg': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "highchartConfig",
+            "baseName": "highchartConfig",
+            "type": "any"
+        },
+        {
+            "name": "chartId",
+            "baseName": "chartId",
+            "type": "string"
+        },
+        {
+            "name": "chartTitle",
+            "baseName": "chartTitle",
+            "type": "string"
+        },
+        {
+            "name": "explanation",
+            "baseName": "explanation",
+            "type": "string"
+        },
+        {
+            "name": "svgUrl",
+            "baseName": "svgUrl",
+            "type": "string"
+        },
+        {
+            "name": "svg",
+            "baseName": "svg",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Chart.attributeTypeMap;
+    }
+}
 
 export class CommonResponse {
     /**
-    * Status code
+    * Can be used as body of help info popup
     */
-    'status': number;
+    'description': string;
     /**
-    * Message
+    * Can be used as title in help info popup
     */
-    'message': string;
-    'success': boolean;
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return CommonResponse.attributeTypeMap;
+    }
 }
 
-export class Connection {
+export class ConnectInstructions {
     /**
-    * id
+    * Create a form with these fields and post the key and user submitted value to the provided connect url
     */
-    'id': number;
+    'parameters': Array<any>;
     /**
-    * ID of user that owns this correlation
+    * URL to open to connect
     */
-    'userId': number;
+    'url': string;
     /**
-    * The id for the connector data source for which the connection is connected
+    * True if should open auth window in popup
     */
-    'connectorId': number;
-    /**
-    * Indicates whether a connector is currently connected to a service for a user.
-    */
-    'connectStatus': string;
-    /**
-    * Error message if there is a problem with authorizing this connection.
-    */
-    'connectError': string;
-    /**
-    * Time at which an update was requested by a user.
-    */
-    'updateRequestedAt': Date;
-    /**
-    * Indicates whether a connector is currently updated.
-    */
-    'updateStatus': string;
-    /**
-    * Indicates if there was an error during the update.
-    */
-    'updateError': string;
-    /**
-    * The time at which the connector was last successfully updated.
-    */
-    'lastSuccessfulUpdatedAt': Date;
-    /**
-    * When the record was first created. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
-    */
-    'createdAt': Date;
-    /**
-    * When the record in the database was last updated. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
-    */
-    'updatedAt': Date;
+    'usePopup': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "parameters",
+            "baseName": "parameters",
+            "type": "Array<any>"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        },
+        {
+            "name": "usePopup",
+            "baseName": "usePopup",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ConnectInstructions.attributeTypeMap;
+    }
 }
 
 export class Connector {
     /**
-    * Connector ID number
+    * Ex: false
     */
-    'id': number;
+    'affiliate': boolean;
     /**
-    * Connector lowercase system name
+    * Background color HEX code that matches the icon
     */
-    'name': string;
+    'backgroundColor': string;
+    'buttons': Array<Button>;
     /**
-    * Connector pretty display name
+    * Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
     */
-    'displayName': string;
-    /**
-    * URL to the image of the connector logo
-    */
-    'image': string;
-    /**
-    * URL to a site where one can get this device or application
-    */
-    'getItUrl': string;
-    /**
-    * True if the authenticated user has this connector enabled
-    */
-    'connected': string;
-    /**
-    * URL and parameters used when connecting to a service
-    */
-    'connectInstructions': string;
-    /**
-    * Epoch timestamp of last sync
-    */
-    'lastUpdate': number;
-    /**
-    * Number of measurements obtained during latest update
-    */
-    'totalMeasurementsInLastUpdate': number;
-}
-
-export class ConnectorInfo {
-    /**
-    * Connector ID number
-    */
-    'id': number;
+    'clientId': string;
     /**
     * True if the authenticated user has this connector enabled
     */
     'connected': boolean;
     /**
-    * Error message. Empty if connected.
+    * Ex: Your token is expired. Please re-connect
     */
-    'error': string;
-    'history': Array<ConnectorInfoHistoryItem>;
-}
-
-export class ConnectorInfoHistoryItem {
+    'connectError': string;
     /**
-    * Number of measurements
+    * URL and parameters used when connecting to a service
     */
-    'numberOfMeasurements': number;
+    'connectInstructions': ConnectInstructions;
     /**
-    * True if the update was successfull
+    * Ex: 225078261031461
     */
-    'success': boolean;
+    'connectorClientId': string;
     /**
-    * Error message.
+    * Ex: 8
+    */
+    'connectorId': number;
+    /**
+    * Ex: CONNECTED
+    */
+    'connectStatus': string;
+    /**
+    * Ex: 2000-01-01 00:00:00 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'createdAt': string;
+    /**
+    * Ex: Social Interactions
+    */
+    'defaultVariableCategoryName': string;
+    /**
+    * Connector pretty display name
+    */
+    'displayName': string;
+    /**
+    * Ex: 1
+    */
+    'enabled': number;
+    /**
+    * URL to a site where one can get this device or application
+    */
+    'getItUrl': string;
+    /**
+    * Connector ID number
+    */
+    'id': number;
+    /**
+    * URL to the image of the connector logo
+    */
+    'image': string;
+    /**
+    * Ex: <a href=\"http://www.facebook.com\"><img id=\"facebook_image\" title=\"Facebook\" src=\"https://i.imgur.com/GhwqK4f.png\" alt=\"Facebook\"></a>
+    */
+    'imageHtml': string;
+    /**
+    * Ex: 2017-07-31 10:10:34 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'lastSuccessfulUpdatedAt': string;
+    /**
+    * Epoch timestamp of last sync
+    */
+    'lastUpdate': number;
+    /**
+    * Ex: <a href=\"http://www.facebook.com\">Facebook</a>
+    */
+    'linkedDisplayNameHtml': string;
+    /**
+    * Ex: Facebook is a social networking website where users may create a personal profile, add other users as friends, and exchange messages.
+    */
+    'longDescription': string;
+    /**
+    * Ex: Got 412 new measurements on 2017-07-31 10:10:34
     */
     'message': string;
     /**
-    * Date and time of the update in UTC time zone
+    * Mobile connect method: webview, cordova, google, spreadsheet, or ip
     */
-    'createdAt': string;
-}
+    'mobileConnectMethod': string;
+    /**
+    * Connector lowercase system name
+    */
+    'name': string;
+    /**
+    * Platforms (chrome, android, ios, web) that you can connect on.
+    */
+    'platforms': Array<string>;
+    /**
+    * True if connection requires upgrade
+    */
+    'premium': boolean;
+    /**
+    * Required connector scopes
+    */
+    'scopes': Array<string>;
+    /**
+    * Ex: Tracks social interaction. QuantiModo requires permission to access your Facebook \"user likes\" and \"user posts\".
+    */
+    'shortDescription': string;
+    /**
+    * True if the user must upload a spreadsheet.  Post the uploaded spreadsheet with your clientId and user accessToken to https://app.quantimo.do/api/v2/spreadsheetUpload
+    */
+    'spreadsheetUpload': boolean;
+    /**
+    * Number of measurements obtained during latest update
+    */
+    'totalMeasurementsInLastUpdate': number;
+    /**
+    * Ex: 2017-07-31 10:10:34 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'updatedAt': string;
+    /**
+    * Ex: 2017-07-18 05:16:31 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'updateRequestedAt': string;
+    /**
+    * Ex: UPDATED
+    */
+    'updateStatus': string;
+    /**
+    * Ex: 230
+    */
+    'userId': number;
 
-export class ConnectorInstruction {
-    /**
-    * url
-    */
-    'url': string;
-    /**
-    * parameters array
-    */
-    'parameters': Array<string>;
-    /**
-    * usePopup
-    */
-    'usePopup': boolean;
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "affiliate",
+            "baseName": "affiliate",
+            "type": "boolean"
+        },
+        {
+            "name": "backgroundColor",
+            "baseName": "backgroundColor",
+            "type": "string"
+        },
+        {
+            "name": "buttons",
+            "baseName": "buttons",
+            "type": "Array<Button>"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "connected",
+            "baseName": "connected",
+            "type": "boolean"
+        },
+        {
+            "name": "connectError",
+            "baseName": "connectError",
+            "type": "string"
+        },
+        {
+            "name": "connectInstructions",
+            "baseName": "connectInstructions",
+            "type": "ConnectInstructions"
+        },
+        {
+            "name": "connectorClientId",
+            "baseName": "connectorClientId",
+            "type": "string"
+        },
+        {
+            "name": "connectorId",
+            "baseName": "connectorId",
+            "type": "number"
+        },
+        {
+            "name": "connectStatus",
+            "baseName": "connectStatus",
+            "type": "string"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "defaultVariableCategoryName",
+            "baseName": "defaultVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "displayName",
+            "type": "string"
+        },
+        {
+            "name": "enabled",
+            "baseName": "enabled",
+            "type": "number"
+        },
+        {
+            "name": "getItUrl",
+            "baseName": "getItUrl",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "image",
+            "baseName": "image",
+            "type": "string"
+        },
+        {
+            "name": "imageHtml",
+            "baseName": "imageHtml",
+            "type": "string"
+        },
+        {
+            "name": "lastSuccessfulUpdatedAt",
+            "baseName": "lastSuccessfulUpdatedAt",
+            "type": "string"
+        },
+        {
+            "name": "lastUpdate",
+            "baseName": "lastUpdate",
+            "type": "number"
+        },
+        {
+            "name": "linkedDisplayNameHtml",
+            "baseName": "linkedDisplayNameHtml",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "longDescription",
+            "type": "string"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        },
+        {
+            "name": "mobileConnectMethod",
+            "baseName": "mobileConnectMethod",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "platforms",
+            "baseName": "platforms",
+            "type": "Array<string>"
+        },
+        {
+            "name": "premium",
+            "baseName": "premium",
+            "type": "boolean"
+        },
+        {
+            "name": "scopes",
+            "baseName": "scopes",
+            "type": "Array<string>"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "shortDescription",
+            "type": "string"
+        },
+        {
+            "name": "spreadsheetUpload",
+            "baseName": "spreadsheetUpload",
+            "type": "boolean"
+        },
+        {
+            "name": "totalMeasurementsInLastUpdate",
+            "baseName": "totalMeasurementsInLastUpdate",
+            "type": "number"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "updateRequestedAt",
+            "baseName": "updateRequestedAt",
+            "type": "string"
+        },
+        {
+            "name": "updateStatus",
+            "baseName": "updateStatus",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Connector.attributeTypeMap;
+    }
 }
 
 export class ConversionStep {
@@ -191,394 +932,2104 @@ export class ConversionStep {
     * This specifies the order of conversion steps starting with 0
     */
     'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "operation",
+            "baseName": "operation",
+            "type": "ConversionStep.OperationEnum"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ConversionStep.attributeTypeMap;
+    }
 }
 
 export namespace ConversionStep {
     export enum OperationEnum {
-        MULTIPLY = <any> 'MULTIPLY',
-        ADD = <any> 'ADD'
+        ADD = <any> 'ADD',
+        MULTIPLY = <any> 'MULTIPLY'
     }
 }
 export class Correlation {
     /**
-    * 
-    */
-    'averageDailyLowCause': number;
-    /**
-    * 
+    * Ex: 4.19
     */
     'averageDailyHighCause': number;
     /**
-    * 
+    * Ex: 1.97
+    */
+    'averageDailyLowCause': number;
+    /**
+    * Ex: 3.0791054117396
     */
     'averageEffect': number;
     /**
-    * 
+    * Ex: 3.55
     */
     'averageEffectFollowingHighCause': number;
     /**
-    * 
+    * Ex: 2.65
     */
     'averageEffectFollowingLowCause': number;
     /**
-    * 
+    * Ex: 0.396
     */
-    'averageEffectFollowingHighCauseExplanation': string;
+    'averageForwardPearsonCorrelationOverOnsetDelays': number;
     /**
-    * 
+    * Ex: 0.453667
     */
-    'averageEffectFollowingLowCauseExplanation': string;
+    'averageReversePearsonCorrelationOverOnsetDelays': number;
     /**
-    * Average Vote
+    * Ex: 0.9855
     */
     'averageVote': number;
     /**
-    * 
+    * Ex: 164
     */
-    'causalityFactor': number;
+    'causeChanges': number;
+    'causeDataSource': DataSource;
     /**
-    * Variable name of the cause variable for which the user desires correlations.
+    * Ex: 1
     */
-    'cause': string;
+    'causeUserVariableShareUserMeasurements': number;
     /**
-    * Variable category of the cause variable.
+    * Ex: 6
+    */
+    'causeVariableCategoryId': number;
+    /**
+    * Ex: Sleep
     */
     'causeVariableCategoryName': string;
     /**
-    * Number of changes in the predictor variable (a.k.a the number of experiments)
-    */
-    'causeChanges': number;
-    /**
-    * The way cause measurements are aggregated
+    * Ex: MEAN
     */
     'causeVariableCombinationOperation': string;
     /**
-    * 
+    * Ex: /5
     */
-    'causeVariableImageUrl': string;
+    'causeVariableUnitAbbreviatedName': string;
     /**
-    * For use in Ionic apps
-    */
-    'causeVariableIonIcon': string;
-    /**
-    * Unit of the predictor variable
-    */
-    'causeUnit': string;
-    /**
-    * Unit Id of the predictor variable
-    */
-    'causeVariableDefaultUnitId': number;
-    /**
-    * 
+    * Ex: 1448
     */
     'causeVariableId': number;
     /**
-    * Variable name of the cause variable for which the user desires correlations.
+    * Ex: 6
+    */
+    'causeVariableMostCommonConnectorId': number;
+    /**
+    * Ex: Sleep Quality
     */
     'causeVariableName': string;
     /**
-    * Pearson correlation coefficient between cause and effect measurements
+    * Ex: 0.14344467795996
+    */
+    'confidenceInterval': number;
+    /**
+    * Ex: high
+    */
+    'confidenceLevel': string;
+    /**
+    * Ex: 0.538
     */
     'correlationCoefficient': number;
     /**
-    * When the record was first created. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
+    * Ex: false
     */
-    'createdAt': Date;
+    'correlationIsContradictoryToOptimalValues': boolean;
     /**
-    * How the data was analyzed
+    * Ex: 2016-12-28 20:47:30 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
     */
-    'dataAnalysis': string;
+    'createdAt': string;
     /**
-    * How the data was obtained
+    * Ex: 1.646
     */
-    'dataSources': string;
+    'criticalTValue': number;
     /**
-    * The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
+    * Ex: higher
+    */
+    'direction': string;
+    /**
+    * Ex: 604800
     */
     'durationOfAction': number;
     /**
-    * Variable name of the effect variable for which the user desires correlations.
+    * Ex: 168
     */
-    'effect': string;
+    'durationOfActionInHours': number;
     /**
-    * Variable category of the effect variable.
+    * Ex: 200
     */
-    'effectVariableCategoryName': string;
+    'degreesOfFreedom': number;
     /**
-    * 
+    * Ex: 145
     */
-    'effectVariableImageUrl': string;
+    'effectNumberOfProcessedDailyMeasurements': number;
     /**
-    * For use in Ionic apps
+    * Ex: optimalPearsonProduct is not defined
     */
-    'effectVariableIonIcon': string;
+    'error': string;
     /**
-    * Magnitude of the effects of a cause indicating whether it's practically meaningful.
+    * Ex: 193
+    */
+    'effectChanges': number;
+    'effectDataSource': DataSource;
+    /**
+    * Ex: moderately positive
     */
     'effectSize': string;
     /**
-    * Magnitude of the effects of a cause indicating whether it's practically meaningful.
+    * Ex: /5
     */
-    'effectVariableId': string;
+    'effectUnit': string;
     /**
-    * Variable name of the effect variable for which the user desires correlations.
+    * Ex: 1
+    */
+    'effectUserVariableShareUserMeasurements': number;
+    /**
+    * Ex: 1
+    */
+    'effectVariableCategoryId': number;
+    /**
+    * Ex: Emotions
+    */
+    'effectVariableCategoryName': string;
+    /**
+    * Ex: MEAN
+    */
+    'effectVariableCombinationOperation': string;
+    /**
+    * Ex: Mood_(psychology)
+    */
+    'effectVariableCommonAlias': string;
+    /**
+    * Ex: /5
+    */
+    'effectVariableUnitAbbreviatedName': string;
+    /**
+    * Ex: 10
+    */
+    'effectVariableUnitId': number;
+    /**
+    * Ex: 1 to 5 Rating
+    */
+    'effectVariableUnitName': string;
+    /**
+    * Ex: 1398
+    */
+    'effectVariableId': number;
+    /**
+    * Ex: 10
+    */
+    'effectVariableMostCommonConnectorId': number;
+    /**
+    * Ex: Overall Mood
     */
     'effectVariableName': string;
     /**
-    * Illustrates the strength of the relationship
+    * Ex: 2014-07-30 12:50:00 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
     */
-    'gaugeImage': string;
+    'experimentEndTime': string;
     /**
-    * Large image for Facebook
+    * Ex: 2012-05-06 21:15:00 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
     */
-    'imageUrl': string;
+    'experimentStartTime': string;
     /**
-    * Number of points that went into the correlation calculation
+    * Ex: 0.528359
+    */
+    'forwardSpearmanCorrelationCoefficient': number;
+    /**
+    * Ex: 298
     */
     'numberOfPairs': number;
     /**
-    * The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
+    * Ex: 0
     */
     'onsetDelay': number;
     /**
-    * Optimal Pearson Product
+    * Ex: 0
+    */
+    'onsetDelayInHours': number;
+    /**
+    * Ex: -86400
+    */
+    'onsetDelayWithStrongestPearsonCorrelation': number;
+    /**
+    * Ex: -24
+    */
+    'onsetDelayWithStrongestPearsonCorrelationInHours': number;
+    /**
+    * Ex: 0.68582816186982
     */
     'optimalPearsonProduct': number;
+    /**
+    * Ex: -1
+    */
+    'outcomeFillingValue': number;
+    /**
+    * Ex: 23
+    */
+    'outcomeMaximumAllowedValue': number;
+    /**
+    * Ex: 0.1
+    */
+    'outcomeMinimumAllowedValue': number;
+    /**
+    * Ex: 0.477
+    */
+    'pearsonCorrelationWithNoOnsetDelay': number;
+    /**
+    * Ex: 0.538
+    */
+    'predictivePearsonCorrelation': number;
+    /**
+    * Ex: 0.538
+    */
+    'predictivePearsonCorrelationCoefficient': number;
+    /**
+    * Ex: RescueTime
+    */
+    'predictorDataSources': string;
+    /**
+    * Ex: -1
+    */
+    'predictorFillingValue': number;
+    /**
+    * Ex: 200
+    */
+    'predictorMaximumAllowedValue': number;
+    /**
+    * Ex: 30
+    */
+    'predictorMinimumAllowedValue': number;
+    /**
+    * Ex: 17
+    */
+    'predictsHighEffectChange': number;
+    /**
+    * Ex: -11
+    */
+    'predictsLowEffectChange': number;
+    /**
+    * Ex: 0.39628900511586
+    */
+    'pValue': number;
+    /**
+    * Ex: 0.528
+    */
+    'qmScore': number;
+    /**
+    * Ex: 0.01377184270977
+    */
+    'reversePearsonCorrelationCoefficient': number;
+    /**
+    * Ex: 1
+    */
+    'shareUserMeasurements': boolean;
+    /**
+    * Ex: N1 Study: Sleep Quality Predicts Higher Overall Mood
+    */
+    'sharingDescription': string;
+    /**
+    * Ex: N1 Study: Sleep Quality Predicts Higher Overall Mood
+    */
+    'sharingTitle': string;
+    /**
+    * Ex: 1
+    */
+    'significantDifference': boolean;
+    /**
+    * Ex: 0.9813
+    */
+    'statisticalSignificance': number;
+    /**
+    * Ex: moderate
+    */
+    'strengthLevel': string;
+    /**
+    * Ex: 0.613
+    */
+    'strongestPearsonCorrelationCoefficient': number;
+    'studyHtml': StudyHtml;
+    'studyImages': StudyImages;
+    'studyLinks': StudyLinks;
+    'studyText': StudyText;
+    /**
+    * Ex: 9.6986079652717
+    */
+    'tValue': number;
+    /**
+    * Ex: 2017-05-06 15:40:38 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'updatedAt': string;
+    /**
+    * Ex: 230
+    */
+    'userId': number;
+    /**
+    * Ex: 1
+    */
+    'userVote': number;
+    /**
+    * Ex: 4.14
+    */
+    'valuePredictingHighOutcome': number;
+    /**
+    * Ex: 3.03
+    */
+    'valuePredictingLowOutcome': number;
     /**
     * original name of the cause.
     */
     'outcomeDataSources': string;
     /**
-    * HIGHER Remeron predicts HIGHER Overall Mood
-    */
-    'predictorExplanation': string;
-    /**
     * Mike Sinn
     */
     'principalInvestigator': string;
-    /**
-    * Value representing the significance of the relationship as a function of crowdsourced insights, predictive strength, data quantity, and data quality
-    */
-    'qmScore': number;
     /**
     * Correlation when cause and effect are reversed. For any causal relationship, the forward correlation should exceed the reverse correlation.
     */
     'reverseCorrelation': number;
     /**
-    * Using a two-tailed t-test with alpha = 0.05, it was determined that the change...
+    * Ex: 
     */
-    'significanceExplanation': string;
+    'averagePearsonCorrelationCoefficientOverOnsetDelays': string;
     /**
-    * A function of the effect size and sample size
+    * Ex: 14764
     */
-    'statisticalSignificance': string;
+    'causeNumberOfRawMeasurements': number;
     /**
-    * weak, moderate, strong
+    * Ex: 
     */
-    'strengthLevel': string;
+    'correlationsOverDurationsOfAction': string;
     /**
-    * These data suggest with a high degree of confidence...
+    * Ex: 
     */
-    'studyAbstract': string;
+    'correlationsOverDurationsOfActionChartConfig': string;
     /**
-    * In order to reduce suffering through the advancement of human knowledge...
+    * Ex: 
     */
-    'studyBackground': string;
+    'correlationsOverOnsetDelaysChartConfig': string;
     /**
-    * This study is based on data donated by one QuantiModo user...
+    * Ex: 1
     */
-    'studyDesign': string;
+    'numberOfUsers': number;
     /**
-    * As with any human experiment, it was impossible to control for all potentially confounding variables...
+    * Ex: 1
     */
-    'studyLimitations': string;
+    'rawCauseMeasurementSignificance': number;
     /**
-    * Url for the interactive study within the web app
+    * Ex: 1
     */
-    'studyLinkDynamic': string;
+    'rawEffectMeasurementSignificance': number;
     /**
-    * Url for sharing the study on Facebook
+    * Ex: 1
     */
-    'studyLinkFacebook': string;
+    'reversePairsCount': string;
     /**
-    * Url for sharing the study on Google+
+    * Ex: 1
     */
-    'studyLinkGoogle': string;
+    'voteStatisticalSignificance': number;
     /**
-    * Url for sharing the study on Twitter
+    * Ex: 0.011598441286655
     */
-    'studyLinkTwitter': string;
+    'aggregateQMScore': number;
     /**
-    * Url for sharing the statically rendered study on social media
+    * Ex: 0.0333
     */
-    'studyLinkStatic': string;
+    'forwardPearsonCorrelationCoefficient': number;
     /**
-    * The objective of this study is to determine...
+    * Ex: 6
     */
-    'studyObjective': string;
+    'numberOfCorrelations': number;
     /**
-    * This analysis suggests that...
+    * Ex: 1 or 0
     */
-    'studyResults': string;
-    /**
-    * N1 Study HIGHER Remeron predicts HIGHER Overall Mood
-    */
-    'studyTitle': string;
-    /**
-    * Time at which correlation was calculated
-    */
-    'timestamp': number;
-    /**
-    * When the record in the database was last updated. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format. Time zone should be UTC and not local.
-    */
-    'updatedAt': Date;
-    /**
-    * User Vote
-    */
-    'userVote': number;
-    /**
-    * cause value that predicts an above average effect value (in default unit for cause variable)
-    */
-    'valuePredictingHighOutcome': number;
-    /**
-    * Overall Mood, on average, 34% HIGHER after around 3.98mg Remeron
-    */
-    'valuePredictingHighOutcomeExplanation': string;
-    /**
-    * cause value that predicts a below average effect value (in default unit for cause variable)
-    */
-    'valuePredictingLowOutcome': number;
-    /**
-    * Overall Mood, on average, 4% LOWER after around 0mg Remeron
-    */
-    'valuePredictingLowOutcomeExplanation': string;
+    'vote': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "averageDailyHighCause",
+            "baseName": "averageDailyHighCause",
+            "type": "number"
+        },
+        {
+            "name": "averageDailyLowCause",
+            "baseName": "averageDailyLowCause",
+            "type": "number"
+        },
+        {
+            "name": "averageEffect",
+            "baseName": "averageEffect",
+            "type": "number"
+        },
+        {
+            "name": "averageEffectFollowingHighCause",
+            "baseName": "averageEffectFollowingHighCause",
+            "type": "number"
+        },
+        {
+            "name": "averageEffectFollowingLowCause",
+            "baseName": "averageEffectFollowingLowCause",
+            "type": "number"
+        },
+        {
+            "name": "averageForwardPearsonCorrelationOverOnsetDelays",
+            "baseName": "averageForwardPearsonCorrelationOverOnsetDelays",
+            "type": "number"
+        },
+        {
+            "name": "averageReversePearsonCorrelationOverOnsetDelays",
+            "baseName": "averageReversePearsonCorrelationOverOnsetDelays",
+            "type": "number"
+        },
+        {
+            "name": "averageVote",
+            "baseName": "averageVote",
+            "type": "number"
+        },
+        {
+            "name": "causeChanges",
+            "baseName": "causeChanges",
+            "type": "number"
+        },
+        {
+            "name": "causeDataSource",
+            "baseName": "causeDataSource",
+            "type": "DataSource"
+        },
+        {
+            "name": "causeUserVariableShareUserMeasurements",
+            "baseName": "causeUserVariableShareUserMeasurements",
+            "type": "number"
+        },
+        {
+            "name": "causeVariableCategoryId",
+            "baseName": "causeVariableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "causeVariableCategoryName",
+            "baseName": "causeVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "causeVariableCombinationOperation",
+            "baseName": "causeVariableCombinationOperation",
+            "type": "string"
+        },
+        {
+            "name": "causeVariableUnitAbbreviatedName",
+            "baseName": "causeVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "causeVariableId",
+            "baseName": "causeVariableId",
+            "type": "number"
+        },
+        {
+            "name": "causeVariableMostCommonConnectorId",
+            "baseName": "causeVariableMostCommonConnectorId",
+            "type": "number"
+        },
+        {
+            "name": "causeVariableName",
+            "baseName": "causeVariableName",
+            "type": "string"
+        },
+        {
+            "name": "confidenceInterval",
+            "baseName": "confidenceInterval",
+            "type": "number"
+        },
+        {
+            "name": "confidenceLevel",
+            "baseName": "confidenceLevel",
+            "type": "string"
+        },
+        {
+            "name": "correlationCoefficient",
+            "baseName": "correlationCoefficient",
+            "type": "number"
+        },
+        {
+            "name": "correlationIsContradictoryToOptimalValues",
+            "baseName": "correlationIsContradictoryToOptimalValues",
+            "type": "boolean"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "criticalTValue",
+            "baseName": "criticalTValue",
+            "type": "number"
+        },
+        {
+            "name": "direction",
+            "baseName": "direction",
+            "type": "string"
+        },
+        {
+            "name": "durationOfAction",
+            "baseName": "durationOfAction",
+            "type": "number"
+        },
+        {
+            "name": "durationOfActionInHours",
+            "baseName": "durationOfActionInHours",
+            "type": "number"
+        },
+        {
+            "name": "degreesOfFreedom",
+            "baseName": "degreesOfFreedom",
+            "type": "number"
+        },
+        {
+            "name": "effectNumberOfProcessedDailyMeasurements",
+            "baseName": "effectNumberOfProcessedDailyMeasurements",
+            "type": "number"
+        },
+        {
+            "name": "error",
+            "baseName": "error",
+            "type": "string"
+        },
+        {
+            "name": "effectChanges",
+            "baseName": "effectChanges",
+            "type": "number"
+        },
+        {
+            "name": "effectDataSource",
+            "baseName": "effectDataSource",
+            "type": "DataSource"
+        },
+        {
+            "name": "effectSize",
+            "baseName": "effectSize",
+            "type": "string"
+        },
+        {
+            "name": "effectUnit",
+            "baseName": "effectUnit",
+            "type": "string"
+        },
+        {
+            "name": "effectUserVariableShareUserMeasurements",
+            "baseName": "effectUserVariableShareUserMeasurements",
+            "type": "number"
+        },
+        {
+            "name": "effectVariableCategoryId",
+            "baseName": "effectVariableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "effectVariableCategoryName",
+            "baseName": "effectVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableCombinationOperation",
+            "baseName": "effectVariableCombinationOperation",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableCommonAlias",
+            "baseName": "effectVariableCommonAlias",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableUnitAbbreviatedName",
+            "baseName": "effectVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableUnitId",
+            "baseName": "effectVariableUnitId",
+            "type": "number"
+        },
+        {
+            "name": "effectVariableUnitName",
+            "baseName": "effectVariableUnitName",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableId",
+            "baseName": "effectVariableId",
+            "type": "number"
+        },
+        {
+            "name": "effectVariableMostCommonConnectorId",
+            "baseName": "effectVariableMostCommonConnectorId",
+            "type": "number"
+        },
+        {
+            "name": "effectVariableName",
+            "baseName": "effectVariableName",
+            "type": "string"
+        },
+        {
+            "name": "experimentEndTime",
+            "baseName": "experimentEndTime",
+            "type": "string"
+        },
+        {
+            "name": "experimentStartTime",
+            "baseName": "experimentStartTime",
+            "type": "string"
+        },
+        {
+            "name": "forwardSpearmanCorrelationCoefficient",
+            "baseName": "forwardSpearmanCorrelationCoefficient",
+            "type": "number"
+        },
+        {
+            "name": "numberOfPairs",
+            "baseName": "numberOfPairs",
+            "type": "number"
+        },
+        {
+            "name": "onsetDelay",
+            "baseName": "onsetDelay",
+            "type": "number"
+        },
+        {
+            "name": "onsetDelayInHours",
+            "baseName": "onsetDelayInHours",
+            "type": "number"
+        },
+        {
+            "name": "onsetDelayWithStrongestPearsonCorrelation",
+            "baseName": "onsetDelayWithStrongestPearsonCorrelation",
+            "type": "number"
+        },
+        {
+            "name": "onsetDelayWithStrongestPearsonCorrelationInHours",
+            "baseName": "onsetDelayWithStrongestPearsonCorrelationInHours",
+            "type": "number"
+        },
+        {
+            "name": "optimalPearsonProduct",
+            "baseName": "optimalPearsonProduct",
+            "type": "number"
+        },
+        {
+            "name": "outcomeFillingValue",
+            "baseName": "outcomeFillingValue",
+            "type": "number"
+        },
+        {
+            "name": "outcomeMaximumAllowedValue",
+            "baseName": "outcomeMaximumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "outcomeMinimumAllowedValue",
+            "baseName": "outcomeMinimumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "pearsonCorrelationWithNoOnsetDelay",
+            "baseName": "pearsonCorrelationWithNoOnsetDelay",
+            "type": "number"
+        },
+        {
+            "name": "predictivePearsonCorrelation",
+            "baseName": "predictivePearsonCorrelation",
+            "type": "number"
+        },
+        {
+            "name": "predictivePearsonCorrelationCoefficient",
+            "baseName": "predictivePearsonCorrelationCoefficient",
+            "type": "number"
+        },
+        {
+            "name": "predictorDataSources",
+            "baseName": "predictorDataSources",
+            "type": "string"
+        },
+        {
+            "name": "predictorFillingValue",
+            "baseName": "predictorFillingValue",
+            "type": "number"
+        },
+        {
+            "name": "predictorMaximumAllowedValue",
+            "baseName": "predictorMaximumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "predictorMinimumAllowedValue",
+            "baseName": "predictorMinimumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "predictsHighEffectChange",
+            "baseName": "predictsHighEffectChange",
+            "type": "number"
+        },
+        {
+            "name": "predictsLowEffectChange",
+            "baseName": "predictsLowEffectChange",
+            "type": "number"
+        },
+        {
+            "name": "pValue",
+            "baseName": "pValue",
+            "type": "number"
+        },
+        {
+            "name": "qmScore",
+            "baseName": "qmScore",
+            "type": "number"
+        },
+        {
+            "name": "reversePearsonCorrelationCoefficient",
+            "baseName": "reversePearsonCorrelationCoefficient",
+            "type": "number"
+        },
+        {
+            "name": "shareUserMeasurements",
+            "baseName": "shareUserMeasurements",
+            "type": "boolean"
+        },
+        {
+            "name": "sharingDescription",
+            "baseName": "sharingDescription",
+            "type": "string"
+        },
+        {
+            "name": "sharingTitle",
+            "baseName": "sharingTitle",
+            "type": "string"
+        },
+        {
+            "name": "significantDifference",
+            "baseName": "significantDifference",
+            "type": "boolean"
+        },
+        {
+            "name": "statisticalSignificance",
+            "baseName": "statisticalSignificance",
+            "type": "number"
+        },
+        {
+            "name": "strengthLevel",
+            "baseName": "strengthLevel",
+            "type": "string"
+        },
+        {
+            "name": "strongestPearsonCorrelationCoefficient",
+            "baseName": "strongestPearsonCorrelationCoefficient",
+            "type": "number"
+        },
+        {
+            "name": "studyHtml",
+            "baseName": "studyHtml",
+            "type": "StudyHtml"
+        },
+        {
+            "name": "studyImages",
+            "baseName": "studyImages",
+            "type": "StudyImages"
+        },
+        {
+            "name": "studyLinks",
+            "baseName": "studyLinks",
+            "type": "StudyLinks"
+        },
+        {
+            "name": "studyText",
+            "baseName": "studyText",
+            "type": "StudyText"
+        },
+        {
+            "name": "tValue",
+            "baseName": "tValue",
+            "type": "number"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "number"
+        },
+        {
+            "name": "userVote",
+            "baseName": "userVote",
+            "type": "number"
+        },
+        {
+            "name": "valuePredictingHighOutcome",
+            "baseName": "valuePredictingHighOutcome",
+            "type": "number"
+        },
+        {
+            "name": "valuePredictingLowOutcome",
+            "baseName": "valuePredictingLowOutcome",
+            "type": "number"
+        },
+        {
+            "name": "outcomeDataSources",
+            "baseName": "outcomeDataSources",
+            "type": "string"
+        },
+        {
+            "name": "principalInvestigator",
+            "baseName": "principalInvestigator",
+            "type": "string"
+        },
+        {
+            "name": "reverseCorrelation",
+            "baseName": "reverseCorrelation",
+            "type": "number"
+        },
+        {
+            "name": "averagePearsonCorrelationCoefficientOverOnsetDelays",
+            "baseName": "averagePearsonCorrelationCoefficientOverOnsetDelays",
+            "type": "string"
+        },
+        {
+            "name": "causeNumberOfRawMeasurements",
+            "baseName": "causeNumberOfRawMeasurements",
+            "type": "number"
+        },
+        {
+            "name": "correlationsOverDurationsOfAction",
+            "baseName": "correlationsOverDurationsOfAction",
+            "type": "string"
+        },
+        {
+            "name": "correlationsOverDurationsOfActionChartConfig",
+            "baseName": "correlationsOverDurationsOfActionChartConfig",
+            "type": "string"
+        },
+        {
+            "name": "correlationsOverOnsetDelaysChartConfig",
+            "baseName": "correlationsOverOnsetDelaysChartConfig",
+            "type": "string"
+        },
+        {
+            "name": "numberOfUsers",
+            "baseName": "numberOfUsers",
+            "type": "number"
+        },
+        {
+            "name": "rawCauseMeasurementSignificance",
+            "baseName": "rawCauseMeasurementSignificance",
+            "type": "number"
+        },
+        {
+            "name": "rawEffectMeasurementSignificance",
+            "baseName": "rawEffectMeasurementSignificance",
+            "type": "number"
+        },
+        {
+            "name": "reversePairsCount",
+            "baseName": "reversePairsCount",
+            "type": "string"
+        },
+        {
+            "name": "voteStatisticalSignificance",
+            "baseName": "voteStatisticalSignificance",
+            "type": "number"
+        },
+        {
+            "name": "aggregateQMScore",
+            "baseName": "aggregateQMScore",
+            "type": "number"
+        },
+        {
+            "name": "forwardPearsonCorrelationCoefficient",
+            "baseName": "forwardPearsonCorrelationCoefficient",
+            "type": "number"
+        },
+        {
+            "name": "numberOfCorrelations",
+            "baseName": "numberOfCorrelations",
+            "type": "number"
+        },
+        {
+            "name": "vote",
+            "baseName": "vote",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Correlation.attributeTypeMap;
+    }
 }
 
-export class HumanTime {
+export class DataSource {
     /**
-    * date time
+    * Ex: true
     */
-    'date': string;
-    'timezoneType': number;
+    'affiliate': boolean;
     /**
-    * timezone of date time
+    * Ex: ba7d0c12432650e23b3ce924ae2d21e2ff59e7e4e28650759633700af7ed0a30
     */
-    'timezone': string;
+    'connectorClientId': string;
+    /**
+    * Ex: Foods
+    */
+    'defaultVariableCategoryName': string;
+    /**
+    * Ex: QuantiModo
+    */
+    'displayName': string;
+    /**
+    * Ex: 0
+    */
+    'enabled': number;
+    /**
+    * Ex: https://quantimo.do
+    */
+    'getItUrl': string;
+    /**
+    * Ex: 72
+    */
+    'id': number;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/logos/quantimodo-logo-qm-rainbow-200-200.png
+    */
+    'image': string;
+    /**
+    * Ex: <a href=\"https://quantimo.do\"><img id=\"quantimodo_image\" title=\"QuantiModo\" src=\"https://quantimodo.quantimo.do/ionic/Modo/www/img/logos/quantimodo-logo-qm-rainbow-200-200.png\" alt=\"QuantiModo\"></a>
+    */
+    'imageHtml': string;
+    /**
+    * Ex: <a href=\"https://quantimo.do\">QuantiModo</a>
+    */
+    'linkedDisplayNameHtml': string;
+    /**
+    * Ex: QuantiModo is a Chrome extension, Android app, iOS app, and web app that allows you to easily track mood, symptoms, or any outcome you want to optimize in a fraction of a second.  You can also import your data from over 30 other apps and devices like Fitbit, Rescuetime, Jawbone Up, Withings, Facebook, Github, Google Calendar, Runkeeper, MoodPanda, Slice, Google Fit, and more.  QuantiModo then analyzes your data to identify which hidden factors are most likely to be influencing your mood or symptoms and their optimal daily values.
+    */
+    'longDescription': string;
+    /**
+    * Ex: quantimodo
+    */
+    'name': string;
+    /**
+    * Ex: Tracks anything
+    */
+    'shortDescription': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "affiliate",
+            "baseName": "affiliate",
+            "type": "boolean"
+        },
+        {
+            "name": "connectorClientId",
+            "baseName": "connectorClientId",
+            "type": "string"
+        },
+        {
+            "name": "defaultVariableCategoryName",
+            "baseName": "defaultVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "displayName",
+            "type": "string"
+        },
+        {
+            "name": "enabled",
+            "baseName": "enabled",
+            "type": "number"
+        },
+        {
+            "name": "getItUrl",
+            "baseName": "getItUrl",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "image",
+            "baseName": "image",
+            "type": "string"
+        },
+        {
+            "name": "imageHtml",
+            "baseName": "imageHtml",
+            "type": "string"
+        },
+        {
+            "name": "linkedDisplayNameHtml",
+            "baseName": "linkedDisplayNameHtml",
+            "type": "string"
+        },
+        {
+            "name": "longDescription",
+            "baseName": "longDescription",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "shortDescription",
+            "baseName": "shortDescription",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DataSource.attributeTypeMap;
+    }
 }
 
-export class InlineResponse200 {
-    'success': boolean;
-    'data': Array<TrackingReminder>;
+export class DeviceToken {
+    /**
+    * Client id
+    */
+    'clientId': string;
+    /**
+    * ios, android, or web
+    */
+    'platform': string;
+    /**
+    * The device token
+    */
+    'deviceToken': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "platform",
+            "baseName": "platform",
+            "type": "string"
+        },
+        {
+            "name": "deviceToken",
+            "baseName": "deviceToken",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return DeviceToken.attributeTypeMap;
+    }
 }
 
-export class InlineResponse2001 {
-    'success': boolean;
-    'data': TrackingReminder;
+export class Explanation {
+    /**
+    * Ex: These factors are most predictive of Overall Mood based on your own data.
+    */
+    'description': string;
+    'image': Image;
+    /**
+    * Ex: ion-ios-person
+    */
+    'ionIcon': string;
+    'startTracking': ExplanationStartTracking;
+    /**
+    * Ex: Top Predictors of Overall Mood
+    */
+    'title': string;
+    /**
+    * Embeddable list of study summaries with explanation at the top
+    */
+    'html': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "image",
+            "baseName": "image",
+            "type": "Image"
+        },
+        {
+            "name": "ionIcon",
+            "baseName": "ionIcon",
+            "type": "string"
+        },
+        {
+            "name": "startTracking",
+            "baseName": "startTracking",
+            "type": "ExplanationStartTracking"
+        },
+        {
+            "name": "title",
+            "baseName": "title",
+            "type": "string"
+        },
+        {
+            "name": "html",
+            "baseName": "html",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Explanation.attributeTypeMap;
+    }
 }
 
-export class InlineResponse2002 {
-    'success': boolean;
+export class ExplanationStartTracking {
+    'button': Button;
+    /**
+    * Ex: The more data I have the more accurate your results will be so track regularly!
+    */
+    'description': string;
+    /**
+    * Ex: Improve Accuracy
+    */
+    'title': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "button",
+            "baseName": "button",
+            "type": "Button"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "title",
+            "baseName": "title",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ExplanationStartTracking.attributeTypeMap;
+    }
+}
+
+export class GetConnectorsResponse {
+    'connectors': Array<Connector>;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "connectors",
+            "baseName": "connectors",
+            "type": "Array<Connector>"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GetConnectorsResponse.attributeTypeMap;
+    }
+}
+
+export class GetCorrelationsDataResponse {
+    'correlations': Array<Correlation>;
+    'explanation': Explanation;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "correlations",
+            "baseName": "correlations",
+            "type": "Array<Correlation>"
+        },
+        {
+            "name": "explanation",
+            "baseName": "explanation",
+            "type": "Explanation"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GetCorrelationsDataResponse.attributeTypeMap;
+    }
+}
+
+export class GetCorrelationsResponse {
+    'data': GetCorrelationsDataResponse;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "data",
+            "baseName": "data",
+            "type": "GetCorrelationsDataResponse"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GetCorrelationsResponse.attributeTypeMap;
+    }
+}
+
+export class GetSharesResponse {
+    'authorizedClients': AuthorizedClients;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "authorizedClients",
+            "baseName": "authorizedClients",
+            "type": "AuthorizedClients"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GetSharesResponse.attributeTypeMap;
+    }
+}
+
+export class GetStudiesResponse {
+    'studies': Array<Study>;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "studies",
+            "baseName": "studies",
+            "type": "Array<Study>"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GetStudiesResponse.attributeTypeMap;
+    }
+}
+
+export class GetTrackingReminderNotificationsResponse {
     'data': Array<TrackingReminderNotification>;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "data",
+            "baseName": "data",
+            "type": "Array<TrackingReminderNotification>"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return GetTrackingReminderNotificationsResponse.attributeTypeMap;
+    }
+}
+
+export class Image {
+    /**
+    * Ex: 240
+    */
+    'height': string;
+    /**
+    * Ex: https://www.filepicker.io/api/file/TjmeNWS5Q2SFmtJlUGLf
+    */
+    'imageUrl': string;
+    /**
+    * Ex: 224
+    */
+    'width': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "height",
+            "baseName": "height",
+            "type": "string"
+        },
+        {
+            "name": "imageUrl",
+            "baseName": "imageUrl",
+            "type": "string"
+        },
+        {
+            "name": "width",
+            "baseName": "width",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Image.attributeTypeMap;
+    }
 }
 
 export class JsonErrorResponse {
+    /**
+    * Error message
+    */
+    'message': string;
     /**
     * Status: \"ok\" or \"error\"
     */
     'status': string;
     /**
-    * Error message
+    * Can be used as body of help info popup
     */
-    'message': string;
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return JsonErrorResponse.attributeTypeMap;
+    }
 }
 
 export class Measurement {
     /**
-    * Name of the variable for which we are creating the measurement records
+    * Ex: quantimodo
     */
-    'variableName': string;
+    'clientId': string;
     /**
-    * Application or device used to record the measurement values
+    * Ex: 13
     */
-    'sourceName': string;
+    'connectorId': number;
     /**
-    * Start Time for the measurement event in UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"
+    * Ex: 2017-07-30 21:08:36
     */
-    'startTimeString': string;
+    'createdAt': string;
     /**
-    * Seconds between the start of the event measured and 1970 (Unix timestamp)
+    * Examples: 3/5, $10, or 1 count
     */
-    'startTimeEpoch': number;
-    'humanTime': HumanTime;
+    'displayValueAndUnitString': string;
     /**
-    * Converted measurement value in requested unit
+    * Ex: ion-sad-outline
     */
-    'value': number;
+    'iconIcon': string;
+    /**
+    * Ex: 1051466127
+    */
+    'id': number;
+    /**
+    * Ex: value
+    */
+    'inputType': string;
+    /**
+    * Ex: ion-ios-medkit-outline
+    */
+    'ionIcon': string;
+    /**
+    * Ex: 1
+    */
+    'manualTracking': boolean;
+    /**
+    * Ex: 5
+    */
+    'maximumAllowedValue': number;
+    /**
+    * Ex: 1
+    */
+    'minimumAllowedValue': number;
+    /**
+    * Note of measurement
+    */
+    'note': string;
+    /**
+    * Additional meta data for the measurement
+    */
+    'noteObject': any;
+    /**
+    * Embeddable HTML with message hyperlinked with associated url
+    */
+    'noteHtml': any;
+    /**
+    * Ex: 23
+    */
+    'originalUnitId': number;
     /**
     * Original value as originally submitted
     */
     'originalValue': number;
     /**
-    * Original Unit of measurement as originally submitted
+    * Ex: img/variable_categories/treatments.png
     */
-    'originalunitAbbreviatedName': string;
+    'pngPath': string;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/treatments.png
+    */
+    'pngUrl': string;
+    /**
+    * Link to associated product for purchase
+    */
+    'productUrl': string;
+    /**
+    * Application or device used to record the measurement values
+    */
+    'sourceName': string;
+    /**
+    * Ex: 2014-08-27
+    */
+    'startDate': string;
+    /**
+    * Seconds between the start of the event measured and 1970 (Unix timestamp)
+    */
+    'startTimeEpoch': number;
+    /**
+    * Start Time for the measurement event in UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'startTimeString': string;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/treatments.svg
+    */
+    'svgUrl': string;
     /**
     * Abbreviated name for the unit of measurement
     */
     'unitAbbreviatedName': string;
     /**
-    * Note of measurement
+    * Ex: 6
     */
-    'note': string;
+    'unitCategoryId': number;
+    /**
+    * Ex: Miscellany
+    */
+    'unitCategoryName': string;
+    /**
+    * Ex: 23
+    */
+    'unitId': number;
+    /**
+    * Ex: Count
+    */
+    'unitName': string;
+    /**
+    * Ex: 2017-07-30 21:08:36
+    */
+    'updatedAt': string;
+    /**
+    * Link to associated Facebook like or Github commit, for instance
+    */
+    'url': string;
+    /**
+    * Ex: count
+    */
+    'userVariableUnitAbbreviatedName': string;
+    /**
+    * Ex: 6
+    */
+    'userVariableUnitCategoryId': number;
+    /**
+    * Ex: Miscellany
+    */
+    'userVariableUnitCategoryName': string;
+    /**
+    * Ex: 23
+    */
+    'userVariableUnitId': number;
+    /**
+    * Ex: Count
+    */
+    'userVariableUnitName': string;
+    /**
+    * Ex: 13
+    */
+    'userVariableVariableCategoryId': number;
+    /**
+    * Ex: Treatments
+    */
+    'userVariableVariableCategoryName': string;
+    /**
+    * Ex: negative
+    */
+    'valence': string;
+    /**
+    * Converted measurement value in requested unit
+    */
+    'value': number;
+    /**
+    * Ex: 13
+    */
+    'variableCategoryId': number;
+    /**
+    * Ex: https://maxcdn.icons8.com/Color/PNG/96/Healthcare/pill-96.png
+    */
+    'variableCategoryImageUrl': string;
+    /**
+    * Ex: Treatments
+    */
+    'variableCategoryName': string;
+    /**
+    * Ex: negative
+    */
+    'variableDescription': string;
+    /**
+    * Ex: 5956846
+    */
+    'variableId': number;
+    /**
+    * Name of the variable for which we are creating the measurement records
+    */
+    'variableName': string;
+    /**
+    * Ex: Trader Joe's Bedtime Tea
+    */
+    'displayName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "connectorId",
+            "baseName": "connectorId",
+            "type": "number"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "displayValueAndUnitString",
+            "baseName": "displayValueAndUnitString",
+            "type": "string"
+        },
+        {
+            "name": "iconIcon",
+            "baseName": "iconIcon",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "inputType",
+            "baseName": "inputType",
+            "type": "string"
+        },
+        {
+            "name": "ionIcon",
+            "baseName": "ionIcon",
+            "type": "string"
+        },
+        {
+            "name": "manualTracking",
+            "baseName": "manualTracking",
+            "type": "boolean"
+        },
+        {
+            "name": "maximumAllowedValue",
+            "baseName": "maximumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "minimumAllowedValue",
+            "baseName": "minimumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "note",
+            "baseName": "note",
+            "type": "string"
+        },
+        {
+            "name": "noteObject",
+            "baseName": "noteObject",
+            "type": "any"
+        },
+        {
+            "name": "noteHtml",
+            "baseName": "noteHtml",
+            "type": "any"
+        },
+        {
+            "name": "originalUnitId",
+            "baseName": "originalUnitId",
+            "type": "number"
+        },
+        {
+            "name": "originalValue",
+            "baseName": "originalValue",
+            "type": "number"
+        },
+        {
+            "name": "pngPath",
+            "baseName": "pngPath",
+            "type": "string"
+        },
+        {
+            "name": "pngUrl",
+            "baseName": "pngUrl",
+            "type": "string"
+        },
+        {
+            "name": "productUrl",
+            "baseName": "productUrl",
+            "type": "string"
+        },
+        {
+            "name": "sourceName",
+            "baseName": "sourceName",
+            "type": "string"
+        },
+        {
+            "name": "startDate",
+            "baseName": "startDate",
+            "type": "string"
+        },
+        {
+            "name": "startTimeEpoch",
+            "baseName": "startTimeEpoch",
+            "type": "number"
+        },
+        {
+            "name": "startTimeString",
+            "baseName": "startTimeString",
+            "type": "string"
+        },
+        {
+            "name": "svgUrl",
+            "baseName": "svgUrl",
+            "type": "string"
+        },
+        {
+            "name": "unitAbbreviatedName",
+            "baseName": "unitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "unitCategoryId",
+            "baseName": "unitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "unitCategoryName",
+            "baseName": "unitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "unitId",
+            "baseName": "unitId",
+            "type": "number"
+        },
+        {
+            "name": "unitName",
+            "baseName": "unitName",
+            "type": "string"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "url",
+            "baseName": "url",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitAbbreviatedName",
+            "baseName": "userVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitCategoryId",
+            "baseName": "userVariableUnitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitCategoryName",
+            "baseName": "userVariableUnitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitId",
+            "baseName": "userVariableUnitId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitName",
+            "baseName": "userVariableUnitName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableVariableCategoryId",
+            "baseName": "userVariableVariableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableVariableCategoryName",
+            "baseName": "userVariableVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "valence",
+            "baseName": "valence",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        },
+        {
+            "name": "variableCategoryId",
+            "baseName": "variableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "variableCategoryImageUrl",
+            "baseName": "variableCategoryImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryName",
+            "baseName": "variableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "variableDescription",
+            "baseName": "variableDescription",
+            "type": "string"
+        },
+        {
+            "name": "variableId",
+            "baseName": "variableId",
+            "type": "number"
+        },
+        {
+            "name": "variableName",
+            "baseName": "variableName",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "displayName",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Measurement.attributeTypeMap;
+    }
 }
 
 export class MeasurementDelete {
+    /**
+    * Start time of the measurement to be deleted
+    */
+    'startTime': number;
     /**
     * Variable id of the measurement to be deleted
     */
     'variableId': number;
     /**
-    * Start time of the measurement to be deleted
+    * Name of the connector for which measurements should be deleted
     */
-    'startTime': number;
+    'connectorName': string;
+    /**
+    * Your app's client id
+    */
+    'clientId': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "startTime",
+            "baseName": "startTime",
+            "type": "number"
+        },
+        {
+            "name": "variableId",
+            "baseName": "variableId",
+            "type": "number"
+        },
+        {
+            "name": "connectorName",
+            "baseName": "connectorName",
+            "type": "string"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return MeasurementDelete.attributeTypeMap;
+    }
 }
 
-export class MeasurementRange {
+export class MeasurementItem {
     /**
-    * The timestamp of the earliest measurement for a user.
+    * Optional note to include with the measurement
     */
-    'lowerLimit': number;
+    'note': string;
     /**
-    * The timestamp of the most recent measurement for a user.
+    * Timestamp for the measurement event in epoch time (unixtime)
     */
-    'upperLimit': number;
+    'timestamp': number;
+    /**
+    * Measurement value
+    */
+    'value': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "note",
+            "baseName": "note",
+            "type": "string"
+        },
+        {
+            "name": "timestamp",
+            "baseName": "timestamp",
+            "type": "number"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return MeasurementItem.attributeTypeMap;
+    }
 }
 
 export class MeasurementSet {
-    /**
-    * Array of timestamps, values, and optional notes
-    */
-    'measurements': Array<ValueObject>;
-    /**
-    * ORIGINAL name of the variable for which we are creating the measurement records
-    */
-    'variableName': string;
-    /**
-    * Name of the application or device used to record the measurement values
-    */
-    'sourceName': string;
-    /**
-    * Variable category name
-    */
-    'variableCategoryName': string;
     /**
     * Way to aggregate measurements over time. Options are \"MEAN\" or \"SUM\". SUM should be used for things like minutes of exercise.  If you use MEAN for exercise, then a person might exercise more minutes in one day but add separate measurements that were smaller.  So when we are doing correlational analysis, we would think that the person exercised less that day even though they exercised more.  Conversely, we must use MEAN for things such as ratings which cannot be SUMMED.
     */
     'combinationOperation': MeasurementSet.CombinationOperationEnum;
     /**
+    * Array of timestamps, values, and optional notes
+    */
+    'measurementItems': Array<MeasurementItem>;
+    /**
+    * Name of the application or device used to record the measurement values
+    */
+    'sourceName': string;
+    /**
     * Unit of measurement
     */
     'unitAbbreviatedName': string;
+    /**
+    * Variable category name
+    */
+    'variableCategoryName': string;
+    /**
+    * ORIGINAL name of the variable for which we are creating the measurement records
+    */
+    'variableName': string;
+    /**
+    * UPC or other barcode scan result
+    */
+    'upc': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "combinationOperation",
+            "baseName": "combinationOperation",
+            "type": "MeasurementSet.CombinationOperationEnum"
+        },
+        {
+            "name": "measurementItems",
+            "baseName": "measurementItems",
+            "type": "Array<MeasurementItem>"
+        },
+        {
+            "name": "sourceName",
+            "baseName": "sourceName",
+            "type": "string"
+        },
+        {
+            "name": "unitAbbreviatedName",
+            "baseName": "unitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryName",
+            "baseName": "variableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "variableName",
+            "baseName": "variableName",
+            "type": "string"
+        },
+        {
+            "name": "upc",
+            "baseName": "upc",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return MeasurementSet.attributeTypeMap;
+    }
 }
 
 export namespace MeasurementSet {
@@ -587,18 +3038,15 @@ export namespace MeasurementSet {
         SUM = <any> 'SUM'
     }
 }
-export class MeasurementSource {
-    /**
-    * Name of the application or device.
-    */
-    'name': string;
-}
-
 export class MeasurementUpdate {
     /**
-    * Variable id of the measurement to be deleted
+    * Variable id of the measurement to be updated
     */
     'id': number;
+    /**
+    * The new note for the measurement (optional)
+    */
+    'note': string;
     /**
     * The new timestamp for the the event in epoch seconds (optional)
     */
@@ -607,48 +3055,164 @@ export class MeasurementUpdate {
     * The new value of for the measurement (optional)
     */
     'value': number;
-    /**
-    * The new note for the measurement (optional)
-    */
-    'note': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "note",
+            "baseName": "note",
+            "type": "string"
+        },
+        {
+            "name": "startTime",
+            "baseName": "startTime",
+            "type": "number"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return MeasurementUpdate.attributeTypeMap;
+    }
 }
 
-export class Pairs {
+export class Pair {
     /**
-    * Category name
+    * Ex: 101341.66666667
     */
-    'name': string;
+    'causeMeasurement': number;
+    /**
+    * Ex: 101341.66666667
+    */
+    'causeMeasurementValue': number;
+    /**
+    * Ex: mg
+    */
+    'causeVariableUnitAbbreviatedName': string;
+    /**
+    * Ex: 7.98
+    */
+    'effectMeasurement': number;
+    /**
+    * Ex: 7.98
+    */
+    'effectMeasurementValue': number;
+    /**
+    * Ex: %
+    */
+    'effectVariableUnitAbbreviatedName': string;
+    /**
+    * Ex: 2015-08-06 15:49:02 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'eventAt': string;
+    /**
+    * Ex: 1438876142
+    */
+    'eventAtUnixTime': number;
+    /**
+    * Ex: 2015-08-06 15:49:02 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'startTimeString': string;
+    /**
+    * Ex: 1464937200
+    */
+    'timestamp': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "causeMeasurement",
+            "baseName": "causeMeasurement",
+            "type": "number"
+        },
+        {
+            "name": "causeMeasurementValue",
+            "baseName": "causeMeasurementValue",
+            "type": "number"
+        },
+        {
+            "name": "causeVariableUnitAbbreviatedName",
+            "baseName": "causeVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "effectMeasurement",
+            "baseName": "effectMeasurement",
+            "type": "number"
+        },
+        {
+            "name": "effectMeasurementValue",
+            "baseName": "effectMeasurementValue",
+            "type": "number"
+        },
+        {
+            "name": "effectVariableUnitAbbreviatedName",
+            "baseName": "effectVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "eventAt",
+            "baseName": "eventAt",
+            "type": "string"
+        },
+        {
+            "name": "eventAtUnixTime",
+            "baseName": "eventAtUnixTime",
+            "type": "number"
+        },
+        {
+            "name": "startTimeString",
+            "baseName": "startTimeString",
+            "type": "string"
+        },
+        {
+            "name": "timestamp",
+            "baseName": "timestamp",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Pair.attributeTypeMap;
+    }
 }
 
-export class Permission {
+export class ParticipantInstruction {
     /**
-    * Grant permission to target user or public so they may access measurements within the given parameters. TODO: Rename target to something more intuitive.
+    * Ex: <a href=\"https://www.amazon.com/Fitbit-Charge-Heart-Fitness-Wristband/dp/B01K9S260E/ref=as_li_ss_tl?ie=UTF8&qid=1493518902&sr=8-3&keywords=fitbit&th=1&linkCode=ll1&tag=quant08-20&linkId=b357b0833de73b0c4e935fd7c13a079e\">Obtain Fitbit</a> and use it to record your Sleep Duration. Once you have a <a href=\"https://www.amazon.com/Fitbit-Charge-Heart-Fitness-Wristband/dp/B01K9S260E/ref=as_li_ss_tl?ie=UTF8&qid=1493518902&sr=8-3&keywords=fitbit&th=1&linkCode=ll1&tag=quant08-20&linkId=b357b0833de73b0c4e935fd7c13a079e\">Fitbit</a> account, <a href=\"https://quantimodo.quantimo.do/ionic/Modo/www/#/app/import\">connect your  Fitbit account at QuantiModo</a> to automatically import and analyze your data.
     */
-    'target': number;
+    'instructionsForCauseVariable': string;
     /**
-    * ORIGINAL Variable name
+    * Ex: <a href=\"https://quantimo.do\">Obtain QuantiModo</a> and use it to record your Overall Mood. Once you have a <a href=\"https://quantimo.do\">QuantiModo</a> account, <a href=\"https://quantimodo.quantimo.do/ionic/Modo/www/#/app/import\">connect your  QuantiModo account at QuantiModo</a> to automatically import and analyze your data.
     */
-    'variableName': string;
-    /**
-    * Earliest time when measurements will be accessible in epoch seconds
-    */
-    'minTimestamp': number;
-    /**
-    * Latest time when measurements will be accessible in epoch seconds
-    */
-    'maxTimestamp': number;
-    /**
-    * Earliest time of day when measurements will be accessible in epoch seconds
-    */
-    'minTimeOfDay': number;
-    /**
-    * Latest time of day when measurements will be accessible in epoch seconds
-    */
-    'maxTimeOfDay': number;
-    /**
-    * Maybe specifies if only weekday measurements should be accessible
-    */
-    'week': string;
+    'instructionsForEffectVariable': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "instructionsForCauseVariable",
+            "baseName": "instructionsForCauseVariable",
+            "type": "string"
+        },
+        {
+            "name": "instructionsForEffectVariable",
+            "baseName": "instructionsForEffectVariable",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ParticipantInstruction.attributeTypeMap;
+    }
 }
 
 export class PostCorrelation {
@@ -657,95 +3221,1352 @@ export class PostCorrelation {
     */
     'causeVariableName': string;
     /**
-    * Effect variable name
-    */
-    'effectVariableName': string;
-    /**
     * Correlation value
     */
     'correlation': number;
     /**
+    * Effect variable name
+    */
+    'effectVariableName': string;
+    /**
     * Vote: 0 or 1
     */
     'vote': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "causeVariableName",
+            "baseName": "causeVariableName",
+            "type": "string"
+        },
+        {
+            "name": "correlation",
+            "baseName": "correlation",
+            "type": "number"
+        },
+        {
+            "name": "effectVariableName",
+            "baseName": "effectVariableName",
+            "type": "string"
+        },
+        {
+            "name": "vote",
+            "baseName": "vote",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostCorrelation.attributeTypeMap;
+    }
 }
 
-export class PostVote {
+export class PostMeasurementsDataResponse {
+    'userVariables': Array<Variable>;
     /**
-    * Cause variable id
+    * Can be used as body of help info popup
     */
-    'causeVariableId': number;
+    'description': string;
     /**
-    * Effect variable id
+    * Can be used as title in help info popup
     */
-    'effectVariableId': number;
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "userVariables",
+            "baseName": "userVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostMeasurementsDataResponse.attributeTypeMap;
+    }
+}
+
+export class PostMeasurementsResponse {
+    'data': PostMeasurementsDataResponse;
     /**
-    * Vote: 0 (for implausible) or 1 (for plausible)
+    * Message
     */
-    'vote': boolean;
+    'message': string;
+    /**
+    * Status code
+    */
+    'status': number;
+    'success': boolean;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "data",
+            "baseName": "data",
+            "type": "PostMeasurementsDataResponse"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "number"
+        },
+        {
+            "name": "success",
+            "baseName": "success",
+            "type": "boolean"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostMeasurementsResponse.attributeTypeMap;
+    }
+}
+
+export class PostStudyCreateResponse {
+    'study': Study;
+    /**
+    * Ex: ok
+    */
+    'status': string;
+    /**
+    * Ex: true
+    */
+    'success': boolean;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "study",
+            "baseName": "study",
+            "type": "Study"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "string"
+        },
+        {
+            "name": "success",
+            "baseName": "success",
+            "type": "boolean"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostStudyCreateResponse.attributeTypeMap;
+    }
+}
+
+export class PostStudyPublishResponse {
+    /**
+    * Ex: ok
+    */
+    'status': string;
+    /**
+    * Ex: true
+    */
+    'success': boolean;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "string"
+        },
+        {
+            "name": "success",
+            "baseName": "success",
+            "type": "boolean"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostStudyPublishResponse.attributeTypeMap;
+    }
+}
+
+export class PostTrackingRemindersDataResponse {
+    'trackingReminderNotifications': Array<TrackingReminderNotification>;
+    'trackingReminders': Array<TrackingReminder>;
+    'userVariables': Array<Variable>;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "trackingReminderNotifications",
+            "baseName": "trackingReminderNotifications",
+            "type": "Array<TrackingReminderNotification>"
+        },
+        {
+            "name": "trackingReminders",
+            "baseName": "trackingReminders",
+            "type": "Array<TrackingReminder>"
+        },
+        {
+            "name": "userVariables",
+            "baseName": "userVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostTrackingRemindersDataResponse.attributeTypeMap;
+    }
+}
+
+export class PostTrackingRemindersResponse {
+    'data': PostTrackingRemindersDataResponse;
+    /**
+    * Message
+    */
+    'message': string;
+    /**
+    * Status code
+    */
+    'status': number;
+    'success': boolean;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "data",
+            "baseName": "data",
+            "type": "PostTrackingRemindersDataResponse"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "number"
+        },
+        {
+            "name": "success",
+            "baseName": "success",
+            "type": "boolean"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostTrackingRemindersResponse.attributeTypeMap;
+    }
+}
+
+export class PostUserSettingsDataResponse {
+    /**
+    * Ex: 1
+    */
+    'purchaseId': number;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "purchaseId",
+            "baseName": "purchaseId",
+            "type": "number"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostUserSettingsDataResponse.attributeTypeMap;
+    }
+}
+
+export class PostUserSettingsResponse {
+    'data': PostUserSettingsDataResponse;
+    /**
+    * Message
+    */
+    'message': string;
+    /**
+    * Status code
+    */
+    'status': number;
+    'success': boolean;
+    /**
+    * Can be used as body of help info popup
+    */
+    'description': string;
+    /**
+    * Can be used as title in help info popup
+    */
+    'summary': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "data",
+            "baseName": "data",
+            "type": "PostUserSettingsDataResponse"
+        },
+        {
+            "name": "message",
+            "baseName": "message",
+            "type": "string"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "number"
+        },
+        {
+            "name": "success",
+            "baseName": "success",
+            "type": "boolean"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "summary",
+            "baseName": "summary",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return PostUserSettingsResponse.attributeTypeMap;
+    }
+}
+
+export class Scope {
+    /**
+    * Ex: user_likes
+    */
+    'scalar': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "scalar",
+            "baseName": "scalar",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Scope.attributeTypeMap;
+    }
+}
+
+export class ShareInvitationBody {
+    /**
+    * Enter the email address of the friend, family member, or health-care provider that you would like to give access to your measurements
+    */
+    'emailAddress': string;
+    /**
+    * Name of the individual that the user wishes to have access to their measurements
+    */
+    'name': string;
+    /**
+    * Ex: I would like to share my measurements with you!
+    */
+    'emailSubject': string;
+    /**
+    * Ex: I would like to share my data with you so you can help me identify find discover hidden causes of and new treatments for my illness.
+    */
+    'emailBody': string;
+    /**
+    * Space separated list of scopes to grant to the recipient (i.e. readmeasurements, writemeasurements, measurements:read
+    */
+    'scopes': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "emailAddress",
+            "baseName": "emailAddress",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "emailSubject",
+            "baseName": "emailSubject",
+            "type": "string"
+        },
+        {
+            "name": "emailBody",
+            "baseName": "emailBody",
+            "type": "string"
+        },
+        {
+            "name": "scopes",
+            "baseName": "scopes",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return ShareInvitationBody.attributeTypeMap;
+    }
+}
+
+export class Study {
+    /**
+    * Ex: population, cohort, or individual
+    */
+    'type': string;
+    /**
+    * The user id of the principal investigator or subject if an individual studies
+    */
+    'userId': string;
+    /**
+    * ID of the cohort study which is necessary to allow participants to join
+    */
+    'studyId': string;
+    'causeVariable': Variable;
+    'studyCharts': StudyCharts;
+    'effectVariable': Variable;
+    'participantInstructions': ParticipantInstruction;
+    'statistics': Correlation;
+    'studyHtml': StudyHtml;
+    'studyImages': StudyImages;
+    'studyLinks': StudyLinks;
+    'studyText': StudyText;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "type",
+            "baseName": "type",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "string"
+        },
+        {
+            "name": "studyId",
+            "baseName": "studyId",
+            "type": "string"
+        },
+        {
+            "name": "causeVariable",
+            "baseName": "causeVariable",
+            "type": "Variable"
+        },
+        {
+            "name": "studyCharts",
+            "baseName": "studyCharts",
+            "type": "StudyCharts"
+        },
+        {
+            "name": "effectVariable",
+            "baseName": "effectVariable",
+            "type": "Variable"
+        },
+        {
+            "name": "participantInstructions",
+            "baseName": "participantInstructions",
+            "type": "ParticipantInstruction"
+        },
+        {
+            "name": "statistics",
+            "baseName": "statistics",
+            "type": "Correlation"
+        },
+        {
+            "name": "studyHtml",
+            "baseName": "studyHtml",
+            "type": "StudyHtml"
+        },
+        {
+            "name": "studyImages",
+            "baseName": "studyImages",
+            "type": "StudyImages"
+        },
+        {
+            "name": "studyLinks",
+            "baseName": "studyLinks",
+            "type": "StudyLinks"
+        },
+        {
+            "name": "studyText",
+            "baseName": "studyText",
+            "type": "StudyText"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Study.attributeTypeMap;
+    }
+}
+
+/**
+* An object with various chart properties each property contain and svg and Highcharts configuration
+*/
+export class StudyCharts {
+    'populationTraitScatterPlot': Chart;
+    'outcomeDistributionColumnChart': Chart;
+    'predictorDistributionColumnChart': Chart;
+    'correlationScatterPlot': Chart;
+    'pairsOverTimeLineChart': Chart;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "populationTraitScatterPlot",
+            "baseName": "populationTraitScatterPlot",
+            "type": "Chart"
+        },
+        {
+            "name": "outcomeDistributionColumnChart",
+            "baseName": "outcomeDistributionColumnChart",
+            "type": "Chart"
+        },
+        {
+            "name": "predictorDistributionColumnChart",
+            "baseName": "predictorDistributionColumnChart",
+            "type": "Chart"
+        },
+        {
+            "name": "correlationScatterPlot",
+            "baseName": "correlationScatterPlot",
+            "type": "Chart"
+        },
+        {
+            "name": "pairsOverTimeLineChart",
+            "baseName": "pairsOverTimeLineChart",
+            "type": "Chart"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StudyCharts.attributeTypeMap;
+    }
+}
+
+export class StudyHtml {
+    /**
+    * Embeddable chart html
+    */
+    'chartHtml': string;
+    /**
+    * Play Store, App Store, Chrome Web Store
+    */
+    'downloadButtonsHtml': string;
+    /**
+    * Embeddable study including HTML head section charts.  Modifiable css classes are study-title, study-section-header, study-section-body
+    */
+    'fullPageWithHead': string;
+    /**
+    * Embeddable study text html including charts.  Modifiable css classes are study-title, study-section-header, study-section-body
+    */
+    'fullStudyHtml': string;
+    /**
+    * Embeddable study html including charts and css styling
+    */
+    'fullStudyHtmlWithCssStyles': string;
+    /**
+    * Embeddable table with statistics
+    */
+    'statisticsTableHtml': string;
+    /**
+    * Text summary
+    */
+    'studyAbstractHtml': string;
+    /**
+    * Title, study image, abstract with CSS styling
+    */
+    'studyHeaderHtml': string;
+    /**
+    * PNG image
+    */
+    'studyImageHtml': string;
+    /**
+    * Facebook, Twitter, Google+
+    */
+    'studyMetaHtml': string;
+    /**
+    * Formatted study text sections
+    */
+    'studyTextHtml': string;
+    /**
+    * 
+    */
+    'socialSharingButtonHtml': string;
+    /**
+    * 
+    */
+    'studySummaryBoxHtml': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "chartHtml",
+            "baseName": "chartHtml",
+            "type": "string"
+        },
+        {
+            "name": "downloadButtonsHtml",
+            "baseName": "downloadButtonsHtml",
+            "type": "string"
+        },
+        {
+            "name": "fullPageWithHead",
+            "baseName": "fullPageWithHead",
+            "type": "string"
+        },
+        {
+            "name": "fullStudyHtml",
+            "baseName": "fullStudyHtml",
+            "type": "string"
+        },
+        {
+            "name": "fullStudyHtmlWithCssStyles",
+            "baseName": "fullStudyHtmlWithCssStyles",
+            "type": "string"
+        },
+        {
+            "name": "statisticsTableHtml",
+            "baseName": "statisticsTableHtml",
+            "type": "string"
+        },
+        {
+            "name": "studyAbstractHtml",
+            "baseName": "studyAbstractHtml",
+            "type": "string"
+        },
+        {
+            "name": "studyHeaderHtml",
+            "baseName": "studyHeaderHtml",
+            "type": "string"
+        },
+        {
+            "name": "studyImageHtml",
+            "baseName": "studyImageHtml",
+            "type": "string"
+        },
+        {
+            "name": "studyMetaHtml",
+            "baseName": "studyMetaHtml",
+            "type": "string"
+        },
+        {
+            "name": "studyTextHtml",
+            "baseName": "studyTextHtml",
+            "type": "string"
+        },
+        {
+            "name": "socialSharingButtonHtml",
+            "baseName": "socialSharingButtonHtml",
+            "type": "string"
+        },
+        {
+            "name": "studySummaryBoxHtml",
+            "baseName": "studySummaryBoxHtml",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StudyHtml.attributeTypeMap;
+    }
+}
+
+export class StudyImages {
+    /**
+    * Ex: https://maxcdn.icons8.com/Color/PNG/96/Household/sleeping_in_bed-96.png
+    */
+    'causeVariableImageUrl': string;
+    /**
+    * Ex: ion-ios-cloudy-night-outline
+    */
+    'causeVariableIonIcon': string;
+    /**
+    * Ex: https://maxcdn.icons8.com/Color/PNG/96/Cinema/theatre_mask-96.png
+    */
+    'effectVariableImageUrl': string;
+    /**
+    * Ex: ion-happy-outline
+    */
+    'effectVariableIonIcon': string;
+    /**
+    * Ex: https://s3.amazonaws.com/quantimodo-docs/images/gauge-moderately-positive-relationship.png
+    */
+    'gaugeImage': string;
+    /**
+    * Ex: https://s3.amazonaws.com/quantimodo-docs/images/gauge-moderately-positive-relationship-200-200.png
+    */
+    'gaugeImageSquare': string;
+    /**
+    * Image with gauge and category images
+    */
+    'gaugeSharingImageUrl': string;
+    /**
+    * Ex: https://s3-us-west-1.amazonaws.com/qmimages/variable_categories_gauges_logo_background/gauge-moderately-positive-relationship_sleep_emotions_logo_background.png
+    */
+    'imageUrl': string;
+    /**
+    * Image with robot and category images
+    */
+    'robotSharingImageUrl': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "causeVariableImageUrl",
+            "baseName": "causeVariableImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "causeVariableIonIcon",
+            "baseName": "causeVariableIonIcon",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableImageUrl",
+            "baseName": "effectVariableImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableIonIcon",
+            "baseName": "effectVariableIonIcon",
+            "type": "string"
+        },
+        {
+            "name": "gaugeImage",
+            "baseName": "gaugeImage",
+            "type": "string"
+        },
+        {
+            "name": "gaugeImageSquare",
+            "baseName": "gaugeImageSquare",
+            "type": "string"
+        },
+        {
+            "name": "gaugeSharingImageUrl",
+            "baseName": "gaugeSharingImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "imageUrl",
+            "baseName": "imageUrl",
+            "type": "string"
+        },
+        {
+            "name": "robotSharingImageUrl",
+            "baseName": "robotSharingImageUrl",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StudyImages.attributeTypeMap;
+    }
+}
+
+export class StudyLinks {
+    /**
+    * Ex: mailto:?subject=N1%20Study%3A%20Sleep%20Quality%20Predicts%20Higher%20Overall%20Mood&body=Check%20out%20my%20study%20at%20https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fstudy%3FcauseVariableName%3DSleep%2520Quality%26effectVariableName%3DOverall%2520Mood%26userId%3D230%0A%0AHave%20a%20great%20day!
+    */
+    'studyLinkEmail': string;
+    /**
+    * Ex: https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fstudy%3FcauseVariableName%3DSleep%2520Quality%26effectVariableName%3DOverall%2520Mood%26userId%3D230
+    */
+    'studyLinkFacebook': string;
+    /**
+    * Ex: https://plus.google.com/share?url=https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fstudy%3FcauseVariableName%3DSleep%2520Quality%26effectVariableName%3DOverall%2520Mood%26userId%3D230
+    */
+    'studyLinkGoogle': string;
+    /**
+    * Ex: https://local.quantimo.do/api/v2/study?causeVariableName=Sleep%20Quality&effectVariableName=Overall%20Mood&userId=230
+    */
+    'studyLinkStatic': string;
+    /**
+    * Ex: https://local.quantimo.do/ionic/Modo/www/index.html#/app/study?causeVariableName=Sleep%20Quality&effectVariableName=Overall%20Mood&userId=230
+    */
+    'studyLinkDynamic': string;
+    /**
+    * Ex: https://twitter.com/home?status=Sleep%20Quality%20Predicts%20Higher%20Overall%20Mood%20https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fstudy%3FcauseVariableName%3DSleep%2520Quality%26effectVariableName%3DOverall%2520Mood%26userId%3D230%20%40quantimodo
+    */
+    'studyLinkTwitter': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "studyLinkEmail",
+            "baseName": "studyLinkEmail",
+            "type": "string"
+        },
+        {
+            "name": "studyLinkFacebook",
+            "baseName": "studyLinkFacebook",
+            "type": "string"
+        },
+        {
+            "name": "studyLinkGoogle",
+            "baseName": "studyLinkGoogle",
+            "type": "string"
+        },
+        {
+            "name": "studyLinkStatic",
+            "baseName": "studyLinkStatic",
+            "type": "string"
+        },
+        {
+            "name": "studyLinkDynamic",
+            "baseName": "studyLinkDynamic",
+            "type": "string"
+        },
+        {
+            "name": "studyLinkTwitter",
+            "baseName": "studyLinkTwitter",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StudyLinks.attributeTypeMap;
+    }
+}
+
+export class StudyText {
+    /**
+    * Ex: Overall Mood is 3.55/5 (15% higher) on average after days with around 4.19/5 Sleep Quality
+    */
+    'averageEffectFollowingHighCauseExplanation': string;
+    /**
+    * Ex: Overall Mood is 2.65/5 (14% lower) on average after days with around 1.97/5 Sleep Quality
+    */
+    'averageEffectFollowingLowCauseExplanation': string;
+    /**
+    * Ex: Overall Mood, on average, 17% higher after around 4.14/5 Sleep Quality
+    */
+    'valuePredictingHighOutcomeExplanation': string;
+    /**
+    * Ex: Overall Mood, on average, 11% lower after around 3.03/5 Sleep Quality
+    */
+    'valuePredictingLowOutcomeExplanation': string;
+    /**
+    * Ex: It was assumed that 0 hours would pass before a change in Very Distracting Time would produce an observable change in Video Activities.  It was assumed that Very Distracting Time could produce an observable change in Video Activities for as much as 7 days after the stimulus event.
+    */
+    'dataAnalysis': string;
+    /**
+    * Ex: Very Distracting Time data was primarily collected using <a href=\"https://www.rescuetime.com/rp/quantimodo/plans\">RescueTime</a>. Detailed reports show which applications and websites you spent time on. Activities are automatically grouped into pre-defined categories with built-in productivity scores covering thousands of websites and applications. You can customize categories and productivity scores to meet your needs.<br>Video Activities data was primarily collected using <a href=\"https://www.rescuetime.com/rp/quantimodo/plans\">RescueTime</a>. Detailed reports show which applications and websites you spent time on. Activities are automatically grouped into pre-defined categories with built-in productivity scores covering thousands of websites and applications. You can customize categories and productivity scores to meet your needs.
+    */
+    'dataSources': string;
+    /**
+    * Ex: Very Distracting Time data was primarily collected using <a href=\"https://www.rescuetime.com/rp/quantimodo/plans\">RescueTime</a>. Detailed reports show which applications and websites you spent time on. Activities are automatically grouped into pre-defined categories with built-in productivity scores covering thousands of websites and applications. You can customize categories and productivity scores to meet your needs.<br>Video Activities data was primarily collected using <a href=\"https://www.rescuetime.com/rp/quantimodo/plans\">RescueTime</a>. Detailed reports show which applications and websites you spent time on. Activities are automatically grouped into pre-defined categories with built-in productivity scores covering thousands of websites and applications. You can customize categories and productivity scores to meet your needs.
+    */
+    'dataSourcesParagraphForCause': string;
+    /**
+    * Ex: Very Distracting Time data was primarily collected using <a href=\"https://www.rescuetime.com/rp/quantimodo/plans\">RescueTime</a>. Detailed reports show which applications and websites you spent time on. Activities are automatically grouped into pre-defined categories with built-in productivity scores covering thousands of websites and applications. You can customize categories and productivity scores to meet your needs.<br>Video Activities data was primarily collected using <a href=\"https://www.rescuetime.com/rp/quantimodo/plans\">RescueTime</a>. Detailed reports show which applications and websites you spent time on. Activities are automatically grouped into pre-defined categories with built-in productivity scores covering thousands of websites and applications. You can customize categories and productivity scores to meet your needs.
+    */
+    'dataSourcesParagraphForEffect': string;
+    /**
+    * Ex: Sleep Quality Predicts Higher Overall Mood
+    */
+    'lastCauseDailyValueSentenceExtended': string;
+    /**
+    * Ex: Sleep Quality Predicts Higher Overall Mood
+    */
+    'lastCauseAndOptimalValueSentence': string;
+    /**
+    * Ex: Sleep Quality Predicts Higher Overall Mood
+    */
+    'lastCauseDailyValueSentence': string;
+    /**
+    * Ex: Sleep Quality Predicts Higher Overall Mood
+    */
+    'optimalDailyValueSentence': string;
+    /**
+    * Ex: Sleep Quality Predicts Higher Overall Mood
+    */
+    'predictorExplanation': string;
+    /**
+    * Ex: Using a two-tailed t-test with alpha = 0.05, it was determined that the change in Video Activities is statistically significant at 95% confidence interval.
+    */
+    'significanceExplanation': string;
+    /**
+    * Ex: Aggregated data from 21 suggests with a low degree of confidence (p=0.097) that Very Distracting Time (Work) has a moderately positive predictive relationship (R=0.354) with Video Activities  (Activity).  The highest quartile of Video Activities measurements were observed following an average 2.03h Very Distracting Timeper day.  The lowest quartile of Video Activities  measurements were observed following an average 1.04h Very Distracting Timeper day.
+    */
+    'studyAbstract': string;
+    /**
+    * Ex: This study is based on data donated by  21 QuantiModo users. Thus, the study design is equivalent to the aggregation of 21 separate n=1 observational natural experiments.
+    */
+    'studyDesign': string;
+    /**
+    * Ex: As with any human experiment, it was impossible to control for all potentially confounding variables.             Correlation does not necessarily imply correlation.  We can never know for sure if one factor is definitely the cause of an outcome.             However, lack of correlation definitely implies the lack of a causal relationship.  Hence, we can with great             confidence rule out non-existent relationships. For instance, if we discover no relationship between mood             and an antidepressant this information is just as or even more valuable than the discovery that there is a relationship.             <br>             <br>             We can also take advantage of several characteristics of time series data from many subjects  to infer the likelihood of a causal relationship if we do find a correlational relationship.             The criteria for causation are a group of minimal conditions necessary to provide adequate evidence of a causal relationship between an incidence and a possible consequence.             The list of the criteria is as follows:             <br>             1. Strength (effect size): A small association does not mean that there is not a causal effect, though the larger the association, the more likely that it is causal.             <br>             2. Consistency (reproducibility): Consistent findings observed by different persons in different places with different samples strengthens the likelihood of an effect.             <br>             3. Specificity: Causation is likely if a very specific population at a specific site and disease with no other likely explanation. The more specific an association between a factor and an effect is, the bigger the probability of a causal relationship.             <br>             4. Temporality: The effect has to occur after the cause (and if there is an expected delay between the cause and expected effect, then the effect must occur after that delay).             <br>             5. Biological gradient: Greater exposure should generally lead to greater incidence of the effect. However, in some cases, the mere presence of the factor can trigger the effect. In other cases, an inverse proportion is observed: greater exposure leads to lower incidence.             <br>             6. Plausibility: A plausible mechanism between cause and effect is helpful.             <br>             7. Coherence: Coherence between epidemiological and laboratory findings increases the likelihood of an effect.             <br>             8. Experiment: \"Occasionally it is possible to appeal to experimental evidence\".             <br>             9. Analogy: The effect of similar factors may be considered.             <br>             <br>              The confidence in a causal relationship is bolstered by the fact that time-precedence was taken into account in all calculations. Furthermore, in accordance with the law of large numbers (LLN), the predictive power and accuracy of these results will continually grow over time.  146 paired data points were used in this analysis.   Assuming that the relationship is merely coincidental, as the participant independently modifies their Very Distracting Time values, the observed strength of the relationship will decline until it is below the threshold of significance.  To it another way, in the case that we do find a spurious correlation, suggesting that banana intake improves mood for instance,             one will likely increase their banana intake.  Due to the fact that this correlation is spurious, it is unlikely             that you will see a continued and persistent corresponding increase in mood.  So over time, the spurious correlation will             naturally dissipate.Furthermore, it will be very enlightening to aggregate this data with the data from other participants  with similar genetic, diseasomic, environmentomic, and demographic profiles.
+    */
+    'studyLimitations': string;
+    /**
+    * Ex: The objective of this study is to determine the nature of the relationship (if any) between the Very Distracting Time and the Video Activities. Additionally, we attempt to determine the Very Distracting Time values most likely to produce optimal Video Activities values.
+    */
+    'studyObjective': string;
+    /**
+    * Ex: This analysis suggests that higher Very Distracting Time (Work) generally predicts negative Video Activities (p = 0.097). Video Activities is, on average, 36%  higher after around 2.03 Very Distracting Time.  After an onset delay of 168 hours, Video Activities is, on average, 16%  lower than its average over the 168 hours following around 1.04 Very Distracting Time.  146 data points were used in this analysis.  The value for Very Distracting Time changed 2984 times, effectively running 1492 separate natural experiments. The top quartile outcome values are preceded by an average 2.03 h of Very Distracting Time.  The bottom quartile outcome values are preceded by an average 1.04 h of Very Distracting Time.  Forward Pearson Correlation Coefficient was 0.354 (p=0.097, 95% CI -0.437 to 1.144 onset delay = 0 hours, duration of action = 168 hours) .  The Reverse Pearson Correlation Coefficient was 0.208 (P=0.097, 95% CI -0.583 to 0.998, onset delay = -0 hours, duration of action = -168 hours). When the Very Distracting Time value is closer to 2.03 h than 1.04 h, the Video Activities value which follows is, on average, 36% percent higher than its typical value.  When the Very Distracting Time value is closer to 1.04 h than 2.03 h, the Video Activities value which follows is 0% lower than its typical value.  Video Activities is 5 h (67% higher) on average after days with around 5 h Very Distracting Time
+    */
+    'studyResults': string;
+    /**
+    * Ex: N1 Study: Very Distracting Time Predicts Negative Video Activities
+    */
+    'studyTitle': string;
+    /**
+    * Help us determine if Remeron affects Overall Mood!
+    */
+    'studyInvitation': string;
+    /**
+    * Does Remeron affect Overall Mood?
+    */
+    'studyQuestion': string;
+    /**
+    * In order to reduce suffering through the advancement of human knowledge...
+    */
+    'studyBackground': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "averageEffectFollowingHighCauseExplanation",
+            "baseName": "averageEffectFollowingHighCauseExplanation",
+            "type": "string"
+        },
+        {
+            "name": "averageEffectFollowingLowCauseExplanation",
+            "baseName": "averageEffectFollowingLowCauseExplanation",
+            "type": "string"
+        },
+        {
+            "name": "valuePredictingHighOutcomeExplanation",
+            "baseName": "valuePredictingHighOutcomeExplanation",
+            "type": "string"
+        },
+        {
+            "name": "valuePredictingLowOutcomeExplanation",
+            "baseName": "valuePredictingLowOutcomeExplanation",
+            "type": "string"
+        },
+        {
+            "name": "dataAnalysis",
+            "baseName": "dataAnalysis",
+            "type": "string"
+        },
+        {
+            "name": "dataSources",
+            "baseName": "dataSources",
+            "type": "string"
+        },
+        {
+            "name": "dataSourcesParagraphForCause",
+            "baseName": "dataSourcesParagraphForCause",
+            "type": "string"
+        },
+        {
+            "name": "dataSourcesParagraphForEffect",
+            "baseName": "dataSourcesParagraphForEffect",
+            "type": "string"
+        },
+        {
+            "name": "lastCauseDailyValueSentenceExtended",
+            "baseName": "lastCauseDailyValueSentenceExtended",
+            "type": "string"
+        },
+        {
+            "name": "lastCauseAndOptimalValueSentence",
+            "baseName": "lastCauseAndOptimalValueSentence",
+            "type": "string"
+        },
+        {
+            "name": "lastCauseDailyValueSentence",
+            "baseName": "lastCauseDailyValueSentence",
+            "type": "string"
+        },
+        {
+            "name": "optimalDailyValueSentence",
+            "baseName": "optimalDailyValueSentence",
+            "type": "string"
+        },
+        {
+            "name": "predictorExplanation",
+            "baseName": "predictorExplanation",
+            "type": "string"
+        },
+        {
+            "name": "significanceExplanation",
+            "baseName": "significanceExplanation",
+            "type": "string"
+        },
+        {
+            "name": "studyAbstract",
+            "baseName": "studyAbstract",
+            "type": "string"
+        },
+        {
+            "name": "studyDesign",
+            "baseName": "studyDesign",
+            "type": "string"
+        },
+        {
+            "name": "studyLimitations",
+            "baseName": "studyLimitations",
+            "type": "string"
+        },
+        {
+            "name": "studyObjective",
+            "baseName": "studyObjective",
+            "type": "string"
+        },
+        {
+            "name": "studyResults",
+            "baseName": "studyResults",
+            "type": "string"
+        },
+        {
+            "name": "studyTitle",
+            "baseName": "studyTitle",
+            "type": "string"
+        },
+        {
+            "name": "studyInvitation",
+            "baseName": "studyInvitation",
+            "type": "string"
+        },
+        {
+            "name": "studyQuestion",
+            "baseName": "studyQuestion",
+            "type": "string"
+        },
+        {
+            "name": "studyBackground",
+            "baseName": "studyBackground",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return StudyText.attributeTypeMap;
+    }
 }
 
 export class TrackingReminder {
+    'actionArray': Array<TrackingReminderNotificationAction>;
+    'availableUnits': Array<Unit>;
     /**
-    * id
-    */
-    'id': number;
-    /**
-    * clientId
+    * Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
     */
     'clientId': string;
     /**
-    * ID of User
+    * The way multiple measurements are aggregated over time
     */
-    'userId': number;
+    'combinationOperation': TrackingReminder.CombinationOperationEnum;
     /**
-    * Id for the variable to be tracked
+    * Ex: 2016-05-18 02:24:08 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
     */
-    'variableId': number;
+    'createdAt': string;
+    /**
+    * Ex: Trader Joe's Bedtime Tea
+    */
+    'displayName': string;
+    /**
+    * Ex: /5
+    */
+    'unitAbbreviatedName': string;
+    /**
+    * Ex: 5
+    */
+    'unitCategoryId': number;
+    /**
+    * Ex: Rating
+    */
+    'unitCategoryName': string;
+    /**
+    * Ex: 10
+    */
+    'unitId': number;
+    /**
+    * Ex: 1 to 5 Rating
+    */
+    'unitName': string;
     /**
     * Default value to use for the measurement when tracking
     */
     'defaultValue': number;
     /**
-    * Earliest time of day at which reminders should appear in UTC HH:MM:SS format
-    */
-    'reminderStartTime': string;
-    /**
-    * Latest time of day at which reminders should appear in UTC HH:MM:SS format
-    */
-    'reminderEndTime': string;
-    /**
-    * String identifier for the sound to accompany the reminder
-    */
-    'reminderSound': string;
-    /**
-    * Number of seconds between one reminder and the next
-    */
-    'reminderFrequency': number;
-    /**
-    * True if the reminders should appear as a popup notification
-    */
-    'popUp': boolean;
-    /**
-    * True if the reminders should be delivered via SMS
-    */
-    'sms': boolean;
-    /**
     * True if the reminders should be delivered via email
     */
     'email': boolean;
+    /**
+    * Ex: reminderStartTimeLocal is less than $user->earliestReminderTime or greater than  $user->latestReminderTime
+    */
+    'errorMessage': string;
+    /**
+    * Ex: 0
+    */
+    'fillingValue': number;
+    /**
+    * Ex: 02:45:20 in UTC timezone
+    */
+    'firstDailyReminderTime': string;
+    /**
+    * Ex: Daily
+    */
+    'frequencyTextDescription': string;
+    /**
+    * Ex: Daily at 09:45 PM
+    */
+    'frequencyTextDescriptionWithTime': string;
+    /**
+    * id
+    */
+    'id': number;
+    /**
+    * Ex: saddestFaceIsFive
+    */
+    'inputType': string;
+    /**
+    * Ex: I am an instruction!
+    */
+    'instructions': string;
+    /**
+    * Ex: ion-sad-outline
+    */
+    'ionIcon': string;
+    /**
+    * UTC ISO 8601 YYYY-MM-DDThh:mm:ss timestamp for the last time a measurement was received for this user and variable
+    */
+    'lastTracked': string;
+    /**
+    * Ex: 2
+    */
+    'lastValue': number;
+    /**
+    * UTC ISO 8601 YYYY-MM-DDThh:mm:ss  timestamp for the reminder time of the latest tracking reminder notification that has been pre-emptively generated in the database
+    */
+    'latestTrackingReminderNotificationReminderTime': string;
+    'localDailyReminderNotificationTimes': Array<string>;
+    'localDailyReminderNotificationTimesForAllReminders': Array<string>;
+    /**
+    * Ex: 1
+    */
+    'manualTracking': boolean;
+    /**
+    * Ex: 5
+    */
+    'maximumAllowedValue': number;
+    /**
+    * Ex: 1
+    */
+    'minimumAllowedValue': number;
+    /**
+    * Ex: 1501555520
+    */
+    'nextReminderTimeEpochSeconds': number;
     /**
     * True if the reminders should appear in the notification bar
     */
     'notificationBar': boolean;
     /**
-    * UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  timestamp for the reminder time of the latest tracking reminder notification that has been pre-emptively generated in the database
+    * Ex: 445
     */
-    'latestTrackingReminderNotificationReminderTime': Date;
+    'numberOfRawMeasurements': number;
     /**
-    * UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  timestamp for the last time a measurement was received for this user and variable
+    * Ex: 1
     */
-    'lastTracked': Date;
+    'numberOfUniqueValues': number;
+    /**
+    * Indicates whether or not the variable is usually an outcome of interest such as a symptom or emotion
+    */
+    'outcome': boolean;
+    /**
+    * Ex: img/variable_categories/symptoms.png
+    */
+    'pngPath': string;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/symptoms.png
+    */
+    'pngUrl': string;
+    /**
+    * Link to associated product for purchase
+    */
+    'productUrl': string;
+    /**
+    * True if the reminders should appear as a popup notification
+    */
+    'popUp': boolean;
+    /**
+    * Ex: How is your overall mood?
+    */
+    'question': string;
+    /**
+    * Latest time of day at which reminders should appear in UTC HH:MM:SS format
+    */
+    'reminderEndTime': string;
+    /**
+    * Number of seconds between one reminder and the next
+    */
+    'reminderFrequency': number;
+    /**
+    * String identifier for the sound to accompany the reminder
+    */
+    'reminderSound': string;
+    /**
+    * Ex: 1469760320
+    */
+    'reminderStartEpochSeconds': number;
+    /**
+    * Earliest time of day at which reminders should appear in UTC HH:MM:SS format
+    */
+    'reminderStartTime': string;
+    /**
+    * Ex: 21:45:20
+    */
+    'reminderStartTimeLocal': string;
+    /**
+    * Ex: 09:45 PM
+    */
+    'reminderStartTimeLocalHumanFormatted': string;
+    /**
+    * Ex: true
+    */
+    'repeating': boolean;
+    /**
+    * Ex: 01:00:00
+    */
+    'secondDailyReminderTime': string;
+    /**
+    * Ex: 1
+    */
+    'secondToLastValue': number;
+    /**
+    * True if the reminders should be delivered via SMS
+    */
+    'sms': boolean;
     /**
     * Earliest date on which the user should be reminded to track in YYYY-MM-DD format
     */
@@ -755,25 +4576,494 @@ export class TrackingReminder {
     */
     'stopTrackingDate': string;
     /**
-    * When the record in the database was last updated. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format. Time zone should be UTC and not local.
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/symptoms.svg
     */
-    'updatedAt': Date;
+    'svgUrl': string;
     /**
-    * Name of the variable to be used when sending measurements
+    * Ex: 20:00:00
     */
-    'variableName': string;
+    'thirdDailyReminderTime': string;
+    /**
+    * Ex: 3
+    */
+    'thirdToLastValue': number;
+    /**
+    * Ex: 11841
+    */
+    'trackingReminderId': number;
+    /**
+    * Ex: Not Found
+    */
+    'trackingReminderImageUrl': string;
+    /**
+    * UPC or other barcode scan result
+    */
+    'upc': string;
+    /**
+    * When the record in the database was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+    */
+    'updatedAt': string;
+    /**
+    * ID of User
+    */
+    'userId': number;
+    /**
+    * Ex: /5
+    */
+    'userVariableUnitAbbreviatedName': string;
+    /**
+    * Ex: 5
+    */
+    'userVariableUnitCategoryId': number;
+    /**
+    * Ex: Rating
+    */
+    'userVariableUnitCategoryName': string;
+    /**
+    * Ex: 10
+    */
+    'userVariableUnitId': number;
+    /**
+    * Ex: 1 to 5 Rating
+    */
+    'userVariableUnitName': string;
+    /**
+    * Ex: 10
+    */
+    'userVariableVariableCategoryId': number;
+    /**
+    * Ex: Symptoms
+    */
+    'userVariableVariableCategoryName': string;
+    /**
+    * Ex: negative
+    */
+    'valence': string;
+    /**
+    * Ex: Rate daily
+    */
+    'valueAndFrequencyTextDescription': string;
+    /**
+    * Ex: Rate daily at 09:45 PM
+    */
+    'valueAndFrequencyTextDescriptionWithTime': string;
+    /**
+    * Ex: 10
+    */
+    'variableCategoryId': number;
+    /**
+    * Ex: https://maxcdn.icons8.com/Color/PNG/96/Messaging/sad-96.png
+    */
+    'variableCategoryImageUrl': string;
     /**
     * Name of the variable category to be used when sending measurements
     */
     'variableCategoryName': string;
     /**
-    * Abbreviated name of the unit to be used when sending measurements
+    * Ex: negative
     */
-    'unitAbbreviatedName': string;
+    'variableDescription': string;
     /**
-    * The way multiple measurements are aggregated over time
+    * Id for the variable to be tracked
     */
-    'combinationOperation': TrackingReminder.CombinationOperationEnum;
+    'variableId': number;
+    /**
+    * Name of the variable to be used when sending measurements
+    */
+    'variableName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "actionArray",
+            "baseName": "actionArray",
+            "type": "Array<TrackingReminderNotificationAction>"
+        },
+        {
+            "name": "availableUnits",
+            "baseName": "availableUnits",
+            "type": "Array<Unit>"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "combinationOperation",
+            "baseName": "combinationOperation",
+            "type": "TrackingReminder.CombinationOperationEnum"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "displayName",
+            "type": "string"
+        },
+        {
+            "name": "unitAbbreviatedName",
+            "baseName": "unitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "unitCategoryId",
+            "baseName": "unitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "unitCategoryName",
+            "baseName": "unitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "unitId",
+            "baseName": "unitId",
+            "type": "number"
+        },
+        {
+            "name": "unitName",
+            "baseName": "unitName",
+            "type": "string"
+        },
+        {
+            "name": "defaultValue",
+            "baseName": "defaultValue",
+            "type": "number"
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "boolean"
+        },
+        {
+            "name": "errorMessage",
+            "baseName": "errorMessage",
+            "type": "string"
+        },
+        {
+            "name": "fillingValue",
+            "baseName": "fillingValue",
+            "type": "number"
+        },
+        {
+            "name": "firstDailyReminderTime",
+            "baseName": "firstDailyReminderTime",
+            "type": "string"
+        },
+        {
+            "name": "frequencyTextDescription",
+            "baseName": "frequencyTextDescription",
+            "type": "string"
+        },
+        {
+            "name": "frequencyTextDescriptionWithTime",
+            "baseName": "frequencyTextDescriptionWithTime",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "inputType",
+            "baseName": "inputType",
+            "type": "string"
+        },
+        {
+            "name": "instructions",
+            "baseName": "instructions",
+            "type": "string"
+        },
+        {
+            "name": "ionIcon",
+            "baseName": "ionIcon",
+            "type": "string"
+        },
+        {
+            "name": "lastTracked",
+            "baseName": "lastTracked",
+            "type": "string"
+        },
+        {
+            "name": "lastValue",
+            "baseName": "lastValue",
+            "type": "number"
+        },
+        {
+            "name": "latestTrackingReminderNotificationReminderTime",
+            "baseName": "latestTrackingReminderNotificationReminderTime",
+            "type": "string"
+        },
+        {
+            "name": "localDailyReminderNotificationTimes",
+            "baseName": "localDailyReminderNotificationTimes",
+            "type": "Array<string>"
+        },
+        {
+            "name": "localDailyReminderNotificationTimesForAllReminders",
+            "baseName": "localDailyReminderNotificationTimesForAllReminders",
+            "type": "Array<string>"
+        },
+        {
+            "name": "manualTracking",
+            "baseName": "manualTracking",
+            "type": "boolean"
+        },
+        {
+            "name": "maximumAllowedValue",
+            "baseName": "maximumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "minimumAllowedValue",
+            "baseName": "minimumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "nextReminderTimeEpochSeconds",
+            "baseName": "nextReminderTimeEpochSeconds",
+            "type": "number"
+        },
+        {
+            "name": "notificationBar",
+            "baseName": "notificationBar",
+            "type": "boolean"
+        },
+        {
+            "name": "numberOfRawMeasurements",
+            "baseName": "numberOfRawMeasurements",
+            "type": "number"
+        },
+        {
+            "name": "numberOfUniqueValues",
+            "baseName": "numberOfUniqueValues",
+            "type": "number"
+        },
+        {
+            "name": "outcome",
+            "baseName": "outcome",
+            "type": "boolean"
+        },
+        {
+            "name": "pngPath",
+            "baseName": "pngPath",
+            "type": "string"
+        },
+        {
+            "name": "pngUrl",
+            "baseName": "pngUrl",
+            "type": "string"
+        },
+        {
+            "name": "productUrl",
+            "baseName": "productUrl",
+            "type": "string"
+        },
+        {
+            "name": "popUp",
+            "baseName": "popUp",
+            "type": "boolean"
+        },
+        {
+            "name": "question",
+            "baseName": "question",
+            "type": "string"
+        },
+        {
+            "name": "reminderEndTime",
+            "baseName": "reminderEndTime",
+            "type": "string"
+        },
+        {
+            "name": "reminderFrequency",
+            "baseName": "reminderFrequency",
+            "type": "number"
+        },
+        {
+            "name": "reminderSound",
+            "baseName": "reminderSound",
+            "type": "string"
+        },
+        {
+            "name": "reminderStartEpochSeconds",
+            "baseName": "reminderStartEpochSeconds",
+            "type": "number"
+        },
+        {
+            "name": "reminderStartTime",
+            "baseName": "reminderStartTime",
+            "type": "string"
+        },
+        {
+            "name": "reminderStartTimeLocal",
+            "baseName": "reminderStartTimeLocal",
+            "type": "string"
+        },
+        {
+            "name": "reminderStartTimeLocalHumanFormatted",
+            "baseName": "reminderStartTimeLocalHumanFormatted",
+            "type": "string"
+        },
+        {
+            "name": "repeating",
+            "baseName": "repeating",
+            "type": "boolean"
+        },
+        {
+            "name": "secondDailyReminderTime",
+            "baseName": "secondDailyReminderTime",
+            "type": "string"
+        },
+        {
+            "name": "secondToLastValue",
+            "baseName": "secondToLastValue",
+            "type": "number"
+        },
+        {
+            "name": "sms",
+            "baseName": "sms",
+            "type": "boolean"
+        },
+        {
+            "name": "startTrackingDate",
+            "baseName": "startTrackingDate",
+            "type": "string"
+        },
+        {
+            "name": "stopTrackingDate",
+            "baseName": "stopTrackingDate",
+            "type": "string"
+        },
+        {
+            "name": "svgUrl",
+            "baseName": "svgUrl",
+            "type": "string"
+        },
+        {
+            "name": "thirdDailyReminderTime",
+            "baseName": "thirdDailyReminderTime",
+            "type": "string"
+        },
+        {
+            "name": "thirdToLastValue",
+            "baseName": "thirdToLastValue",
+            "type": "number"
+        },
+        {
+            "name": "trackingReminderId",
+            "baseName": "trackingReminderId",
+            "type": "number"
+        },
+        {
+            "name": "trackingReminderImageUrl",
+            "baseName": "trackingReminderImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "upc",
+            "baseName": "upc",
+            "type": "string"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitAbbreviatedName",
+            "baseName": "userVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitCategoryId",
+            "baseName": "userVariableUnitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitCategoryName",
+            "baseName": "userVariableUnitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitId",
+            "baseName": "userVariableUnitId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitName",
+            "baseName": "userVariableUnitName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableVariableCategoryId",
+            "baseName": "userVariableVariableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableVariableCategoryName",
+            "baseName": "userVariableVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "valence",
+            "baseName": "valence",
+            "type": "string"
+        },
+        {
+            "name": "valueAndFrequencyTextDescription",
+            "baseName": "valueAndFrequencyTextDescription",
+            "type": "string"
+        },
+        {
+            "name": "valueAndFrequencyTextDescriptionWithTime",
+            "baseName": "valueAndFrequencyTextDescriptionWithTime",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryId",
+            "baseName": "variableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "variableCategoryImageUrl",
+            "baseName": "variableCategoryImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryName",
+            "baseName": "variableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "variableDescription",
+            "baseName": "variableDescription",
+            "type": "string"
+        },
+        {
+            "name": "variableId",
+            "baseName": "variableId",
+            "type": "number"
+        },
+        {
+            "name": "variableName",
+            "baseName": "variableName",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TrackingReminder.attributeTypeMap;
+    }
 }
 
 export namespace TrackingReminder {
@@ -784,80 +5074,672 @@ export namespace TrackingReminder {
 }
 export class TrackingReminderDelete {
     /**
-    * Id of the PENDING reminder to be deleted
+    * Id of the TrackingReminder to be deleted
     */
     'id': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TrackingReminderDelete.attributeTypeMap;
+    }
 }
 
 export class TrackingReminderNotification {
+    'actionArray': Array<TrackingReminderNotificationAction>;
+    'availableUnits': Array<Unit>;
     /**
-    * id for the specific PENDING tracking remidner
-    */
-    'id': number;
-    /**
-    * id for the repeating tracking remidner
-    */
-    'trackingReminderId': number;
-    /**
-    * clientId
+    * Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
     */
     'clientId': string;
     /**
-    * ID of User
+    * The way multiple measurements are aggregated over time
     */
-    'userId': number;
+    'combinationOperation': TrackingReminderNotification.CombinationOperationEnum;
     /**
-    * Id for the variable to be tracked
+    * Ex: 2017-07-29 20:49:54 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
     */
-    'variableId': number;
+    'createdAt': string;
     /**
-    * UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  timestamp for the specific time the variable should be tracked in UTC.  This will be used for the measurement startTime if the track endpoint is used.
+    * Ex: Trader Joe's Bedtime Tea
     */
-    'pendingReminderTime': Date;
+    'displayName': string;
+    /**
+    * Is the user specified default value or falls back to the last value in user unit. Good for initializing input fields
+    */
+    'modifiedValue': number;
+    /**
+    * Ex: /5
+    */
+    'unitAbbreviatedName': string;
+    /**
+    * Ex: 5
+    */
+    'unitCategoryId': number;
+    /**
+    * Ex: Rating
+    */
+    'unitCategoryName': string;
+    /**
+    * Ex: 10
+    */
+    'unitId': number;
+    /**
+    * Ex: 1 to 5 Rating
+    */
+    'unitName': string;
     /**
     * Default value to use for the measurement when tracking
     */
     'defaultValue': number;
     /**
-    * String identifier for the sound to accompany the reminder
+    * Ex: positive
     */
-    'reminderSound': string;
-    /**
-    * True if the reminders should appear as a popup notification
-    */
-    'popUp': boolean;
-    /**
-    * True if the reminders should be delivered via SMS
-    */
-    'sms': boolean;
+    'description': string;
     /**
     * True if the reminders should be delivered via email
     */
     'email': boolean;
     /**
+    * Ex: 0
+    */
+    'fillingValue': number;
+    /**
+    * Ex: ion-sad-outline
+    */
+    'iconIcon': string;
+    /**
+    * id for the specific PENDING tracking remidner
+    */
+    'id': number;
+    /**
+    * Ex: https://rximage.nlm.nih.gov/image/images/gallery/original/55111-0129-60_RXNAVIMAGE10_B051D81E.jpg
+    */
+    'imageUrl': string;
+    /**
+    * Ex: happiestFaceIsFive
+    */
+    'inputType': string;
+    /**
+    * Ex: ion-happy-outline
+    */
+    'ionIcon': string;
+    /**
+    * Ex: 3
+    */
+    'lastValue': number;
+    /**
+    * Ex: 1
+    */
+    'manualTracking': boolean;
+    /**
+    * Ex: 5
+    */
+    'maximumAllowedValue': number;
+    /**
+    * Ex: 1
+    */
+    'minimumAllowedValue': number;
+    /**
+    * Ex: 3
+    */
+    'mostCommonValue': number;
+    /**
     * True if the reminders should appear in the notification bar
     */
     'notificationBar': boolean;
     /**
-    * When the record in the database was last updated. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format. Time zone should be UTC and not local.
+    * Ex: UTC ISO 8601 YYYY-MM-DDThh:mm:ss
     */
-    'updatedAt': Date;
+    'notifiedAt': string;
     /**
-    * Name of the variable to be used when sending measurements
+    * Ex: 5
     */
-    'variableName': string;
+    'numberOfUniqueValues': number;
+    /**
+    * Indicates whether or not the variable is usually an outcome of interest such as a symptom or emotion
+    */
+    'outcome': boolean;
+    /**
+    * Ex: img/variable_categories/emotions.png
+    */
+    'pngPath': string;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/emotions.png
+    */
+    'pngUrl': string;
+    /**
+    * True if the reminders should appear as a popup notification
+    */
+    'popUp': boolean;
+    /**
+    * Link to associated product for purchase
+    */
+    'productUrl': string;
+    /**
+    * Ex: How is your overall mood?
+    */
+    'question': string;
+    /**
+    * Ex: 01-01-2018
+    */
+    'reminderEndTime': string;
+    /**
+    * How often user should be reminded in seconds. Ex: 86400
+    */
+    'reminderFrequency': number;
+    /**
+    * String identifier for the sound to accompany the reminder
+    */
+    'reminderSound': string;
+    /**
+    * Earliest time of day at which reminders should appear in UTC HH:MM:SS format
+    */
+    'reminderStartTime': string;
+    /**
+    * UTC ISO 8601 YYYY-MM-DDThh:mm:ss timestamp for the specific time the variable should be tracked in UTC.  This will be used for the measurement startTime if the track endpoint is used.
+    */
+    'reminderTime': string;
+    /**
+    * Ex: 4
+    */
+    'secondMostCommonValue': number;
+    /**
+    * Ex: 1
+    */
+    'secondToLastValue': number;
+    /**
+    * True if the reminders should be delivered via SMS
+    */
+    'sms': boolean;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/emotions.svg
+    */
+    'svgUrl': string;
+    /**
+    * Ex: 2
+    */
+    'thirdMostCommonValue': number;
+    /**
+    * Ex: 2
+    */
+    'thirdToLastValue': number;
+    /**
+    * Ex: Rate Overall Mood
+    */
+    'title': string;
+    /**
+    * Ex: 3
+    */
+    'total': number;
+    'trackAllActions': Array<TrackingReminderNotificationTrackAllAction>;
+    /**
+    * id for the repeating tracking remidner
+    */
+    'trackingReminderId': number;
+    /**
+    * Ex: https://rximage.nlm.nih.gov/image/images/gallery/original/55111-0129-60_RXNAVIMAGE10_B051D81E.jpg
+    */
+    'trackingReminderImageUrl': string;
+    /**
+    * Ex: 5072482
+    */
+    'trackingReminderNotificationId': number;
+    /**
+    * UTC ISO 8601 YYYY-MM-DDThh:mm:ss timestamp for the specific time the variable should be tracked in UTC.  This will be used for the measurement startTime if the track endpoint is used.
+    */
+    'trackingReminderNotificationTime': string;
+    /**
+    * Ex: 1501534124
+    */
+    'trackingReminderNotificationTimeEpoch': number;
+    /**
+    * Ex: 15:48:44
+    */
+    'trackingReminderNotificationTimeLocal': string;
+    /**
+    * Ex: 8PM Sun, May 1
+    */
+    'trackingReminderNotificationTimeLocalHumanString': string;
+    /**
+    * When the record in the database was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+    */
+    'updatedAt': string;
+    /**
+    * ID of User
+    */
+    'userId': number;
+    /**
+    * Ex: /5
+    */
+    'userVariableUnitAbbreviatedName': string;
+    /**
+    * Ex: 5
+    */
+    'userVariableUnitCategoryId': number;
+    /**
+    * Ex: Rating
+    */
+    'userVariableUnitCategoryName': string;
+    /**
+    * Ex: 10
+    */
+    'userVariableUnitId': number;
+    /**
+    * Ex: 1 to 5 Rating
+    */
+    'userVariableUnitName': string;
+    /**
+    * Ex: 1
+    */
+    'userVariableVariableCategoryId': number;
+    /**
+    * Ex: Emotions
+    */
+    'userVariableVariableCategoryName': string;
+    /**
+    * Ex: positive
+    */
+    'valence': string;
+    /**
+    * Ex: 1
+    */
+    'variableCategoryId': number;
+    /**
+    * Ex: https://maxcdn.icons8.com/Color/PNG/96/Cinema/theatre_mask-96.png
+    */
+    'variableCategoryImageUrl': string;
     /**
     * Name of the variable category to be used when sending measurements
     */
     'variableCategoryName': string;
     /**
-    * Abbreviated name of the unit to be used when sending measurements
+    * Id for the variable to be tracked
     */
-    'unitAbbreviatedName': string;
+    'variableId': number;
     /**
-    * The way multiple measurements are aggregated over time
+    * Ex: https://image.png
     */
-    'combinationOperation': TrackingReminderNotification.CombinationOperationEnum;
+    'variableImageUrl': string;
+    /**
+    * Name of the variable to be used when sending measurements
+    */
+    'variableName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "actionArray",
+            "baseName": "actionArray",
+            "type": "Array<TrackingReminderNotificationAction>"
+        },
+        {
+            "name": "availableUnits",
+            "baseName": "availableUnits",
+            "type": "Array<Unit>"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "combinationOperation",
+            "baseName": "combinationOperation",
+            "type": "TrackingReminderNotification.CombinationOperationEnum"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "displayName",
+            "type": "string"
+        },
+        {
+            "name": "modifiedValue",
+            "baseName": "modifiedValue",
+            "type": "number"
+        },
+        {
+            "name": "unitAbbreviatedName",
+            "baseName": "unitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "unitCategoryId",
+            "baseName": "unitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "unitCategoryName",
+            "baseName": "unitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "unitId",
+            "baseName": "unitId",
+            "type": "number"
+        },
+        {
+            "name": "unitName",
+            "baseName": "unitName",
+            "type": "string"
+        },
+        {
+            "name": "defaultValue",
+            "baseName": "defaultValue",
+            "type": "number"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "boolean"
+        },
+        {
+            "name": "fillingValue",
+            "baseName": "fillingValue",
+            "type": "number"
+        },
+        {
+            "name": "iconIcon",
+            "baseName": "iconIcon",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "imageUrl",
+            "baseName": "imageUrl",
+            "type": "string"
+        },
+        {
+            "name": "inputType",
+            "baseName": "inputType",
+            "type": "string"
+        },
+        {
+            "name": "ionIcon",
+            "baseName": "ionIcon",
+            "type": "string"
+        },
+        {
+            "name": "lastValue",
+            "baseName": "lastValue",
+            "type": "number"
+        },
+        {
+            "name": "manualTracking",
+            "baseName": "manualTracking",
+            "type": "boolean"
+        },
+        {
+            "name": "maximumAllowedValue",
+            "baseName": "maximumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "minimumAllowedValue",
+            "baseName": "minimumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "mostCommonValue",
+            "baseName": "mostCommonValue",
+            "type": "number"
+        },
+        {
+            "name": "notificationBar",
+            "baseName": "notificationBar",
+            "type": "boolean"
+        },
+        {
+            "name": "notifiedAt",
+            "baseName": "notifiedAt",
+            "type": "string"
+        },
+        {
+            "name": "numberOfUniqueValues",
+            "baseName": "numberOfUniqueValues",
+            "type": "number"
+        },
+        {
+            "name": "outcome",
+            "baseName": "outcome",
+            "type": "boolean"
+        },
+        {
+            "name": "pngPath",
+            "baseName": "pngPath",
+            "type": "string"
+        },
+        {
+            "name": "pngUrl",
+            "baseName": "pngUrl",
+            "type": "string"
+        },
+        {
+            "name": "popUp",
+            "baseName": "popUp",
+            "type": "boolean"
+        },
+        {
+            "name": "productUrl",
+            "baseName": "productUrl",
+            "type": "string"
+        },
+        {
+            "name": "question",
+            "baseName": "question",
+            "type": "string"
+        },
+        {
+            "name": "reminderEndTime",
+            "baseName": "reminderEndTime",
+            "type": "string"
+        },
+        {
+            "name": "reminderFrequency",
+            "baseName": "reminderFrequency",
+            "type": "number"
+        },
+        {
+            "name": "reminderSound",
+            "baseName": "reminderSound",
+            "type": "string"
+        },
+        {
+            "name": "reminderStartTime",
+            "baseName": "reminderStartTime",
+            "type": "string"
+        },
+        {
+            "name": "reminderTime",
+            "baseName": "reminderTime",
+            "type": "string"
+        },
+        {
+            "name": "secondMostCommonValue",
+            "baseName": "secondMostCommonValue",
+            "type": "number"
+        },
+        {
+            "name": "secondToLastValue",
+            "baseName": "secondToLastValue",
+            "type": "number"
+        },
+        {
+            "name": "sms",
+            "baseName": "sms",
+            "type": "boolean"
+        },
+        {
+            "name": "svgUrl",
+            "baseName": "svgUrl",
+            "type": "string"
+        },
+        {
+            "name": "thirdMostCommonValue",
+            "baseName": "thirdMostCommonValue",
+            "type": "number"
+        },
+        {
+            "name": "thirdToLastValue",
+            "baseName": "thirdToLastValue",
+            "type": "number"
+        },
+        {
+            "name": "title",
+            "baseName": "title",
+            "type": "string"
+        },
+        {
+            "name": "total",
+            "baseName": "total",
+            "type": "number"
+        },
+        {
+            "name": "trackAllActions",
+            "baseName": "trackAllActions",
+            "type": "Array<TrackingReminderNotificationTrackAllAction>"
+        },
+        {
+            "name": "trackingReminderId",
+            "baseName": "trackingReminderId",
+            "type": "number"
+        },
+        {
+            "name": "trackingReminderImageUrl",
+            "baseName": "trackingReminderImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "trackingReminderNotificationId",
+            "baseName": "trackingReminderNotificationId",
+            "type": "number"
+        },
+        {
+            "name": "trackingReminderNotificationTime",
+            "baseName": "trackingReminderNotificationTime",
+            "type": "string"
+        },
+        {
+            "name": "trackingReminderNotificationTimeEpoch",
+            "baseName": "trackingReminderNotificationTimeEpoch",
+            "type": "number"
+        },
+        {
+            "name": "trackingReminderNotificationTimeLocal",
+            "baseName": "trackingReminderNotificationTimeLocal",
+            "type": "string"
+        },
+        {
+            "name": "trackingReminderNotificationTimeLocalHumanString",
+            "baseName": "trackingReminderNotificationTimeLocalHumanString",
+            "type": "string"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitAbbreviatedName",
+            "baseName": "userVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitCategoryId",
+            "baseName": "userVariableUnitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitCategoryName",
+            "baseName": "userVariableUnitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitId",
+            "baseName": "userVariableUnitId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitName",
+            "baseName": "userVariableUnitName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableVariableCategoryId",
+            "baseName": "userVariableVariableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableVariableCategoryName",
+            "baseName": "userVariableVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "valence",
+            "baseName": "valence",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryId",
+            "baseName": "variableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "variableCategoryImageUrl",
+            "baseName": "variableCategoryImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryName",
+            "baseName": "variableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "variableId",
+            "baseName": "variableId",
+            "type": "number"
+        },
+        {
+            "name": "variableImageUrl",
+            "baseName": "variableImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "variableName",
+            "baseName": "variableName",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TrackingReminderNotification.attributeTypeMap;
+    }
 }
 
 export namespace TrackingReminderNotification {
@@ -866,53 +5748,295 @@ export namespace TrackingReminderNotification {
         SUM = <any> 'SUM'
     }
 }
-export class TrackingReminderNotificationSkip {
+export class TrackingReminderNotificationAction {
     /**
-    * Id of the PENDING reminder to be skipped
+    * Ex: track
     */
-    'id': number;
+    'action': string;
+    /**
+    * Ex: trackThreeRatingAction
+    */
+    'callback': string;
+    /**
+    * Ex: 3
+    */
+    'modifiedValue': number;
+    /**
+    * Ex: 3/5
+    */
+    'title': string;
+    /**
+    * Ex: Rate 3/5
+    */
+    'longTitle': string;
+    /**
+    * Ex: 3
+    */
+    'shortTitle': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "action",
+            "baseName": "action",
+            "type": "string"
+        },
+        {
+            "name": "callback",
+            "baseName": "callback",
+            "type": "string"
+        },
+        {
+            "name": "modifiedValue",
+            "baseName": "modifiedValue",
+            "type": "number"
+        },
+        {
+            "name": "title",
+            "baseName": "title",
+            "type": "string"
+        },
+        {
+            "name": "longTitle",
+            "baseName": "longTitle",
+            "type": "string"
+        },
+        {
+            "name": "shortTitle",
+            "baseName": "shortTitle",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TrackingReminderNotificationAction.attributeTypeMap;
+    }
 }
 
-export class TrackingReminderNotificationSnooze {
+export class TrackingReminderNotificationPost {
     /**
-    * Id of the PENDING reminder to be snoozed
+    * track records a measurement for the notification.  snooze changes the notification to 1 hour from now. skip deletes the notification.
+    */
+    'action': TrackingReminderNotificationPost.ActionEnum;
+    /**
+    * Id of the TrackingReminderNotification
     */
     'id': number;
-}
-
-export class TrackingReminderNotificationTrack {
-    'trackingReminderNotification': TrackingReminderNotification;
     /**
     * Optional value to be recorded instead of the tracking reminder default value
     */
     'modifiedValue': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "action",
+            "baseName": "action",
+            "type": "TrackingReminderNotificationPost.ActionEnum"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "modifiedValue",
+            "baseName": "modifiedValue",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TrackingReminderNotificationPost.attributeTypeMap;
+    }
+}
+
+export namespace TrackingReminderNotificationPost {
+    export enum ActionEnum {
+        Skip = <any> 'skip',
+        Snooze = <any> 'snooze',
+        Track = <any> 'track'
+    }
+}
+export class TrackingReminderNotificationTrackAllAction {
+    /**
+    * Ex: trackAll
+    */
+    'action': string;
+    /**
+    * Ex: trackThreeRatingAction
+    */
+    'callback': string;
+    /**
+    * Ex: 3
+    */
+    'modifiedValue': number;
+    /**
+    * Ex: Rate 3/5 for all
+    */
+    'title': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "action",
+            "baseName": "action",
+            "type": "string"
+        },
+        {
+            "name": "callback",
+            "baseName": "callback",
+            "type": "string"
+        },
+        {
+            "name": "modifiedValue",
+            "baseName": "modifiedValue",
+            "type": "number"
+        },
+        {
+            "name": "title",
+            "baseName": "title",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return TrackingReminderNotificationTrackAllAction.attributeTypeMap;
+    }
 }
 
 export class Unit {
-    /**
-    * Unit name
-    */
-    'name': string;
     /**
     * Unit abbreviation
     */
     'abbreviatedName': string;
     /**
+    * Ex: 1
+    */
+    'advanced': number;
+    /**
     * Unit category
     */
     'category': Unit.CategoryEnum;
     /**
-    * The minimum allowed value for measurements. While you can record a value below this minimum, it will be excluded from the correlation analysis.
+    * Ex: 6
     */
-    'minimumAllowedValue': number;
+    'categoryId': number;
+    /**
+    * Ex: Miscellany
+    */
+    'categoryName': string;
+    /**
+    * Conversion steps list
+    */
+    'conversionSteps': Array<ConversionStep>;
+    /**
+    * Ex: 29
+    */
+    'id': number;
+    /**
+    * Ex: 0
+    */
+    'manualTracking': number;
     /**
     * The maximum allowed value for measurements. While you can record a value above this maximum, it will be excluded from the correlation analysis.
     */
     'maximumAllowedValue': number;
     /**
-    * Conversion steps list
+    * Ex: 4
     */
-    'conversionSteps': Array<ConversionStep>;
+    'maximumValue': number;
+    /**
+    * The minimum allowed value for measurements. While you can record a value below this minimum, it will be excluded from the correlation analysis.
+    */
+    'minimumAllowedValue': number;
+    /**
+    * Ex: 0
+    */
+    'minimumValue': number;
+    /**
+    * Unit name
+    */
+    'name': string;
+    'unitCategory': UnitCategory;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "abbreviatedName",
+            "baseName": "abbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "advanced",
+            "baseName": "advanced",
+            "type": "number"
+        },
+        {
+            "name": "category",
+            "baseName": "category",
+            "type": "Unit.CategoryEnum"
+        },
+        {
+            "name": "categoryId",
+            "baseName": "categoryId",
+            "type": "number"
+        },
+        {
+            "name": "categoryName",
+            "baseName": "categoryName",
+            "type": "string"
+        },
+        {
+            "name": "conversionSteps",
+            "baseName": "conversionSteps",
+            "type": "Array<ConversionStep>"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "manualTracking",
+            "baseName": "manualTracking",
+            "type": "number"
+        },
+        {
+            "name": "maximumAllowedValue",
+            "baseName": "maximumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "maximumValue",
+            "baseName": "maximumValue",
+            "type": "number"
+        },
+        {
+            "name": "minimumAllowedValue",
+            "baseName": "minimumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "minimumValue",
+            "baseName": "minimumValue",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "unitCategory",
+            "baseName": "unitCategory",
+            "type": "UnitCategory"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Unit.attributeTypeMap;
+    }
 }
 
 export namespace Unit {
@@ -927,83 +6051,484 @@ export namespace Unit {
         Rating = <any> 'Rating',
         Temperature = <any> 'Temperature',
         Volume = <any> 'Volume',
-        Weight = <any> 'Weight'
+        Weight = <any> 'Weight',
+        Count = <any> 'Count'
     }
 }
 export class UnitCategory {
-    /**
-    * Category name
-    */
-    'name': string;
-}
-
-export class Update {
     /**
     * id
     */
     'id': number;
     /**
-    * userId
+    * Category name
     */
-    'userId': number;
+    'name': string;
     /**
-    * connectorId
+    * Base unit for in which measurements are to be converted to and stored
     */
-    'connectorId': number;
-    /**
-    * numberOfMeasurements
-    */
-    'numberOfMeasurements': number;
-    /**
-    * success
-    */
-    'success': boolean;
-    /**
-    * message
-    */
-    'message': string;
-    /**
-    * When the record was first created. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
-    */
-    'createdAt': Date;
-    /**
-    * When the record in the database was last updated. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
-    */
-    'updatedAt': Date;
+    'standardUnitAbbreviatedName': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "standardUnitAbbreviatedName",
+            "baseName": "standardUnitAbbreviatedName",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UnitCategory.attributeTypeMap;
+    }
 }
 
 export class User {
     /**
-    * User id
+    * User access token
     */
-    'id': number;
+    'accessToken': string;
     /**
-    * Wordpress user id
+    * Ex: 2018-08-08 02:41:19
     */
-    'wpId': number;
+    'accessTokenExpires': string;
+    /**
+    * Ex: 1533696079000
+    */
+    'accessTokenExpiresAtMilliseconds': number;
+    /**
+    * Is user administrator
+    */
+    'administrator': boolean;
+    'authorizedClients': AuthorizedClients;
+    /**
+    * Ex: https://lh6.googleusercontent.com/-BHr4hyUWqZU/AAAAAAAAAAI/AAAAAAAIG28/2Lv0en738II/photo.jpg?sz=50
+    */
+    'avatar': string;
+    /**
+    * Ex: https://lh6.googleusercontent.com/-BHr4hyUWqZU/AAAAAAAAAAI/AAAAAAAIG28/2Lv0en738II/photo.jpg?sz=50
+    */
+    'avatarImage': string;
+    /**
+    * Ex: a:1:{s:13:\"administrator\";b:1;}
+    */
+    'capabilities': string;
+    /**
+    * Ex: quantimodo
+    */
+    'clientId': string;
+    /**
+    * Ex: 118444693184829555362
+    */
+    'clientUserId': string;
+    /**
+    * Ex: 1
+    */
+    'combineNotifications': boolean;
+    /**
+    * When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format
+    */
+    'createdAt': string;
     /**
     * User display name
     */
     'displayName': string;
     /**
-    * User login name
+    * Earliest time user should get notifications. Ex: 05:00:00
     */
-    'loginName': string;
+    'earliestReminderTime': string;
     /**
     * User email
     */
     'email': string;
     /**
-    * User token
+    * Ex: Mike
     */
-    'token': string;
+    'firstName': string;
     /**
-    * Is user administrator
+    * Ex: false
     */
-    'administrator': boolean;
+    'getPreviewBuilds': boolean;
+    /**
+    * Ex: false
+    */
+    'hasAndroidApp': boolean;
+    /**
+    * Ex: false
+    */
+    'hasChromeExtension': boolean;
+    /**
+    * Ex: false
+    */
+    'hasIosApp': boolean;
+    /**
+    * User id
+    */
+    'id': number;
+    /**
+    * Ex: 2009
+    */
+    'lastFour': string;
+    /**
+    * Ex: Sinn
+    */
+    'lastName': string;
+    /**
+    * Ex: 1
+    */
+    'lastSmsTrackingReminderNotificationId': string;
+    /**
+    * Latest time user should get notifications. Ex: 23:00:00
+    */
+    'latestReminderTime': string;
+    /**
+    * User login name
+    */
+    'loginName': string;
+    /**
+    * Ex: PASSWORD
+    */
+    'password': string;
+    /**
+    * Ex: 618-391-0002
+    */
+    'phoneNumber': string;
+    /**
+    * Ex: 1234
+    */
+    'phoneVerificationCode': string;
+    /**
+    * Ex: 1
+    */
+    'pushNotificationsEnabled': boolean;
+    /**
+    * Ex: 6e99b113d85586de1f92468433f2df1e666647cb
+    */
+    'refreshToken': string;
+    /**
+    * Ex: [\"admin\"]
+    */
+    'roles': string;
+    /**
+    * Ex: 1
+    */
+    'sendPredictorEmails': boolean;
+    /**
+    * Ex: 1
+    */
+    'sendReminderNotificationEmails': boolean;
+    /**
+    * Share all studies, charts, and measurement data with all other users
+    */
+    'shareAllData': boolean;
+    /**
+    * Ex: false
+    */
+    'smsNotificationsEnabled': boolean;
+    /**
+    * Ex: 1
+    */
+    'stripeActive': boolean;
+    /**
+    * Ex: cus_A8CEmcvl8jwLhV
+    */
+    'stripeId': string;
+    /**
+    * Ex: monthly7
+    */
+    'stripePlan': string;
+    /**
+    * Ex: sub_ANTx3nOE7nzjQf
+    */
+    'stripeSubscription': string;
+    /**
+    * UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'subscriptionEndsAt': string;
+    /**
+    * Ex: google
+    */
+    'subscriptionProvider': string;
+    /**
+    * Ex: 300
+    */
+    'timeZoneOffset': number;
+    /**
+    * Ex: 1
+    */
+    'trackLocation': boolean;
+    /**
+    * When the record in the database was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format
+    */
+    'updatedAt': string;
+    /**
+    * Ex: 2013-12-03 15:25:13 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'userRegistered': string;
+    /**
+    * Ex: https://plus.google.com/+MikeSinn
+    */
+    'userUrl': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "accessToken",
+            "baseName": "accessToken",
+            "type": "string"
+        },
+        {
+            "name": "accessTokenExpires",
+            "baseName": "accessTokenExpires",
+            "type": "string"
+        },
+        {
+            "name": "accessTokenExpiresAtMilliseconds",
+            "baseName": "accessTokenExpiresAtMilliseconds",
+            "type": "number"
+        },
+        {
+            "name": "administrator",
+            "baseName": "administrator",
+            "type": "boolean"
+        },
+        {
+            "name": "authorizedClients",
+            "baseName": "authorizedClients",
+            "type": "AuthorizedClients"
+        },
+        {
+            "name": "avatar",
+            "baseName": "avatar",
+            "type": "string"
+        },
+        {
+            "name": "avatarImage",
+            "baseName": "avatarImage",
+            "type": "string"
+        },
+        {
+            "name": "capabilities",
+            "baseName": "capabilities",
+            "type": "string"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "clientUserId",
+            "baseName": "clientUserId",
+            "type": "string"
+        },
+        {
+            "name": "combineNotifications",
+            "baseName": "combineNotifications",
+            "type": "boolean"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "displayName",
+            "type": "string"
+        },
+        {
+            "name": "earliestReminderTime",
+            "baseName": "earliestReminderTime",
+            "type": "string"
+        },
+        {
+            "name": "email",
+            "baseName": "email",
+            "type": "string"
+        },
+        {
+            "name": "firstName",
+            "baseName": "firstName",
+            "type": "string"
+        },
+        {
+            "name": "getPreviewBuilds",
+            "baseName": "getPreviewBuilds",
+            "type": "boolean"
+        },
+        {
+            "name": "hasAndroidApp",
+            "baseName": "hasAndroidApp",
+            "type": "boolean"
+        },
+        {
+            "name": "hasChromeExtension",
+            "baseName": "hasChromeExtension",
+            "type": "boolean"
+        },
+        {
+            "name": "hasIosApp",
+            "baseName": "hasIosApp",
+            "type": "boolean"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "lastFour",
+            "baseName": "lastFour",
+            "type": "string"
+        },
+        {
+            "name": "lastName",
+            "baseName": "lastName",
+            "type": "string"
+        },
+        {
+            "name": "lastSmsTrackingReminderNotificationId",
+            "baseName": "lastSmsTrackingReminderNotificationId",
+            "type": "string"
+        },
+        {
+            "name": "latestReminderTime",
+            "baseName": "latestReminderTime",
+            "type": "string"
+        },
+        {
+            "name": "loginName",
+            "baseName": "loginName",
+            "type": "string"
+        },
+        {
+            "name": "password",
+            "baseName": "password",
+            "type": "string"
+        },
+        {
+            "name": "phoneNumber",
+            "baseName": "phoneNumber",
+            "type": "string"
+        },
+        {
+            "name": "phoneVerificationCode",
+            "baseName": "phoneVerificationCode",
+            "type": "string"
+        },
+        {
+            "name": "pushNotificationsEnabled",
+            "baseName": "pushNotificationsEnabled",
+            "type": "boolean"
+        },
+        {
+            "name": "refreshToken",
+            "baseName": "refreshToken",
+            "type": "string"
+        },
+        {
+            "name": "roles",
+            "baseName": "roles",
+            "type": "string"
+        },
+        {
+            "name": "sendPredictorEmails",
+            "baseName": "sendPredictorEmails",
+            "type": "boolean"
+        },
+        {
+            "name": "sendReminderNotificationEmails",
+            "baseName": "sendReminderNotificationEmails",
+            "type": "boolean"
+        },
+        {
+            "name": "shareAllData",
+            "baseName": "shareAllData",
+            "type": "boolean"
+        },
+        {
+            "name": "smsNotificationsEnabled",
+            "baseName": "smsNotificationsEnabled",
+            "type": "boolean"
+        },
+        {
+            "name": "stripeActive",
+            "baseName": "stripeActive",
+            "type": "boolean"
+        },
+        {
+            "name": "stripeId",
+            "baseName": "stripeId",
+            "type": "string"
+        },
+        {
+            "name": "stripePlan",
+            "baseName": "stripePlan",
+            "type": "string"
+        },
+        {
+            "name": "stripeSubscription",
+            "baseName": "stripeSubscription",
+            "type": "string"
+        },
+        {
+            "name": "subscriptionEndsAt",
+            "baseName": "subscriptionEndsAt",
+            "type": "string"
+        },
+        {
+            "name": "subscriptionProvider",
+            "baseName": "subscriptionProvider",
+            "type": "string"
+        },
+        {
+            "name": "timeZoneOffset",
+            "baseName": "timeZoneOffset",
+            "type": "number"
+        },
+        {
+            "name": "trackLocation",
+            "baseName": "trackLocation",
+            "type": "boolean"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "userRegistered",
+            "baseName": "userRegistered",
+            "type": "string"
+        },
+        {
+            "name": "userUrl",
+            "baseName": "userUrl",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return User.attributeTypeMap;
+    }
 }
 
 export class UserTag {
+    /**
+    * Number by which we multiply the tagged variable value to obtain the tag variable (ingredient) value
+    */
+    'conversionFactor': number;
     /**
     * This is the id of the variable being tagged with an ingredient or something.
     */
@@ -1012,195 +6537,357 @@ export class UserTag {
     * This is the id of the ingredient variable whose value is determined based on the value of the tagged variable.
     */
     'tagVariableId': number;
-    /**
-    * Number by which we multiply the tagged variable value to obtain the tag variable (ingredient) value
-    */
-    'conversionFactor': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "conversionFactor",
+            "baseName": "conversionFactor",
+            "type": "number"
+        },
+        {
+            "name": "taggedVariableId",
+            "baseName": "taggedVariableId",
+            "type": "number"
+        },
+        {
+            "name": "tagVariableId",
+            "baseName": "tagVariableId",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserTag.attributeTypeMap;
+    }
 }
 
-export class UserTokenFailedResponse {
+export class UserVariableDelete {
     /**
-    * Status code
-    */
-    'code': number;
-    /**
-    * Message
-    */
-    'message': string;
-    'success': boolean;
-}
-
-export class UserTokenRequest {
-    'user': UserTokenRequestInnerUserField;
-    /**
-    * Organization Access token
-    */
-    'organizationAccessToken': string;
-}
-
-export class UserTokenRequestInnerUserField {
-    /**
-    * WordPress user ID
-    */
-    'id': number;
-}
-
-export class UserTokenSuccessfulResponse {
-    /**
-    * Status code
-    */
-    'code': number;
-    /**
-    * Message
-    */
-    'message': string;
-    'user': UserTokenSuccessfulResponseInnerUserField;
-}
-
-export class UserTokenSuccessfulResponseInnerUserField {
-    /**
-    * WordPress user ID
-    */
-    'id': number;
-    /**
-    * User token
-    */
-    'accessToken': string;
-}
-
-export class UserVariable {
-    /**
-    * ID of the parent variable if this variable has any parent
-    */
-    'parentId': number;
-    /**
-    * User ID
-    */
-    'userId': number;
-    /**
-    * clientId
-    */
-    'clientId': string;
-    /**
-    * ID of variable
+    * Id of the variable whose measurements should be deleted
     */
     'variableId': number;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "variableId",
+            "baseName": "variableId",
+            "type": "number"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return UserVariableDelete.attributeTypeMap;
+    }
+}
+
+export class Variable {
+    'actionArray': Array<TrackingReminderNotificationAction>;
     /**
-    * ID of unit to use for this variable
+    * Alternative name
     */
-    'defaultUnitId': number;
-    /**
-    * The minimum allowed value for measurements. While you can record a value below this minimum, it will be excluded from the correlation analysis.
-    */
-    'minimumAllowedValue': number;
-    /**
-    * The maximum allowed value for measurements. While you can record a value above this maximum, it will be excluded from the correlation analysis.
-    */
-    'maximumAllowedValue': number;
-    /**
-    * When it comes to analysis to determine the effects of this variable, knowing when it did not occur is as important as knowing when it did occur. For example, if you are tracking a medication, it is important to know when you did not take it, but you do not have to log zero values for all the days when you haven't taken it. Hence, you can specify a filling value (typically 0) to insert whenever data is missing.
-    */
-    'fillingValue': number;
-    /**
-    * The Variable this Variable should be joined with. If the variable is joined with some other variable then it is not shown to user in the list of variables
-    */
-    'joinWith': number;
-    /**
-    * The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
-    */
-    'onsetDelay': number;
-    /**
-    * The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
-    */
-    'durationOfAction': number;
-    /**
-    * ID of variable category
-    */
-    'variableCategoryId': number;
-    /**
-    * updated
-    */
-    'updated': number;
-    /**
-    * Is variable public
-    */
-    'public': number;
+    'alias': string;
+    'availableUnits': Array<Unit>;
     /**
     * A value of 1 indicates that this variable is generally a cause in a causal relationship.  An example of a causeOnly variable would be a variable such as Cloud Cover which would generally not be influenced by the behaviour of the user
     */
     'causeOnly': boolean;
+    'charts': VariableCharts;
     /**
-    * 0 -> No filling, 1 -> Use filling-value
+    * Ex: https://local.quantimo.do/ionic/Modo/www/#/app/charts/Trader%20Joes%20Bedtime%20Tea%20%2F%20Sleepytime%20Tea%20%28any%20Brand%29?variableName=Trader%20Joes%20Bedtime%20Tea%20%2F%20Sleepytime%20Tea%20%28any%20Brand%29&userId=230&pngUrl=https%3A%2F%2Fapp.quantimo.do%2Fionic%2FModo%2Fwww%2Fimg%2Fvariable_categories%2Ftreatments.png
     */
-    'fillingType': string;
+    'chartsLinkDynamic': string;
     /**
-    * Number of measurements
+    * Ex: mailto:?subject=Check%20out%20my%20Trader%20Joes%20Bedtime%20Tea%20%2F%20Sleepytime%20Tea%20%28any%20Brand%29%20data%21&body=See%20my%20Trader%20Joes%20Bedtime%20Tea%20%2F%20Sleepytime%20Tea%20%28any%20Brand%29%20history%20at%20https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fcharts%3FvariableName%3DTrader%2520Joes%2520Bedtime%2520Tea%2520%252F%2520Sleepytime%2520Tea%2520%2528any%2520Brand%2529%26userId%3D230%26pngUrl%3Dhttps%253A%252F%252Fapp.quantimo.do%252Fionic%252FModo%252Fwww%252Fimg%252Fvariable_categories%252Ftreatments.png%0A%0AHave%20a%20great%20day!
     */
-    'numberOfMeasurements': number;
+    'chartsLinkEmail': string;
     /**
-    * Number of processed measurements
+    * Ex: https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fcharts%3FvariableName%3DTrader%2520Joes%2520Bedtime%2520Tea%2520%252F%2520Sleepytime%2520Tea%2520%2528any%2520Brand%2529%26userId%3D230%26pngUrl%3Dhttps%253A%252F%252Fapp.quantimo.do%252Fionic%252FModo%252Fwww%252Fimg%252Fvariable_categories%252Ftreatments.png
     */
-    'numberOfProcessedDailyMeasurements': number;
+    'chartsLinkFacebook': string;
     /**
-    * Number of measurements at last analysis
+    * Ex: https://plus.google.com/share?url=https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fcharts%3FvariableName%3DTrader%2520Joes%2520Bedtime%2520Tea%2520%252F%2520Sleepytime%2520Tea%2520%2528any%2520Brand%2529%26userId%3D230%26pngUrl%3Dhttps%253A%252F%252Fapp.quantimo.do%252Fionic%252FModo%252Fwww%252Fimg%252Fvariable_categories%252Ftreatments.png
     */
-    'measurementsAtLastAnalysis': number;
+    'chartsLinkGoogle': string;
     /**
-    * ID of last Unit
+    * Ex: https://local.quantimo.do/api/v2/charts?variableName=Trader%20Joes%20Bedtime%20Tea%20%2F%20Sleepytime%20Tea%20%28any%20Brand%29&userId=230&pngUrl=https%3A%2F%2Fapp.quantimo.do%2Fionic%2FModo%2Fwww%2Fimg%2Fvariable_categories%2Ftreatments.png
     */
-    'lastUnitId': number;
+    'chartsLinkStatic': string;
     /**
-    * ID of last original Unit
+    * Ex: https://twitter.com/home?status=Check%20out%20my%20Trader%20Joes%20Bedtime%20Tea%20%2F%20Sleepytime%20Tea%20%28any%20Brand%29%20data%21%20https%3A%2F%2Flocal.quantimo.do%2Fapi%2Fv2%2Fcharts%3FvariableName%3DTrader%2520Joes%2520Bedtime%2520Tea%2520%252F%2520Sleepytime%2520Tea%2520%2528any%2520Brand%2529%26userId%3D230%26pngUrl%3Dhttps%253A%252F%252Fapp.quantimo.do%252Fionic%252FModo%252Fwww%252Fimg%252Fvariable_categories%252Ftreatments.png%20%40quantimodo
     */
-    'lastOriginalUnitId': number;
+    'chartsLinkTwitter': string;
     /**
-    * Last Value
+    * Commonly defined for all users. An example of a parent category variable would be Fruit when tagged with the child sub-type variables Apple.  Child variable (Apple) measurements will be included when the parent category (Fruit) is analyzed.  This allows us to see how Fruit consumption might be affecting without having to record both Fruit and Apple intake.
     */
-    'lastValue': number;
+    'childCommonTagVariables': Array<Variable>;
     /**
-    * Last original value which is stored
+    * User-defined. An example of a parent category variable would be Fruit when tagged with the child sub-type variables Apple.  Child variable (Apple) measurements will be included when the parent category (Fruit) is analyzed.  This allows us to see how Fruit consumption might be affecting without having to record both Fruit and Apple intake.
     */
-    'lastOriginalValue': number;
+    'childUserTagVariables': Array<Variable>;
     /**
-    * Number of correlations for this variable
+    * Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
     */
-    'numberOfCorrelations': number;
+    'clientId': string;
     /**
-    * status
+    * Ex: MEAN
     */
-    'status': string;
+    'combinationOperation': string;
+    /**
+    * Ex: Anxiety / Nervousness
+    */
+    'commonAlias': string;
+    'commonTaggedVariables': Array<Variable>;
+    'commonTagVariables': Array<Variable>;
+    /**
+    * Ex: 51
+    */
+    'commonVariableMostCommonConnectorId': number;
+    /**
+    * Ex: 2017-02-07 23:43:39 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'commonVariableUpdatedAt': string;
+    /**
+    * When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format
+    */
+    'createdAt': string;
+    /**
+    * Ex: count
+    */
+    'unitAbbreviatedName': string;
+    /**
+    * Ex: 6
+    */
+    'unitCategoryId': number;
+    /**
+    * Ex: Miscellany
+    */
+    'unitCategoryName': string;
+    /**
+    * ID of unit to use for this variable
+    */
+    'unitId': number;
+    /**
+    * Ex: Count
+    */
+    'unitName': string;
+    /**
+    * Ex: negative
+    */
+    'description': string;
+    /**
+    * Ex: Trader Joe's Bedtime Tea
+    */
+    'displayName': string;
+    /**
+    * The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
+    */
+    'durationOfAction': number;
+    /**
+    * Ex: 168
+    */
+    'durationOfActionInHours': number;
+    /**
+    * Earliest filling time
+    */
+    'earliestFillingTime': number;
+    /**
+    * Earliest measurement time
+    */
+    'earliestMeasurementTime': number;
+    /**
+    * Earliest source time
+    */
+    'earliestSourceTime': number;
     /**
     * error_message
     */
     'errorMessage': string;
     /**
-    * When this variable or its settings were last updated
+    * Latest measurement start_time to be used in analysis. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format
     */
-    'lastSuccessfulUpdateTime': Date;
+    'experimentEndTime': string;
     /**
-    * Standard deviation
+    * Ex: 1893477600
     */
-    'standardDeviation': number;
+    'experimentEndTimeSeconds': number;
     /**
-    * Variance
+    * Ex: 2030-01-01 06:00:00 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
     */
-    'variance': number;
+    'experimentEndTimeString': string;
     /**
-    * Minimum recorded value of this variable
+    * Earliest measurement start_time to be used in analysis. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format
     */
-    'minimumRecordedValue': number;
+    'experimentStartTime': string;
+    /**
+    * Ex: 1269307902
+    */
+    'experimentStartTimeSeconds': number;
+    /**
+    * Ex: 2010-03-23 01:31:42 UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'experimentStartTimeString': string;
+    /**
+    * 0 -> No filling, 1 -> Use filling-value
+    */
+    'fillingType': string;
+    /**
+    * When it comes to analysis to determine the effects of this variable, knowing when it did not occur is as important as knowing when it did occur. For example, if you are tracking a medication, it is important to know when you did not take it, but you do not have to log zero values for all the days when you haven't taken it. Hence, you can specify a filling value (typically 0) to insert whenever data is missing.
+    */
+    'fillingValue': number;
+    /**
+    * Ex: ion-sad-outline
+    */
+    'iconIcon': string;
+    /**
+    * Ex: 95614
+    */
+    'id': number;
+    /**
+    * 
+    */
+    'imageUrl': string;
+    /**
+    * Ex: https://google.com
+    */
+    'informationalUrl': string;
+    /**
+    * Commonly defined for all users. IngredientOf variable measurements will be included in analysis of the ingredient variable.  For instance, a ingredient of the variable Lollypop could be Sugar.  This way you only have to record Lollypop consumption and we can use this data to see how sugar might be affecting you.
+    */
+    'ingredientOfCommonTagVariables': Array<Variable>;
+    /**
+    * Commonly defined for all users. IngredientOf variable measurements will be included in analysis of the ingredient variable.  For instance, a ingredient of the variable Lollypop could be Sugar.  This way you only have to record Lollypop consumption and we can use this data to see how sugar might be affecting you.
+    */
+    'ingredientCommonTagVariables': Array<Variable>;
+    /**
+    * User-specific IngredientOf variable measurements will be included in analysis of the ingredient variable.  For instance, a ingredient of the variable Lollypop could be Sugar.  This way you only have to record Lollypop consumption and we can use this data to see how sugar might be affecting you.
+    */
+    'ingredientOfUserTagVariables': Array<Variable>;
+    /**
+    * User-specific IngredientOf variable measurements will be included in analysis of the ingredient variable.  For instance, a ingredient of the variable Lollypop could be Sugar.  This way you only have to record Lollypop consumption and we can use this data to see how sugar might be affecting you.
+    */
+    'ingredientUserTagVariables': Array<Variable>;
+    /**
+    * Ex: value
+    */
+    'inputType': string;
+    /**
+    * 
+    */
+    'ionIcon': string;
+    /**
+    * Commonly defined for all users.  Joining can be used used to merge duplicate variables. For instance, if two variables called Apples (Red Delicious) and Red Delicious Apples are joined, when one of them is analyzed, the measurements for the other will be included as well.
+    */
+    'joinedCommonTagVariables': Array<Variable>;
+    /**
+    * User-defined. Joining can be used used to merge duplicate variables. For instance, if two variables called Apples (Red Delicious) and Red Delicious Apples are joined, when one of them is analyzed, the measurements for the other will be included as well.
+    */
+    'joinedUserTagVariables': Array<Variable>;
+    /**
+    * The Variable this Variable should be joined with. If the variable is joined with some other variable then it is not shown to user in the list of variables
+    */
+    'joinWith': number;
+    /**
+    * Kurtosis
+    */
+    'kurtosis': number;
+    /**
+    * ID of last original Unit
+    */
+    'lastOriginalUnitId': number;
+    /**
+    * Last original value which is stored
+    */
+    'lastOriginalValue': number;
+    /**
+    * Ex: 500
+    */
+    'lastProcessedDailyValue': number;
+    /**
+    * When this variable or its settings were last updated UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'lastSuccessfulUpdateTime': string;
+    /**
+    * ID of last Unit
+    */
+    'lastUnitId': number;
+    /**
+    * Last Value
+    */
+    'lastValue': number;
+    /**
+    * Latest filling time
+    */
+    'latestFillingTime': number;
+    /**
+    * Latest measurement time
+    */
+    'latestMeasurementTime': number;
+    /**
+    * Latest source time
+    */
+    'latestSourceTime': number;
+    /**
+    * Ex: 1501383600
+    */
+    'latestUserMeasurementTime': number;
+    /**
+    * Latitude
+    */
+    'latitude': number;
+    /**
+    * Location
+    */
+    'location': string;
+    /**
+    * Longitude
+    */
+    'longitude': number;
+    /**
+    * Ex: 1
+    */
+    'manualTracking': boolean;
+    /**
+    * The maximum allowed value for measurements. While you can record a value above this maximum, it will be excluded from the correlation analysis.
+    */
+    'maximumAllowedValue': number;
     /**
     * Maximum recorded daily value of this variable
     */
     'maximumRecordedDailyValue': number;
     /**
+    * Ex: 1
+    */
+    'maximumRecordedValue': number;
+    /**
     * Mean
     */
     'mean': number;
     /**
+    * Number of measurements at last analysis
+    */
+    'measurementsAtLastAnalysis': number;
+    /**
     * Median
     */
     'median': number;
+    /**
+    * The minimum allowed value for measurements. While you can record a value below this minimum, it will be excluded from the correlation analysis.
+    */
+    'minimumAllowedValue': number;
+    /**
+    * Minimum recorded value of this variable
+    */
+    'minimumRecordedValue': number;
+    /**
+    * Ex: 51
+    */
+    'mostCommonConnectorId': number;
+    /**
+    * Ex: 23
+    */
+    'mostCommonOriginalUnitId': number;
     /**
     * Most common Unit ID
     */
@@ -1210,439 +6897,1461 @@ export class UserVariable {
     */
     'mostCommonValue': number;
     /**
-    * Number of unique daily values
+    * Ex: Trader Joes Bedtime Tea / Sleepytime Tea (any Brand)
     */
-    'numberOfUniqueDailyValues': number;
+    'name': string;
+    /**
+    * Ex: 1
+    */
+    'numberOfAggregateCorrelationsAsCause': number;
+    /**
+    * Ex: 310
+    */
+    'numberOfAggregateCorrelationsAsEffect': number;
     /**
     * Number of changes
     */
     'numberOfChanges': number;
     /**
-    * Skewness
+    * Number of correlations for this variable
     */
-    'skewness': number;
+    'numberOfCorrelations': number;
     /**
-    * Kurtosis
+    * Number of processed measurements
     */
-    'kurtosis': number;
+    'numberOfProcessedDailyMeasurements': number;
     /**
-    * Latitude
+    * Ex: 295
     */
-    'latitude': number;
+    'numberOfRawMeasurements': number;
     /**
-    * Longitude
+    * Ex: 1
     */
-    'longitude': number;
+    'numberOfTrackingReminders': number;
     /**
-    * Location
+    * Number of unique daily values
     */
-    'location': string;
+    'numberOfUniqueDailyValues': number;
     /**
-    * Earliest measurement start_time to be used in analysis. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
+    * Ex: 2
     */
-    'experimentStartTime': Date;
+    'numberOfUniqueValues': number;
     /**
-    * Latest measurement start_time to be used in analysis. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
+    * Ex: 115
     */
-    'experimentEndTime': Date;
+    'numberOfUserCorrelationsAsCause': number;
     /**
-    * When the record was first created. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
+    * Ex: 29014
     */
-    'createdAt': Date;
+    'numberOfUserCorrelationsAsEffect': number;
     /**
-    * When the record in the database was last updated. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
+    * Ex: 2
     */
-    'updatedAt': Date;
+    'numberOfUserVariables': number;
+    /**
+    * The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the onset delay. For example, the onset delay between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
+    */
+    'onsetDelay': number;
+    /**
+    * Ex: 0.5
+    */
+    'onsetDelayInHours': number;
     /**
     * Outcome variables (those with `outcome` == 1) are variables for which a human would generally want to identify the influencing factors. These include symptoms of illness, physique, mood, cognitive performance, etc.  Generally correlation calculations are only performed on outcome variables
     */
     'outcome': boolean;
     /**
+    * Ex: 1
+    */
+    'outcomeOfInterest': number;
+    /**
+    * Commonly defined for all users.  An example of a parent category variable would be Fruit when tagged with the child sub-type variables Apple.  Child variable (Apple) measurements will be included when the parent category (Fruit) is analyzed.  This allows us to see how Fruit consumption might be affecting without having to record both Fruit and Apple intake.
+    */
+    'parentCommonTagVariables': Array<Variable>;
+    /**
+    * User-defined. An example of a parent category variable would be Fruit when tagged with the child sub-type variables Apple.  Child variable (Apple) measurements will be included when the parent category (Fruit) is analyzed.  This allows us to see how Fruit consumption might be affecting without having to record both Fruit and Apple intake.
+    */
+    'parentUserTagVariables': Array<Variable>;
+    /**
+    * Ex: img/variable_categories/treatments.png
+    */
+    'pngPath': string;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/treatments.png
+    */
+    'pngUrl': string;
+    /**
+    * Ex: 0
+    */
+    'predictorOfInterest': number;
+    /**
+    * Ex: 95.4
+    */
+    'price': number;
+    /**
+    * Link to associated product for purchase
+    */
+    'productUrl': string;
+    /**
+    * Is variable public
+    */
+    'public': number;
+    /**
+    * Ex: 131
+    */
+    'rawMeasurementsAtLastAnalysis': number;
+    /**
+    * Ex: 1
+    */
+    'secondMostCommonValue': number;
+    /**
+    * Ex: 250
+    */
+    'secondToLastValue': number;
+    /**
+    * Ex: 1
+    */
+    'shareUserMeasurements': boolean;
+    /**
+    * Skewness
+    */
+    'skewness': number;
+    /**
     * Comma-separated list of source names to limit variables to those sources
     */
     'sources': string;
     /**
-    * Earliest source time
+    * Standard deviation Ex: 0.46483219855434
     */
-    'earliestSourceTime': number;
+    'standardDeviation': number;
     /**
-    * Latest source time
+    * status
     */
-    'latestSourceTime': number;
+    'status': string;
     /**
-    * Earliest measurement time
+    * Based on sort filter and can be shown beneath variable name on search list
     */
-    'earliestMeasurementTime': number;
+    'subtitle': string;
     /**
-    * Latest measurement time
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/treatments.svg
     */
-    'latestMeasurementTime': number;
+    'svgUrl': string;
     /**
-    * Earliest filling time
+    * Ex: 6
     */
-    'earliestFillingTime': number;
+    'thirdMostCommonValue': number;
     /**
-    * Latest filling time
+    * Ex: 250
     */
-    'latestFillingTime': number;
+    'thirdToLastValue': number;
+    'unit': Unit;
     /**
-    * 
+    * Universal product code or similar
     */
-    'imageUrl': string;
+    'upc': string;
     /**
-    * 
+    * updated
     */
-    'ionIcon': string;
-}
-
-export class UserVariableDelete {
+    'updated': number;
     /**
-    * Id of the variable whose measurements should be deleted
+    * When the record in the database was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format
     */
-    'variableId': number;
-}
-
-export class UserVariableRelationship {
+    'updatedAt': string;
     /**
-    * id
+    * Ex: 2017-07-30 14:58:26
     */
-    'id': number;
-    /**
-    * Our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
-    */
-    'confidenceLevel': string;
-    /**
-    * A quantitative representation of our confidence that a consistent predictive relationship exists based on the amount of evidence, reproducibility, and other factors
-    */
-    'confidenceScore': number;
-    /**
-    * Direction is positive if higher predictor values generally precede higher outcome values. Direction is negative if higher predictor values generally precede lower outcome values.
-    */
-    'direction': string;
-    /**
-    * The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
-    */
-    'durationOfAction': number;
-    /**
-    * error_message
-    */
-    'errorMessage': string;
-    /**
-    * The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
-    */
-    'onsetDelay': number;
-    /**
-    * Variable ID for the outcome variable
-    */
-    'outcomeVariableId': number;
-    /**
-    * Variable ID for the predictor variable
-    */
-    'predictorVariableId': number;
-    /**
-    * ID for default unit of the predictor variable
-    */
-    'predictorUnitId': number;
-    /**
-    * A value representative of the relevance of this predictor relative to other predictors of this outcome.  Usually used for relevancy sorting.
-    */
-    'sinnRank': number;
-    /**
-    * Can be weak, medium, or strong based on the size of the effect which the predictor appears to have on the outcome relative to other variable relationship strength scores.
-    */
-    'strengthLevel': string;
-    /**
-    * A value represented to the size of the effect which the predictor appears to have on the outcome.
-    */
-    'strengthScore': number;
-    /**
-    * userId
-    */
-    'userId': number;
-    /**
-    * vote
-    */
-    'vote': string;
-    /**
-    * Value for the predictor variable (in it's default unit) which typically precedes an above average outcome value
-    */
-    'valuePredictingHighOutcome': number;
-    /**
-    * Value for the predictor variable (in it's default unit) which typically precedes a below average outcome value
-    */
-    'valuePredictingLowOutcome': number;
-}
-
-export class UserVariables {
+    'updatedTime': string;
     /**
     * User ID
     */
-    'user': number;
+    'userId': number;
+    'userTaggedVariables': Array<Variable>;
+    'userTagVariables': Array<Variable>;
     /**
-    * Common variable id
+    * Ex: count
     */
-    'variableId': number;
+    'userVariableUnitAbbreviatedName': string;
     /**
-    * The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
+    * Ex: 6
     */
-    'durationOfAction': number;
+    'userVariableUnitCategoryId': number;
     /**
-    * When it comes to analysis to determine the effects of this variable, knowing when it did not occur is as important as knowing when it did occur. For example, if you are tracking a medication, it is important to know when you did not take it, but you do not have to log zero values for all the days when you haven't taken it. Hence, you can specify a filling value (typically 0) to insert whenever data is missing.
+    * Ex: Miscellany
     */
-    'fillingValue': number;
+    'userVariableUnitCategoryName': string;
     /**
-    * joinWith
+    * Ex: 23
     */
-    'joinWith': string;
+    'userVariableUnitId': number;
     /**
-    * The maximum allowed value for measurements. While you can record a value above this maximum, it will be excluded from the correlation analysis.
+    * Ex: Count
     */
-    'maximumAllowedValue': number;
+    'userVariableUnitName': string;
     /**
-    * The minimum allowed value for measurements. While you can record a value below this minimum, it will be excluded from the correlation analysis.
+    * Ex: -1
     */
-    'minimumAllowedValue': number;
+    'userVariableFillingValue': number;
     /**
-    * onsetDelay
+    * Ex: 51
     */
-    'onsetDelay': number;
+    'userVariableMostCommonConnectorId': number;
     /**
-    * Earliest measurement startTime that should be used in analysis. For instance, the date when you started tracking something.  Helpful in determining when to start 0 filling since we can assume the absence of a treatment measurement, for instance, indicates that the treatment was not applied rathter than simply not recorded.  Uses ISO string format
+    * Ex: 2017-07-30 14:58:26
     */
-    'experimentStartTime': string;
+    'userVariableUpdatedAt': string;
     /**
-    * Latest measurement startTime that should be used in analysis. For instance, the date when you stopped tracking something.  Helpful in determining when to stop 0 filling since we can assume the absence of a treatment measurement, for instance, indicates that the treatment was not applied rathter than simply not recorded.   Uses ISO string format
+    * Ex: positive or negative
     */
-    'experimentEndTime': string;
+    'userVariableValence': string;
     /**
-    * User-defined display alias for variable name
+    * Ex: 13
     */
-    'alias': string;
-}
-
-export class ValueObject {
+    'userVariableVariableCategoryId': number;
     /**
-    * Timestamp for the measurement event in epoch time (unixtime)
+    * Ex: Treatments
     */
-    'timestamp': number;
+    'userVariableVariableCategoryName': string;
     /**
-    * Measurement value
+    * Ex: 
     */
-    'value': number;
-    /**
-    * Optional note to include with the measurement
-    */
-    'note': string;
-}
-
-export class Variable {
-    /**
-    * Variable ID
-    */
-    'id': number;
-    /**
-    * User-defined variable display name.
-    */
-    'name': string;
-    /**
-    * Variable category like Mood, Sleep, Physical Activity, Treatment, Symptom, etc.
-    */
-    'category': string;
-    /**
-    * Abbreviated name of the default unit for the variable
-    */
-    'unitAbbreviatedName': string;
-    /**
-    * Id of the default unit for the variable
-    */
-    'abbreviatedUnitId': number;
-    /**
-    * Comma-separated list of source names to limit variables to those sources
-    */
-    'sources': string;
-    /**
-    * The minimum allowed value for measurements. While you can record a value below this minimum, it will be excluded from the correlation analysis.
-    */
-    'minimumAllowedValue': number;
-    /**
-    * The maximum allowed value for measurements. While you can record a value above this maximum, it will be excluded from the correlation analysis.
-    */
-    'maximumAllowedValue': number;
-    /**
-    * Way to aggregate measurements over time. Options are \"MEAN\" or \"SUM\". SUM should be used for things like minutes of exercise.  If you use MEAN for exercise, then a person might exercise more minutes in one day but add separate measurements that were smaller.  So when we are doing correlational analysis, we would think that the person exercised less that day even though they exercised more.  Conversely, we must use MEAN for things such as ratings which cannot be SUMMED.
-    */
-    'combinationOperation': Variable.CombinationOperationEnum;
-    /**
-    * When it comes to analysis to determine the effects of this variable, knowing when it did not occur is as important as knowing when it did occur. For example, if you are tracking a medication, it is important to know when you did not take it, but you do not have to log zero values for all the days when you haven't taken it. Hence, you can specify a filling value (typically 0) to insert whenever data is missing.
-    */
-    'fillingValue': number;
-    /**
-    * The Variable this Variable should be joined with. If the variable is joined with some other variable then it is not shown to user in the list of variables.
-    */
-    'joinWith': string;
+    'userVariableWikipediaTitle': string;
+    'variableCategory': VariableCategory;
+    'dataSource': DataSource;
     /**
     * Array of Variables that are joined with this Variable
     */
     'joinedVariables': Array<Variable>;
     /**
-    * Id of the parent variable if this variable has any parent
+    * Last source
     */
-    'parent': number;
-    /**
-    * Array of Variables that are sub variables to this Variable
-    */
-    'subVariables': Array<Variable>;
-    /**
-    * The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
-    */
-    'onsetDelay': number;
-    /**
-    * The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
-    */
-    'durationOfAction': number;
-    /**
-    * Earliest measurement time
-    */
-    'earliestMeasurementTime': number;
-    /**
-    * Latest measurement time
-    */
-    'latestMeasurementTime': number;
-    /**
-    * When this variable or its settings were last updated
-    */
-    'updated': number;
-    /**
-    * A value of 1 indicates that this variable is generally a cause in a causal relationship.  An example of a causeOnly variable would be a variable such as Cloud Cover which would generally not be influenced by the behaviour of the user.
-    */
-    'causeOnly': number;
-    /**
-    * Number of correlations
-    */
-    'numberOfCorrelations': number;
-    /**
-    * Outcome variables (those with `outcome` == 1) are variables for which a human would generally want to identify the influencing factors. These include symptoms of illness, physique, mood, cognitive performance, etc.  Generally correlation calculations are only performed on outcome variables.
-    */
-    'outcome': number;
-    /**
-    * The number of measurements that a given user had for this variable the last time a correlation calculation was performed. Generally correlation values are only updated once the current number of measurements for a variable is more than 10% greater than the rawMeasurementsAtLastAnalysis.  This avoids a computationally-demanding recalculation when there's not enough new data to make a significant difference in the correlation.
-    */
-    'rawMeasurementsAtLastAnalysis': number;
-    /**
-    * Number of measurements
-    */
-    'numberOfRawMeasurements': number;
+    'lastSource': number;
     /**
     * Last unit
     */
     'lastUnit': string;
     /**
-    * Last value
-    */
-    'lastValue': number;
-    /**
-    * Most common value
-    */
-    'mostCommonValue': number;
-    /**
     * Most common unit
     */
     'mostCommonUnit': string;
     /**
-    * Last source
+    * Ex: positive
     */
-    'lastSource': number;
+    'valence': string;
     /**
-    * 
+    * Ex: 6
+    */
+    'variableCategoryId': number;
+    /**
+    * Ex: https://maxcdn.icons8.com/Color/PNG/96/Household/sleeping_in_bed-96.png
+    */
+    'variableCategoryImageUrl': string;
+    /**
+    * Variable category like Mood, Sleep, Physical Activity, Treatment, Symptom, etc.
+    */
+    'variableCategoryName': string;
+    /**
+    * Ex: -1
+    */
+    'variableFillingValue': number;
+    /**
+    * Ex: 96380
+    */
+    'variableId': number;
+    /**
+    * Ex: Sleep Duration
+    */
+    'variableName': string;
+    /**
+    * Ex: 115947037.40816
+    */
+    'variance': number;
+    /**
+    * Ex: 
+    */
+    'wikipediaTitle': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "actionArray",
+            "baseName": "actionArray",
+            "type": "Array<TrackingReminderNotificationAction>"
+        },
+        {
+            "name": "alias",
+            "baseName": "alias",
+            "type": "string"
+        },
+        {
+            "name": "availableUnits",
+            "baseName": "availableUnits",
+            "type": "Array<Unit>"
+        },
+        {
+            "name": "causeOnly",
+            "baseName": "causeOnly",
+            "type": "boolean"
+        },
+        {
+            "name": "charts",
+            "baseName": "charts",
+            "type": "VariableCharts"
+        },
+        {
+            "name": "chartsLinkDynamic",
+            "baseName": "chartsLinkDynamic",
+            "type": "string"
+        },
+        {
+            "name": "chartsLinkEmail",
+            "baseName": "chartsLinkEmail",
+            "type": "string"
+        },
+        {
+            "name": "chartsLinkFacebook",
+            "baseName": "chartsLinkFacebook",
+            "type": "string"
+        },
+        {
+            "name": "chartsLinkGoogle",
+            "baseName": "chartsLinkGoogle",
+            "type": "string"
+        },
+        {
+            "name": "chartsLinkStatic",
+            "baseName": "chartsLinkStatic",
+            "type": "string"
+        },
+        {
+            "name": "chartsLinkTwitter",
+            "baseName": "chartsLinkTwitter",
+            "type": "string"
+        },
+        {
+            "name": "childCommonTagVariables",
+            "baseName": "childCommonTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "childUserTagVariables",
+            "baseName": "childUserTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "combinationOperation",
+            "baseName": "combinationOperation",
+            "type": "string"
+        },
+        {
+            "name": "commonAlias",
+            "baseName": "commonAlias",
+            "type": "string"
+        },
+        {
+            "name": "commonTaggedVariables",
+            "baseName": "commonTaggedVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "commonTagVariables",
+            "baseName": "commonTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "commonVariableMostCommonConnectorId",
+            "baseName": "commonVariableMostCommonConnectorId",
+            "type": "number"
+        },
+        {
+            "name": "commonVariableUpdatedAt",
+            "baseName": "commonVariableUpdatedAt",
+            "type": "string"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "unitAbbreviatedName",
+            "baseName": "unitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "unitCategoryId",
+            "baseName": "unitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "unitCategoryName",
+            "baseName": "unitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "unitId",
+            "baseName": "unitId",
+            "type": "number"
+        },
+        {
+            "name": "unitName",
+            "baseName": "unitName",
+            "type": "string"
+        },
+        {
+            "name": "description",
+            "baseName": "description",
+            "type": "string"
+        },
+        {
+            "name": "displayName",
+            "baseName": "displayName",
+            "type": "string"
+        },
+        {
+            "name": "durationOfAction",
+            "baseName": "durationOfAction",
+            "type": "number"
+        },
+        {
+            "name": "durationOfActionInHours",
+            "baseName": "durationOfActionInHours",
+            "type": "number"
+        },
+        {
+            "name": "earliestFillingTime",
+            "baseName": "earliestFillingTime",
+            "type": "number"
+        },
+        {
+            "name": "earliestMeasurementTime",
+            "baseName": "earliestMeasurementTime",
+            "type": "number"
+        },
+        {
+            "name": "earliestSourceTime",
+            "baseName": "earliestSourceTime",
+            "type": "number"
+        },
+        {
+            "name": "errorMessage",
+            "baseName": "errorMessage",
+            "type": "string"
+        },
+        {
+            "name": "experimentEndTime",
+            "baseName": "experimentEndTime",
+            "type": "string"
+        },
+        {
+            "name": "experimentEndTimeSeconds",
+            "baseName": "experimentEndTimeSeconds",
+            "type": "number"
+        },
+        {
+            "name": "experimentEndTimeString",
+            "baseName": "experimentEndTimeString",
+            "type": "string"
+        },
+        {
+            "name": "experimentStartTime",
+            "baseName": "experimentStartTime",
+            "type": "string"
+        },
+        {
+            "name": "experimentStartTimeSeconds",
+            "baseName": "experimentStartTimeSeconds",
+            "type": "number"
+        },
+        {
+            "name": "experimentStartTimeString",
+            "baseName": "experimentStartTimeString",
+            "type": "string"
+        },
+        {
+            "name": "fillingType",
+            "baseName": "fillingType",
+            "type": "string"
+        },
+        {
+            "name": "fillingValue",
+            "baseName": "fillingValue",
+            "type": "number"
+        },
+        {
+            "name": "iconIcon",
+            "baseName": "iconIcon",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "imageUrl",
+            "baseName": "imageUrl",
+            "type": "string"
+        },
+        {
+            "name": "informationalUrl",
+            "baseName": "informationalUrl",
+            "type": "string"
+        },
+        {
+            "name": "ingredientOfCommonTagVariables",
+            "baseName": "ingredientOfCommonTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "ingredientCommonTagVariables",
+            "baseName": "ingredientCommonTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "ingredientOfUserTagVariables",
+            "baseName": "ingredientOfUserTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "ingredientUserTagVariables",
+            "baseName": "ingredientUserTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "inputType",
+            "baseName": "inputType",
+            "type": "string"
+        },
+        {
+            "name": "ionIcon",
+            "baseName": "ionIcon",
+            "type": "string"
+        },
+        {
+            "name": "joinedCommonTagVariables",
+            "baseName": "joinedCommonTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "joinedUserTagVariables",
+            "baseName": "joinedUserTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "joinWith",
+            "baseName": "joinWith",
+            "type": "number"
+        },
+        {
+            "name": "kurtosis",
+            "baseName": "kurtosis",
+            "type": "number"
+        },
+        {
+            "name": "lastOriginalUnitId",
+            "baseName": "lastOriginalUnitId",
+            "type": "number"
+        },
+        {
+            "name": "lastOriginalValue",
+            "baseName": "lastOriginalValue",
+            "type": "number"
+        },
+        {
+            "name": "lastProcessedDailyValue",
+            "baseName": "lastProcessedDailyValue",
+            "type": "number"
+        },
+        {
+            "name": "lastSuccessfulUpdateTime",
+            "baseName": "lastSuccessfulUpdateTime",
+            "type": "string"
+        },
+        {
+            "name": "lastUnitId",
+            "baseName": "lastUnitId",
+            "type": "number"
+        },
+        {
+            "name": "lastValue",
+            "baseName": "lastValue",
+            "type": "number"
+        },
+        {
+            "name": "latestFillingTime",
+            "baseName": "latestFillingTime",
+            "type": "number"
+        },
+        {
+            "name": "latestMeasurementTime",
+            "baseName": "latestMeasurementTime",
+            "type": "number"
+        },
+        {
+            "name": "latestSourceTime",
+            "baseName": "latestSourceTime",
+            "type": "number"
+        },
+        {
+            "name": "latestUserMeasurementTime",
+            "baseName": "latestUserMeasurementTime",
+            "type": "number"
+        },
+        {
+            "name": "latitude",
+            "baseName": "latitude",
+            "type": "number"
+        },
+        {
+            "name": "location",
+            "baseName": "location",
+            "type": "string"
+        },
+        {
+            "name": "longitude",
+            "baseName": "longitude",
+            "type": "number"
+        },
+        {
+            "name": "manualTracking",
+            "baseName": "manualTracking",
+            "type": "boolean"
+        },
+        {
+            "name": "maximumAllowedValue",
+            "baseName": "maximumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "maximumRecordedDailyValue",
+            "baseName": "maximumRecordedDailyValue",
+            "type": "number"
+        },
+        {
+            "name": "maximumRecordedValue",
+            "baseName": "maximumRecordedValue",
+            "type": "number"
+        },
+        {
+            "name": "mean",
+            "baseName": "mean",
+            "type": "number"
+        },
+        {
+            "name": "measurementsAtLastAnalysis",
+            "baseName": "measurementsAtLastAnalysis",
+            "type": "number"
+        },
+        {
+            "name": "median",
+            "baseName": "median",
+            "type": "number"
+        },
+        {
+            "name": "minimumAllowedValue",
+            "baseName": "minimumAllowedValue",
+            "type": "number"
+        },
+        {
+            "name": "minimumRecordedValue",
+            "baseName": "minimumRecordedValue",
+            "type": "number"
+        },
+        {
+            "name": "mostCommonConnectorId",
+            "baseName": "mostCommonConnectorId",
+            "type": "number"
+        },
+        {
+            "name": "mostCommonOriginalUnitId",
+            "baseName": "mostCommonOriginalUnitId",
+            "type": "number"
+        },
+        {
+            "name": "mostCommonUnitId",
+            "baseName": "mostCommonUnitId",
+            "type": "number"
+        },
+        {
+            "name": "mostCommonValue",
+            "baseName": "mostCommonValue",
+            "type": "number"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "numberOfAggregateCorrelationsAsCause",
+            "baseName": "numberOfAggregateCorrelationsAsCause",
+            "type": "number"
+        },
+        {
+            "name": "numberOfAggregateCorrelationsAsEffect",
+            "baseName": "numberOfAggregateCorrelationsAsEffect",
+            "type": "number"
+        },
+        {
+            "name": "numberOfChanges",
+            "baseName": "numberOfChanges",
+            "type": "number"
+        },
+        {
+            "name": "numberOfCorrelations",
+            "baseName": "numberOfCorrelations",
+            "type": "number"
+        },
+        {
+            "name": "numberOfProcessedDailyMeasurements",
+            "baseName": "numberOfProcessedDailyMeasurements",
+            "type": "number"
+        },
+        {
+            "name": "numberOfRawMeasurements",
+            "baseName": "numberOfRawMeasurements",
+            "type": "number"
+        },
+        {
+            "name": "numberOfTrackingReminders",
+            "baseName": "numberOfTrackingReminders",
+            "type": "number"
+        },
+        {
+            "name": "numberOfUniqueDailyValues",
+            "baseName": "numberOfUniqueDailyValues",
+            "type": "number"
+        },
+        {
+            "name": "numberOfUniqueValues",
+            "baseName": "numberOfUniqueValues",
+            "type": "number"
+        },
+        {
+            "name": "numberOfUserCorrelationsAsCause",
+            "baseName": "numberOfUserCorrelationsAsCause",
+            "type": "number"
+        },
+        {
+            "name": "numberOfUserCorrelationsAsEffect",
+            "baseName": "numberOfUserCorrelationsAsEffect",
+            "type": "number"
+        },
+        {
+            "name": "numberOfUserVariables",
+            "baseName": "numberOfUserVariables",
+            "type": "number"
+        },
+        {
+            "name": "onsetDelay",
+            "baseName": "onsetDelay",
+            "type": "number"
+        },
+        {
+            "name": "onsetDelayInHours",
+            "baseName": "onsetDelayInHours",
+            "type": "number"
+        },
+        {
+            "name": "outcome",
+            "baseName": "outcome",
+            "type": "boolean"
+        },
+        {
+            "name": "outcomeOfInterest",
+            "baseName": "outcomeOfInterest",
+            "type": "number"
+        },
+        {
+            "name": "parentCommonTagVariables",
+            "baseName": "parentCommonTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "parentUserTagVariables",
+            "baseName": "parentUserTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "pngPath",
+            "baseName": "pngPath",
+            "type": "string"
+        },
+        {
+            "name": "pngUrl",
+            "baseName": "pngUrl",
+            "type": "string"
+        },
+        {
+            "name": "predictorOfInterest",
+            "baseName": "predictorOfInterest",
+            "type": "number"
+        },
+        {
+            "name": "price",
+            "baseName": "price",
+            "type": "number"
+        },
+        {
+            "name": "productUrl",
+            "baseName": "productUrl",
+            "type": "string"
+        },
+        {
+            "name": "public",
+            "baseName": "public",
+            "type": "number"
+        },
+        {
+            "name": "rawMeasurementsAtLastAnalysis",
+            "baseName": "rawMeasurementsAtLastAnalysis",
+            "type": "number"
+        },
+        {
+            "name": "secondMostCommonValue",
+            "baseName": "secondMostCommonValue",
+            "type": "number"
+        },
+        {
+            "name": "secondToLastValue",
+            "baseName": "secondToLastValue",
+            "type": "number"
+        },
+        {
+            "name": "shareUserMeasurements",
+            "baseName": "shareUserMeasurements",
+            "type": "boolean"
+        },
+        {
+            "name": "skewness",
+            "baseName": "skewness",
+            "type": "number"
+        },
+        {
+            "name": "sources",
+            "baseName": "sources",
+            "type": "string"
+        },
+        {
+            "name": "standardDeviation",
+            "baseName": "standardDeviation",
+            "type": "number"
+        },
+        {
+            "name": "status",
+            "baseName": "status",
+            "type": "string"
+        },
+        {
+            "name": "subtitle",
+            "baseName": "subtitle",
+            "type": "string"
+        },
+        {
+            "name": "svgUrl",
+            "baseName": "svgUrl",
+            "type": "string"
+        },
+        {
+            "name": "thirdMostCommonValue",
+            "baseName": "thirdMostCommonValue",
+            "type": "number"
+        },
+        {
+            "name": "thirdToLastValue",
+            "baseName": "thirdToLastValue",
+            "type": "number"
+        },
+        {
+            "name": "unit",
+            "baseName": "unit",
+            "type": "Unit"
+        },
+        {
+            "name": "upc",
+            "baseName": "upc",
+            "type": "string"
+        },
+        {
+            "name": "updated",
+            "baseName": "updated",
+            "type": "number"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "updatedTime",
+            "baseName": "updatedTime",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "number"
+        },
+        {
+            "name": "userTaggedVariables",
+            "baseName": "userTaggedVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "userTagVariables",
+            "baseName": "userTagVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "userVariableUnitAbbreviatedName",
+            "baseName": "userVariableUnitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitCategoryId",
+            "baseName": "userVariableUnitCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitCategoryName",
+            "baseName": "userVariableUnitCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableUnitId",
+            "baseName": "userVariableUnitId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUnitName",
+            "baseName": "userVariableUnitName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableFillingValue",
+            "baseName": "userVariableFillingValue",
+            "type": "number"
+        },
+        {
+            "name": "userVariableMostCommonConnectorId",
+            "baseName": "userVariableMostCommonConnectorId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableUpdatedAt",
+            "baseName": "userVariableUpdatedAt",
+            "type": "string"
+        },
+        {
+            "name": "userVariableValence",
+            "baseName": "userVariableValence",
+            "type": "string"
+        },
+        {
+            "name": "userVariableVariableCategoryId",
+            "baseName": "userVariableVariableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "userVariableVariableCategoryName",
+            "baseName": "userVariableVariableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "userVariableWikipediaTitle",
+            "baseName": "userVariableWikipediaTitle",
+            "type": "string"
+        },
+        {
+            "name": "variableCategory",
+            "baseName": "variableCategory",
+            "type": "VariableCategory"
+        },
+        {
+            "name": "dataSource",
+            "baseName": "dataSource",
+            "type": "DataSource"
+        },
+        {
+            "name": "joinedVariables",
+            "baseName": "joinedVariables",
+            "type": "Array<Variable>"
+        },
+        {
+            "name": "lastSource",
+            "baseName": "lastSource",
+            "type": "number"
+        },
+        {
+            "name": "lastUnit",
+            "baseName": "lastUnit",
+            "type": "string"
+        },
+        {
+            "name": "mostCommonUnit",
+            "baseName": "mostCommonUnit",
+            "type": "string"
+        },
+        {
+            "name": "valence",
+            "baseName": "valence",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryId",
+            "baseName": "variableCategoryId",
+            "type": "number"
+        },
+        {
+            "name": "variableCategoryImageUrl",
+            "baseName": "variableCategoryImageUrl",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryName",
+            "baseName": "variableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "variableFillingValue",
+            "baseName": "variableFillingValue",
+            "type": "number"
+        },
+        {
+            "name": "variableId",
+            "baseName": "variableId",
+            "type": "number"
+        },
+        {
+            "name": "variableName",
+            "baseName": "variableName",
+            "type": "string"
+        },
+        {
+            "name": "variance",
+            "baseName": "variance",
+            "type": "number"
+        },
+        {
+            "name": "wikipediaTitle",
+            "baseName": "wikipediaTitle",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Variable.attributeTypeMap;
+    }
+}
+
+export class VariableCategory {
+    /**
+    * Ex: mood
+    */
+    'appType': string;
+    /**
+    * Ex: false
+    */
+    'causeOnly': boolean;
+    /**
+    * Ex: MEAN
+    */
+    'combinationOperation': string;
+    /**
+    * UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'createdTime': string;
+    /**
+    * Ex: /5
+    */
+    'unitAbbreviatedName': string;
+    /**
+    * Ex: 10
+    */
+    'unitId': number;
+    /**
+    * Ex: 86400
+    */
+    'durationOfAction': number;
+    /**
+    * Ex: -1
+    */
+    'fillingValue': number;
+    /**
+    * Ex: What emotion do you want to rate?
+    */
+    'helpText': string;
+    /**
+    * Ex: 1
+    */
+    'id': number;
+    /**
+    * Ex: https://maxcdn.icons8.com/Color/PNG/96/Cinema/theatre_mask-96.png
     */
     'imageUrl': string;
     /**
-    * 
+    * Ex: ion-happy-outline
     */
     'ionIcon': string;
-}
-
-export namespace Variable {
-    export enum CombinationOperationEnum {
-        MEAN = <any> 'MEAN',
-        SUM = <any> 'SUM'
-    }
-}
-export class VariableCategory {
+    /**
+    * Ex: true
+    */
+    'manualTracking': boolean;
+    /**
+    * Ex: 
+    */
+    'maximumAllowedValue': string;
+    /**
+    * Ex: rating
+    */
+    'measurementSynonymSingularLowercase': string;
+    /**
+    * Ex: 
+    */
+    'minimumAllowedValue': string;
+    /**
+    * Ex: Do you have any emotions that fluctuate regularly?  If so, add them so I can try to determine which factors are influencing them.
+    */
+    'moreInfo': string;
     /**
     * Category name
     */
     'name': string;
-}
+    /**
+    * Ex: 0
+    */
+    'onsetDelay': number;
+    /**
+    * Ex: true
+    */
+    'outcome': boolean;
+    /**
+    * Ex: img/variable_categories/emotions.png
+    */
+    'pngPath': string;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/emotions.png
+    */
+    'pngUrl': string;
+    /**
+    * Ex: true
+    */
+    'public': boolean;
+    /**
+    * Ex: img/variable_categories/emotions.svg
+    */
+    'svgPath': string;
+    /**
+    * Ex: https://quantimodo.quantimo.do/ionic/Modo/www/img/variable_categories/emotions.svg
+    */
+    'svgUrl': string;
+    /**
+    * Ex: 1
+    */
+    'updated': number;
+    /**
+    * UTC ISO 8601 YYYY-MM-DDThh:mm:ss
+    */
+    'updatedTime': string;
+    /**
+    * Ex: Emotions
+    */
+    'variableCategoryName': string;
+    /**
+    * Ex: Emotion
+    */
+    'variableCategoryNameSingular': string;
 
-export class VariableNew {
-    /**
-    * User-defined variable display name.
-    */
-    'name': string;
-    /**
-    * Variable category like Mood, Sleep, Physical Activity, Treatment, Symptom, etc.
-    */
-    'category': string;
-    /**
-    * Abbreviated name of the default unit for the variable
-    */
-    'unit': string;
-    /**
-    * Way to aggregate measurements over time. Options are \"MEAN\" or \"SUM\". SUM should be used for things like minutes of exercise.  If you use MEAN for exercise, then a person might exercise more minutes in one day but add separate measurements that were smaller.  So when we are doing correlational analysis, we would think that the person exercised less that day even though they exercised more.  Conversely, we must use MEAN for things such as ratings which cannot be SUMMED.
-    */
-    'combinationOperation': VariableNew.CombinationOperationEnum;
-    /**
-    * Parent
-    */
-    'parent': string;
-}
+    static discriminator = undefined;
 
-export namespace VariableNew {
-    export enum CombinationOperationEnum {
-        MEAN = <any> 'MEAN',
-        SUM = <any> 'SUM'
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "appType",
+            "baseName": "appType",
+            "type": "string"
+        },
+        {
+            "name": "causeOnly",
+            "baseName": "causeOnly",
+            "type": "boolean"
+        },
+        {
+            "name": "combinationOperation",
+            "baseName": "combinationOperation",
+            "type": "string"
+        },
+        {
+            "name": "createdTime",
+            "baseName": "createdTime",
+            "type": "string"
+        },
+        {
+            "name": "unitAbbreviatedName",
+            "baseName": "unitAbbreviatedName",
+            "type": "string"
+        },
+        {
+            "name": "unitId",
+            "baseName": "unitId",
+            "type": "number"
+        },
+        {
+            "name": "durationOfAction",
+            "baseName": "durationOfAction",
+            "type": "number"
+        },
+        {
+            "name": "fillingValue",
+            "baseName": "fillingValue",
+            "type": "number"
+        },
+        {
+            "name": "helpText",
+            "baseName": "helpText",
+            "type": "string"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "imageUrl",
+            "baseName": "imageUrl",
+            "type": "string"
+        },
+        {
+            "name": "ionIcon",
+            "baseName": "ionIcon",
+            "type": "string"
+        },
+        {
+            "name": "manualTracking",
+            "baseName": "manualTracking",
+            "type": "boolean"
+        },
+        {
+            "name": "maximumAllowedValue",
+            "baseName": "maximumAllowedValue",
+            "type": "string"
+        },
+        {
+            "name": "measurementSynonymSingularLowercase",
+            "baseName": "measurementSynonymSingularLowercase",
+            "type": "string"
+        },
+        {
+            "name": "minimumAllowedValue",
+            "baseName": "minimumAllowedValue",
+            "type": "string"
+        },
+        {
+            "name": "moreInfo",
+            "baseName": "moreInfo",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "onsetDelay",
+            "baseName": "onsetDelay",
+            "type": "number"
+        },
+        {
+            "name": "outcome",
+            "baseName": "outcome",
+            "type": "boolean"
+        },
+        {
+            "name": "pngPath",
+            "baseName": "pngPath",
+            "type": "string"
+        },
+        {
+            "name": "pngUrl",
+            "baseName": "pngUrl",
+            "type": "string"
+        },
+        {
+            "name": "public",
+            "baseName": "public",
+            "type": "boolean"
+        },
+        {
+            "name": "svgPath",
+            "baseName": "svgPath",
+            "type": "string"
+        },
+        {
+            "name": "svgUrl",
+            "baseName": "svgUrl",
+            "type": "string"
+        },
+        {
+            "name": "updated",
+            "baseName": "updated",
+            "type": "number"
+        },
+        {
+            "name": "updatedTime",
+            "baseName": "updatedTime",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryName",
+            "baseName": "variableCategoryName",
+            "type": "string"
+        },
+        {
+            "name": "variableCategoryNameSingular",
+            "baseName": "variableCategoryNameSingular",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VariableCategory.attributeTypeMap;
     }
 }
+
 /**
-* New variables
+* An object with various chart properties each property contain and svg and Highcharts configuration
 */
-export class VariablesNew extends Array<VariableNew> {
+export class VariableCharts {
+    'hourlyColumnChart': Chart;
+    'monthlyColumnChart': Chart;
+    'distributionColumnChart': Chart;
+    'weekdayColumnChart': Chart;
+    'lineChartWithoutSmoothing': Chart;
+    'lineChartWithSmoothing': Chart;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "hourlyColumnChart",
+            "baseName": "hourlyColumnChart",
+            "type": "Chart"
+        },
+        {
+            "name": "monthlyColumnChart",
+            "baseName": "monthlyColumnChart",
+            "type": "Chart"
+        },
+        {
+            "name": "distributionColumnChart",
+            "baseName": "distributionColumnChart",
+            "type": "Chart"
+        },
+        {
+            "name": "weekdayColumnChart",
+            "baseName": "weekdayColumnChart",
+            "type": "Chart"
+        },
+        {
+            "name": "lineChartWithoutSmoothing",
+            "baseName": "lineChartWithoutSmoothing",
+            "type": "Chart"
+        },
+        {
+            "name": "lineChartWithSmoothing",
+            "baseName": "lineChartWithSmoothing",
+            "type": "Chart"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VariableCharts.attributeTypeMap;
+    }
 }
 
 export class Vote {
+    /**
+    * Cause variable id
+    */
+    'causeVariableId': number;
+    /**
+    * Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+    */
+    'clientId': string;
+    /**
+    * When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format
+    */
+    'createdAt': string;
+    /**
+    * Effect variable id
+    */
+    'effectVariableId': number;
     /**
     * id
     */
     'id': number;
     /**
-    * clientId
+    * When the record in the database was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format
     */
-    'clientId': string;
+    'updatedAt': string;
     /**
     * ID of User
     */
     'userId': number;
     /**
-    * ID of the predictor variable
+    * Vote: 0 (for implausible) or 1 (for plausible)
     */
-    'causeId': number;
-    /**
-    * ID of effect variable
-    */
-    'effectId': number;
-    /**
-    * Value of Vote
-    */
-    'value': number;
-    /**
-    * When the record was first created. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
-    */
-    'createdAt': Date;
-    /**
-    * When the record in the database was last updated. Use UTC ISO 8601 \"YYYY-MM-DDThh:mm:ss\"  datetime format
-    */
-    'updatedAt': Date;
+    'value': boolean;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "causeVariableId",
+            "baseName": "causeVariableId",
+            "type": "number"
+        },
+        {
+            "name": "clientId",
+            "baseName": "clientId",
+            "type": "string"
+        },
+        {
+            "name": "createdAt",
+            "baseName": "createdAt",
+            "type": "string"
+        },
+        {
+            "name": "effectVariableId",
+            "baseName": "effectVariableId",
+            "type": "number"
+        },
+        {
+            "name": "id",
+            "baseName": "id",
+            "type": "number"
+        },
+        {
+            "name": "updatedAt",
+            "baseName": "updatedAt",
+            "type": "string"
+        },
+        {
+            "name": "userId",
+            "baseName": "userId",
+            "type": "number"
+        },
+        {
+            "name": "value",
+            "baseName": "value",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Vote.attributeTypeMap;
+    }
 }
 
 export class VoteDelete {
@@ -1654,20 +8363,112 @@ export class VoteDelete {
     * Effect variable name for the correlation to which the vote pertains
     */
     'effect': string;
+
+    static discriminator = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "cause",
+            "baseName": "cause",
+            "type": "string"
+        },
+        {
+            "name": "effect",
+            "baseName": "effect",
+            "type": "string"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return VoteDelete.attributeTypeMap;
+    }
 }
 
+
+let enumsMap: {[index: string]: any} = {
+        "ConversionStep.OperationEnum": ConversionStep.OperationEnum,
+        "MeasurementSet.CombinationOperationEnum": MeasurementSet.CombinationOperationEnum,
+        "TrackingReminder.CombinationOperationEnum": TrackingReminder.CombinationOperationEnum,
+        "TrackingReminderNotification.CombinationOperationEnum": TrackingReminderNotification.CombinationOperationEnum,
+        "TrackingReminderNotificationPost.ActionEnum": TrackingReminderNotificationPost.ActionEnum,
+        "Unit.CategoryEnum": Unit.CategoryEnum,
+}
+
+let typeMap: {[index: string]: any} = {
+    "AppSettings": AppSettings,
+    "AppSettingsResponse": AppSettingsResponse,
+    "AuthorizedClients": AuthorizedClients,
+    "Button": Button,
+    "Chart": Chart,
+    "CommonResponse": CommonResponse,
+    "ConnectInstructions": ConnectInstructions,
+    "Connector": Connector,
+    "ConversionStep": ConversionStep,
+    "Correlation": Correlation,
+    "DataSource": DataSource,
+    "DeviceToken": DeviceToken,
+    "Explanation": Explanation,
+    "ExplanationStartTracking": ExplanationStartTracking,
+    "GetConnectorsResponse": GetConnectorsResponse,
+    "GetCorrelationsDataResponse": GetCorrelationsDataResponse,
+    "GetCorrelationsResponse": GetCorrelationsResponse,
+    "GetSharesResponse": GetSharesResponse,
+    "GetStudiesResponse": GetStudiesResponse,
+    "GetTrackingReminderNotificationsResponse": GetTrackingReminderNotificationsResponse,
+    "Image": Image,
+    "JsonErrorResponse": JsonErrorResponse,
+    "Measurement": Measurement,
+    "MeasurementDelete": MeasurementDelete,
+    "MeasurementItem": MeasurementItem,
+    "MeasurementSet": MeasurementSet,
+    "MeasurementUpdate": MeasurementUpdate,
+    "Pair": Pair,
+    "ParticipantInstruction": ParticipantInstruction,
+    "PostCorrelation": PostCorrelation,
+    "PostMeasurementsDataResponse": PostMeasurementsDataResponse,
+    "PostMeasurementsResponse": PostMeasurementsResponse,
+    "PostStudyCreateResponse": PostStudyCreateResponse,
+    "PostStudyPublishResponse": PostStudyPublishResponse,
+    "PostTrackingRemindersDataResponse": PostTrackingRemindersDataResponse,
+    "PostTrackingRemindersResponse": PostTrackingRemindersResponse,
+    "PostUserSettingsDataResponse": PostUserSettingsDataResponse,
+    "PostUserSettingsResponse": PostUserSettingsResponse,
+    "Scope": Scope,
+    "ShareInvitationBody": ShareInvitationBody,
+    "Study": Study,
+    "StudyCharts": StudyCharts,
+    "StudyHtml": StudyHtml,
+    "StudyImages": StudyImages,
+    "StudyLinks": StudyLinks,
+    "StudyText": StudyText,
+    "TrackingReminder": TrackingReminder,
+    "TrackingReminderDelete": TrackingReminderDelete,
+    "TrackingReminderNotification": TrackingReminderNotification,
+    "TrackingReminderNotificationAction": TrackingReminderNotificationAction,
+    "TrackingReminderNotificationPost": TrackingReminderNotificationPost,
+    "TrackingReminderNotificationTrackAllAction": TrackingReminderNotificationTrackAllAction,
+    "Unit": Unit,
+    "UnitCategory": UnitCategory,
+    "User": User,
+    "UserTag": UserTag,
+    "UserVariableDelete": UserVariableDelete,
+    "Variable": Variable,
+    "VariableCategory": VariableCategory,
+    "VariableCharts": VariableCharts,
+    "Vote": Vote,
+    "VoteDelete": VoteDelete,
+}
 
 export interface Authentication {
     /**
     * Apply authentication settings to header and query params.
     */
-    applyToRequest(requestOptions: request.Options): void;
+    applyToRequest(requestOptions: localVarRequest.Options): void;
 }
 
 export class HttpBasicAuth implements Authentication {
     public username: string;
     public password: string;
-    applyToRequest(requestOptions: request.Options): void {
+    applyToRequest(requestOptions: localVarRequest.Options): void {
         requestOptions.auth = {
             username: this.username, password: this.password
         }
@@ -1680,10 +8481,10 @@ export class ApiKeyAuth implements Authentication {
     constructor(private location: string, private paramName: string) {
     }
 
-    applyToRequest(requestOptions: request.Options): void {
+    applyToRequest(requestOptions: localVarRequest.Options): void {
         if (this.location == "query") {
             (<any>requestOptions.qs)[this.paramName] = this.apiKey;
-        } else if (this.location == "header") {
+        } else if (this.location == "header" && requestOptions && requestOptions.headers) {
             requestOptions.headers[this.paramName] = this.apiKey;
         }
     }
@@ -1692,31 +8493,35 @@ export class ApiKeyAuth implements Authentication {
 export class OAuth implements Authentication {
     public accessToken: string;
 
-    applyToRequest(requestOptions: request.Options): void {
-        requestOptions.headers["Authorization"] = "Bearer " + this.accessToken;
+    applyToRequest(requestOptions: localVarRequest.Options): void {
+        if (requestOptions && requestOptions.headers) {
+            requestOptions.headers["Authorization"] = "Bearer " + this.accessToken;
+        }
     }
 }
 
 export class VoidAuth implements Authentication {
     public username: string;
     public password: string;
-    applyToRequest(requestOptions: request.Options): void {
+    applyToRequest(_: localVarRequest.Options): void {
         // Do nothing
     }
 }
 
-export enum AuthenticationApiApiKeys {
+export enum AnalyticsApiApiKeys {
     access_token,
+    client_id,
 }
 
-export class AuthenticationApi {
-    protected basePath = defaultBasePath;
+export class AnalyticsApi {
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -1737,82 +8542,77 @@ export class AuthenticationApi {
         this._useQuerystring = value;
     }
 
-    public setApiKey(key: AuthenticationApiApiKeys, value: string) {
-        this.authentications[AuthenticationApiApiKeys[key]].apiKey = value;
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
+    public setApiKey(key: AnalyticsApiApiKeys, value: string) {
+        (this.authentications as any)[AnalyticsApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Second Step in Social Authentication flow with JWT Token
-     *  Here is the flow for how social authentication works with a JWT Token 1.**Client:** The client needs to open popup with social auth url (&#x60;https://app/quantimo.do/api/v2/auth/social/login?provider&#x3D;{provider}&amp;redirectUrl&#x3D;{url}&#x60;) of server with &#x60;provider&#x60; and &#x60;redirectUrl&#x60;. (Url should be registered with our social apps. Facebook is fine with any redirect url with the same domain base url but Google needs exact redirect url.) 2.**Server:** The QM server will redirect user to that provider to get access. 3.**Client:** After successful or failed authentication, it will be redirected to given &#x60;redirectUrl&#x60; with code or error. 4.**Client:** The client needs to get that code and needs to send an Ajax request to server at &#x60;https://app.quantimo.do/api/v2/auth/social/authorizeCode?provider&#x3D;{provider}&amp;code&#x3D;{authorizationCode}&#x60; 5.**Server:** The QM server will authorize that code from the social connection and will authenticate user and will retrieve user info. 6.**Server:** The QM server will try to find existing user by unique identity. If the user already exists then it will login. Otherwise, it will create new user and will then login. 7.**Server:** Once user is found/created, it will return a JWT token for that user in the response.
-     * @param code Authorization code obtained from the provider.
-     * @param provider The current options are &#x60;google&#x60; and &#x60;facebook&#x60;.
+     * Get explanations of  correlations based on data from a single user.
+     * @summary Get correlation explanations
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
      */
-    public v2AuthSocialAuthorizeCodeGet (code: string, provider: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v2/auth/social/authorizeCode';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getCorrelationExplanations (causeVariableName?: string, effectVariableName?: string) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
+        const localVarPath = this.basePath + '/v3/correlations/explanations';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        // verify required parameter 'code' is not null or undefined
-        if (code === null || code === undefined) {
-            throw new Error('Required parameter code was null or undefined when calling v2AuthSocialAuthorizeCodeGet.');
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
         }
 
-        // verify required parameter 'provider' is not null or undefined
-        if (provider === null || provider === undefined) {
-            throw new Error('Required parameter provider was null or undefined when calling v2AuthSocialAuthorizeCodeGet.');
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
         }
 
-        if (code !== undefined) {
-            queryParameters['code'] = code;
-        }
 
-        if (provider !== undefined) {
-            queryParameters['provider'] = provider;
-        }
+        let localVarUseFormData = false;
 
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "Array<Correlation>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -1822,249 +8622,107 @@ export class AuthenticationApi {
         });
     }
     /**
-     * Native Social Authentication
-     * If you are using native authentication via Facebook or Google SDKs then you should use the following flow. 1.**Client:** Using native authentication via your native mobile app, get an access token using the instructions provided by the Facebook SDK (https://developers.facebook.com/docs/facebook-login) or Google (https://developers.google.com/identity/protocols/OAuth2) 2.**Client:** Send an Ajax request with provider name and access token on &#x60;https://app.quantimo.do/api/v2/auth/social/authorizeToken?provider&#x3D;{provider}&amp;accessToken&#x3D;{accessToken}&amp;refreshToken&#x3D;{refreshToken}&#x60; (&#x60;refreshToken&#x60; is optional) 3.**Server:** Server will try to get user info and will find existing user by unique identity. If user exist then it will do a login for that or it will create new user and will do login 4.**Server:** Once user is found/created, it will return a JWT token for that user in response 5.**Client:** After getting the JWT token to get a QM access token follow these steps and include your JWT token in them as a header (Authorization: Bearer **{yourJWThere}**) or as a url parameter (https://app.quantimo.do/api/v2/oauth/authorize?token&#x3D;{yourJWThere}).
-     * @param accessToken User&#39;s OAuth2 access token obtained from Google or FB native SDK
-     * @param provider The current options are &#x60;google&#x60; and &#x60;facebook&#x60;.
-     * @param refreshToken Optional refresh token obtained from Google or FB native SDK
+     * Get a list of correlations that can be used to display top predictors of a given outcome like mood, for instance.
+     * @summary Get correlations
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param userId User&#39;s id
+     * @param correlationCoefficient Pearson correlation coefficient between cause and effect after lagging by onset delay and grouping by duration of action
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param outcomesOfInterest Only include correlations for which the effect is an outcome of interest for the user
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param commonOnly Return only public, anonymized and aggregated population data instead of user-specific variables
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v2AuthSocialAuthorizeTokenGet (accessToken: string, provider: string, refreshToken?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v2/auth/social/authorizeToken';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getCorrelations (causeVariableName?: string, effectVariableName?: string, sort?: string, limit?: number, offset?: number, userId?: number, correlationCoefficient?: string, updatedAt?: string, outcomesOfInterest?: boolean, clientId?: string, commonOnly?: boolean, platform?: string) : Promise<{ response: http.ClientResponse; body: GetCorrelationsResponse;  }> {
+        const localVarPath = this.basePath + '/v3/correlations';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        // verify required parameter 'accessToken' is not null or undefined
-        if (accessToken === null || accessToken === undefined) {
-            throw new Error('Required parameter accessToken was null or undefined when calling v2AuthSocialAuthorizeTokenGet.');
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
         }
 
-        // verify required parameter 'provider' is not null or undefined
-        if (provider === null || provider === undefined) {
-            throw new Error('Required parameter provider was null or undefined when calling v2AuthSocialAuthorizeTokenGet.');
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
         }
 
-        if (refreshToken !== undefined) {
-            queryParameters['refreshToken'] = refreshToken;
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
         }
 
-        if (accessToken !== undefined) {
-            queryParameters['accessToken'] = accessToken;
+        if (limit !== undefined) {
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
         }
 
-        if (provider !== undefined) {
-            queryParameters['provider'] = provider;
+        if (offset !== undefined) {
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
         }
 
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * First Setp in Social Authentication flow with JWT Token
-     *  Here is the flow for how social authentication works with a JWT Token 1.**Client:** The client needs to open popup with social auth url (&#x60;https://app/quantimo.do/api/v2/auth/social/login?provider&#x3D;{provider}&amp;redirectUrl&#x3D;{url}&#x60;) of server with &#x60;provider&#x60; and &#x60;redirectUrl&#x60;. (Url should be registered with our social apps. Facebook and Twitter are fine with any redirect url with the same domain base url but Google needs exact redirect url.) 2.**Server:** The QM server will redirect user to that provider to get access. 3.**Client:** After successful or failed authentication, it will be redirected to given &#x60;redirectUrl&#x60; with code or error. 4.**Client:** The client needs to get that code and needs to send an Ajax request to server at &#x60;https://app.quantimo.do/api/v2/auth/social/authorizeCode?provider&#x3D;{provider}&amp;code&#x3D;{authorizationCode}&#x60; 5.**Server:** The QM server will authorize that code from the social connection and will authenticate user and will retrieve user info. 6.**Server:** The QM server will try to find existing user by unique identity. If the user already exists then it will login. Otherwise, it will create new user and will then login. 7.**Server:** Once user is found/created, it will return a JWT token for that user in the response.
-     * @param redirectUrl The redirect URI is the URL within your client application that will receive the OAuth2 credentials. Url should be registered with our social apps. Facebook and Twitter are fine with any redirect url with the same domain base url but Google needs exact redirect url.
-     * @param provider The current options are &#x60;google&#x60; and &#x60;facebook&#x60;.
-     */
-    public v2AuthSocialLoginGet (redirectUrl: string, provider: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v2/auth/social/login';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'redirectUrl' is not null or undefined
-        if (redirectUrl === null || redirectUrl === undefined) {
-            throw new Error('Required parameter redirectUrl was null or undefined when calling v2AuthSocialLoginGet.');
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        // verify required parameter 'provider' is not null or undefined
-        if (provider === null || provider === undefined) {
-            throw new Error('Required parameter provider was null or undefined when calling v2AuthSocialLoginGet.');
+        if (correlationCoefficient !== undefined) {
+            localVarQueryParameters['correlationCoefficient'] = ObjectSerializer.serialize(correlationCoefficient, "string");
         }
 
-        if (redirectUrl !== undefined) {
-            queryParameters['redirectUrl'] = redirectUrl;
+        if (updatedAt !== undefined) {
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
         }
 
-        if (provider !== undefined) {
-            queryParameters['provider'] = provider;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Get a user access token
-     * Client provides authorization token obtained from /api/v1/oauth2/authorize to this endpoint and receives an access token. Access token can then be used to query different API endpoints of QuantiModo. ### Request Access Token After user approves your access to the given scope form the https:/app.quantimo.do/v2/oauth2/authorize endpoint, you&#39;ll receive an authorization code to request an access token. This time make a &#x60;POST&#x60; request to &#x60;/api/v2/oauth/access_token&#x60; with parameters including: * &#x60;grant_type&#x60; Can be &#x60;authorization_code&#x60; or &#x60;refresh_token&#x60; since we are getting the &#x60;access_token&#x60; for the first time we don&#39;t have a &#x60;refresh_token&#x60; so this must be &#x60;authorization_code&#x60;. * &#x60;code&#x60; Authorization code you received with the previous request. * &#x60;redirect_uri&#x60; Your application&#39;s redirect url. ### Refreshing Access Token Access tokens expire at some point, to continue using our api you need to refresh them with &#x60;refresh_token&#x60; you received along with the &#x60;access_token&#x60;. To do this make a &#x60;POST&#x60; request to &#x60;/api/v2/oauth/access_token&#x60; with correct parameters, which are: * &#x60;grant_type&#x60; This time grant type must be &#x60;refresh_token&#x60; since we have it. * &#x60;clientId&#x60; Your application&#39;s client id. * &#x60;client_secret&#x60; Your application&#39;s client secret. * &#x60;refresh_token&#x60; The refresh token you received with the &#x60;access_token&#x60;. Every request you make to this endpoint will give you a new refresh token and make the old one expired. So you can keep getting new access tokens with new refresh tokens. ### Using Access Token Currently we support 2 ways for this, you can&#39;t use both at the same time. * Adding access token to the request header as &#x60;Authorization: Bearer {access_token}&#x60; * Adding to the url as a query parameter &#x60;?access_token&#x3D;{access_token}&#x60; You can read more about OAuth2 from [here](http://oauth.net/2/)
-     * @param clientId This is the unique ID that QuantiModo uses to identify your application. Obtain a client id by emailing info@quantimo.do.
-     * @param clientSecret This is the secret for your obtained clientId. QuantiModo uses this to validate that only your application uses the clientId.
-     * @param grantType Grant Type can be &#39;authorization_code&#39; or &#39;refresh_token&#39;
-     * @param code Authorization code you received with the previous request.
-     * @param responseType If the value is code, launches a Basic flow, requiring a POST to the token endpoint to obtain the tokens. If the value is token id_token or id_token token, launches an Implicit flow, requiring the use of Javascript at the redirect URI to retrieve tokens from the URI #fragment.
-     * @param scope Scopes include basic, readmeasurements, and writemeasurements. The \&quot;basic\&quot; scope allows you to read user info (displayname, email, etc). The \&quot;readmeasurements\&quot; scope allows one to read a user&#39;s data. The \&quot;writemeasurements\&quot; scope allows you to write user data. Separate multiple scopes by a space.
-     * @param redirectUri The redirect URI is the URL within your client application that will receive the OAuth2 credentials.
-     * @param state An opaque string that is round-tripped in the protocol; that is to say, it is returned as a URI parameter in the Basic flow, and in the URI
-     */
-    public v2Oauth2AccessTokenGet (clientId: string, clientSecret: string, grantType: string, code: string, responseType?: string, scope?: string, redirectUri?: string, state?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v2/oauth2/access_token';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'clientId' is not null or undefined
-        if (clientId === null || clientId === undefined) {
-            throw new Error('Required parameter clientId was null or undefined when calling v2Oauth2AccessTokenGet.');
-        }
-
-        // verify required parameter 'clientSecret' is not null or undefined
-        if (clientSecret === null || clientSecret === undefined) {
-            throw new Error('Required parameter clientSecret was null or undefined when calling v2Oauth2AccessTokenGet.');
-        }
-
-        // verify required parameter 'grantType' is not null or undefined
-        if (grantType === null || grantType === undefined) {
-            throw new Error('Required parameter grantType was null or undefined when calling v2Oauth2AccessTokenGet.');
-        }
-
-        // verify required parameter 'code' is not null or undefined
-        if (code === null || code === undefined) {
-            throw new Error('Required parameter code was null or undefined when calling v2Oauth2AccessTokenGet.');
+        if (outcomesOfInterest !== undefined) {
+            localVarQueryParameters['outcomesOfInterest'] = ObjectSerializer.serialize(outcomesOfInterest, "boolean");
         }
 
         if (clientId !== undefined) {
-            queryParameters['clientId'] = clientId;
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
         }
 
-        if (clientSecret !== undefined) {
-            queryParameters['client_secret'] = clientSecret;
+        if (commonOnly !== undefined) {
+            localVarQueryParameters['commonOnly'] = ObjectSerializer.serialize(commonOnly, "boolean");
         }
 
-        if (grantType !== undefined) {
-            queryParameters['grant_type'] = grantType;
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
         }
 
-        if (code !== undefined) {
-            queryParameters['code'] = code;
-        }
 
-        if (responseType !== undefined) {
-            queryParameters['response_type'] = responseType;
-        }
+        let localVarUseFormData = false;
 
-        if (scope !== undefined) {
-            queryParameters['scope'] = scope;
-        }
-
-        if (redirectUri !== undefined) {
-            queryParameters['redirect_uri'] = redirectUri;
-        }
-
-        if (state !== undefined) {
-            queryParameters['state'] = state;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: GetCorrelationsResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "GetCorrelationsResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -2073,97 +8731,420 @@ export class AuthenticationApi {
             });
         });
     }
+}
+export enum AppSettingsApiApiKeys {
+    access_token,
+    client_id,
+}
+
+export class AppSettingsApi {
+    protected _basePath = defaultBasePath;
+    protected defaultHeaders : any = {};
+    protected _useQuerystring : boolean = false;
+
+    protected authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set useQuerystring(value: boolean) {
+        this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
+    public setApiKey(key: AppSettingsApiApiKeys, value: string) {
+        (this.authentications as any)[AppSettingsApiApiKeys[key]].apiKey = value;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
     /**
-     * Request Authorization Code
-     * You can implement OAuth2 authentication to your application using our **OAuth2** endpoints.  You need to redirect users to &#x60;/api/v2/oauth/authorize&#x60; endpoint to get an authorization code and include the parameters below.   This page will ask the user if they want to allow a client&#39;s application to submit or obtain data from their QM account. It will redirect the user to the url provided by the client application with the code as a query parameter or error in case of an error. See the /api/v2/oauth/access_token endpoint for the next steps.
-     * @param clientId This is the unique ID that QuantiModo uses to identify your application. Obtain a client id by creating a free application at [https://app.quantimo.do/api/v2/apps](https://app.quantimo.do/api/v2/apps).
-     * @param clientSecret This is the secret for your obtained clientId. QuantiModo uses this to validate that only your application uses the clientId.  Obtain this by creating a free application at [https://app.quantimo.do/api/v2/apps](https://app.quantimo.do/api/v2/apps).
-     * @param responseType If the value is code, launches a Basic flow, requiring a POST to the token endpoint to obtain the tokens. If the value is token id_token or id_token token, launches an Implicit flow, requiring the use of Javascript at the redirect URI to retrieve tokens from the URI #fragment.
-     * @param scope Scopes include basic, readmeasurements, and writemeasurements. The \&quot;basic\&quot; scope allows you to read user info (displayname, email, etc). The \&quot;readmeasurements\&quot; scope allows one to read a user&#39;s data. The \&quot;writemeasurements\&quot; scope allows you to write user data. Separate multiple scopes by a space.
-     * @param redirectUri The redirect URI is the URL within your client application that will receive the OAuth2 credentials.
-     * @param state An opaque string that is round-tripped in the protocol; that is to say, it is returned as a URI parameter in the Basic flow, and in the URI
+     * Get the settings for your application configurable at https://build.quantimo.do
+     * @summary Get client app settings
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param clientSecret This is the secret for your obtained clientId. We use this to ensure that only your application uses the clientId.  Obtain this by creating a free application at [https://app.quantimo.do/api/v2/apps](https://app.quantimo.do/api/v2/apps).
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v2OauthAuthorizeGet (clientId: string, clientSecret: string, responseType: string, scope: string, redirectUri?: string, state?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v2/oauth/authorize';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getAppSettings (clientId?: string, clientSecret?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: AppSettingsResponse;  }> {
+        const localVarPath = this.basePath + '/v3/appSettings';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        // verify required parameter 'clientId' is not null or undefined
-        if (clientId === null || clientId === undefined) {
-            throw new Error('Required parameter clientId was null or undefined when calling v2OauthAuthorizeGet.');
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
         }
 
-        // verify required parameter 'clientSecret' is not null or undefined
-        if (clientSecret === null || clientSecret === undefined) {
-            throw new Error('Required parameter clientSecret was null or undefined when calling v2OauthAuthorizeGet.');
+        if (clientSecret !== undefined) {
+            localVarQueryParameters['client_secret'] = ObjectSerializer.serialize(clientSecret, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: AppSettingsResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "AppSettingsResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+}
+export enum AuthenticationApiApiKeys {
+    access_token,
+    client_id,
+}
+
+export class AuthenticationApi {
+    protected _basePath = defaultBasePath;
+    protected defaultHeaders : any = {};
+    protected _useQuerystring : boolean = false;
+
+    protected authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set useQuerystring(value: boolean) {
+        this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
+    public setApiKey(key: AuthenticationApiApiKeys, value: string) {
+        (this.authentications as any)[AuthenticationApiApiKeys[key]].apiKey = value;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    /**
+     * Client provides authorization token obtained from /api/v3/oauth2/authorize to this endpoint and receives an access token. Access token can then be used to query API endpoints. ### Request Access Token After user approves your access to the given scope form the https:/app.quantimo.do/v2/oauth2/authorize endpoint, you'll receive an authorization code to request an access token. This time make a `POST` request to `/api/v2/oauth/access_token` with parameters including: * `grant_type` Can be `authorization_code` or `refresh_token` since we are getting the `access_token` for the first time we don't have a `refresh_token` so this must be `authorization_code`. * `code` Authorization code you received with the previous request. * `redirect_uri` Your application's redirect url. ### Refreshing Access Token Access tokens expire at some point, to continue using our api you need to refresh them with `refresh_token` you received along with the `access_token`. To do this make a `POST` request to `/api/v2/oauth/access_token` with correct parameters, which are: * `grant_type` This time grant type must be `refresh_token` since we have it. * `clientId` Your application's client id. * `client_secret` Your application's client secret. * `refresh_token` The refresh token you received with the `access_token`. Every request you make to this endpoint will give you a new refresh token and make the old one expired. So you can keep getting new access tokens with new refresh tokens. ### Using Access Token Currently we support 2 ways for this, you can't use both at the same time. * Adding access token to the request header as `Authorization: Bearer {access_token}` * Adding to the url as a query parameter `?access_token={access_token}` You can read more about OAuth2 from [here](http://oauth.net/2/)
+     * @summary Get a user access token
+     * @param grantType Grant Type can be &#39;authorization_code&#39; or &#39;refresh_token&#39;
+     * @param code Authorization code you received with the previous request.
+     * @param responseType If the value is code, launches a Basic flow, requiring a POST to the token endpoint to obtain the tokens. If the value is token id_token or id_token token, launches an Implicit flow, requiring the use of Javascript at the redirect URI to retrieve tokens from the URI #fragment.
+     * @param scope Scopes include basic, readmeasurements, and writemeasurements. The &#x60;basic&#x60; scope allows you to read user info (displayName, email, etc). The &#x60;readmeasurements&#x60; scope allows one to read a user&#39;s data. The &#x60;writemeasurements&#x60; scope allows you to write user data. Separate multiple scopes by a space.
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param clientSecret This is the secret for your obtained clientId. We use this to ensure that only your application uses the clientId.  Obtain this by creating a free application at [https://app.quantimo.do/api/v2/apps](https://app.quantimo.do/api/v2/apps).
+     * @param redirectUri The redirect URI is the URL within your client application that will receive the OAuth2 credentials.
+     * @param state An opaque string that is round-tripped in the protocol; that is to say, it is returned as a URI parameter in the Basic flow, and in the URI
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public getAccessToken (grantType: string, code: string, responseType: string, scope: string, clientId?: string, clientSecret?: string, redirectUri?: string, state?: string, platform?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/oauth2/token';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'grantType' is not null or undefined
+        if (grantType === null || grantType === undefined) {
+            throw new Error('Required parameter grantType was null or undefined when calling getAccessToken.');
+        }
+
+        // verify required parameter 'code' is not null or undefined
+        if (code === null || code === undefined) {
+            throw new Error('Required parameter code was null or undefined when calling getAccessToken.');
         }
 
         // verify required parameter 'responseType' is not null or undefined
         if (responseType === null || responseType === undefined) {
-            throw new Error('Required parameter responseType was null or undefined when calling v2OauthAuthorizeGet.');
+            throw new Error('Required parameter responseType was null or undefined when calling getAccessToken.');
         }
 
         // verify required parameter 'scope' is not null or undefined
         if (scope === null || scope === undefined) {
-            throw new Error('Required parameter scope was null or undefined when calling v2OauthAuthorizeGet.');
+            throw new Error('Required parameter scope was null or undefined when calling getAccessToken.');
         }
 
         if (clientId !== undefined) {
-            queryParameters['clientId'] = clientId;
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
         }
 
         if (clientSecret !== undefined) {
-            queryParameters['client_secret'] = clientSecret;
+            localVarQueryParameters['client_secret'] = ObjectSerializer.serialize(clientSecret, "string");
+        }
+
+        if (grantType !== undefined) {
+            localVarQueryParameters['grant_type'] = ObjectSerializer.serialize(grantType, "string");
+        }
+
+        if (code !== undefined) {
+            localVarQueryParameters['code'] = ObjectSerializer.serialize(code, "string");
         }
 
         if (responseType !== undefined) {
-            queryParameters['response_type'] = responseType;
+            localVarQueryParameters['response_type'] = ObjectSerializer.serialize(responseType, "string");
         }
 
         if (scope !== undefined) {
-            queryParameters['scope'] = scope;
+            localVarQueryParameters['scope'] = ObjectSerializer.serialize(scope, "string");
         }
 
         if (redirectUri !== undefined) {
-            queryParameters['redirect_uri'] = redirectUri;
+            localVarQueryParameters['redirect_uri'] = ObjectSerializer.serialize(redirectUri, "string");
         }
 
         if (state !== undefined) {
-            queryParameters['state'] = state;
+            localVarQueryParameters['state'] = ObjectSerializer.serialize(state, "string");
         }
 
-        let useFormData = false;
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
 
-        let requestOptions: request.Options = {
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * You can implement OAuth2 authentication to your application using our **OAuth2** endpoints.  You need to redirect users to `/api/v3/oauth2/authorize` endpoint to get an authorization code and include the parameters below.   This page will ask the user if they want to allow a client's application to submit or obtain data from their QM account. It will redirect the user to the url provided by the client application with the code as a query parameter or error in case of an error. See the /api/v2/oauth/access_token endpoint for the next steps.
+     * @summary Request Authorization Code
+     * @param responseType If the value is code, launches a Basic flow, requiring a POST to the token endpoint to obtain the tokens. If the value is token id_token or id_token token, launches an Implicit flow, requiring the use of Javascript at the redirect URI to retrieve tokens from the URI #fragment.
+     * @param scope Scopes include basic, readmeasurements, and writemeasurements. The &#x60;basic&#x60; scope allows you to read user info (displayName, email, etc). The &#x60;readmeasurements&#x60; scope allows one to read a user&#39;s data. The &#x60;writemeasurements&#x60; scope allows you to write user data. Separate multiple scopes by a space.
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param clientSecret This is the secret for your obtained clientId. We use this to ensure that only your application uses the clientId.  Obtain this by creating a free application at [https://app.quantimo.do/api/v2/apps](https://app.quantimo.do/api/v2/apps).
+     * @param redirectUri The redirect URI is the URL within your client application that will receive the OAuth2 credentials.
+     * @param state An opaque string that is round-tripped in the protocol; that is to say, it is returned as a URI parameter in the Basic flow, and in the URI
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public getOauthAuthorizationCode (responseType: string, scope: string, clientId?: string, clientSecret?: string, redirectUri?: string, state?: string, platform?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/oauth2/authorize';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'responseType' is not null or undefined
+        if (responseType === null || responseType === undefined) {
+            throw new Error('Required parameter responseType was null or undefined when calling getOauthAuthorizationCode.');
+        }
+
+        // verify required parameter 'scope' is not null or undefined
+        if (scope === null || scope === undefined) {
+            throw new Error('Required parameter scope was null or undefined when calling getOauthAuthorizationCode.');
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (clientSecret !== undefined) {
+            localVarQueryParameters['client_secret'] = ObjectSerializer.serialize(clientSecret, "string");
+        }
+
+        if (responseType !== undefined) {
+            localVarQueryParameters['response_type'] = ObjectSerializer.serialize(responseType, "string");
+        }
+
+        if (scope !== undefined) {
+            localVarQueryParameters['scope'] = ObjectSerializer.serialize(scope, "string");
+        }
+
+        if (redirectUri !== undefined) {
+            localVarQueryParameters['redirect_uri'] = ObjectSerializer.serialize(redirectUri, "string");
+        }
+
+        if (state !== undefined) {
+            localVarQueryParameters['state'] = ObjectSerializer.serialize(state, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Post GoogleIdToken
+     * @summary Post GoogleIdToken
+     */
+    public postGoogleIdToken () : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/googleIdToken';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -2175,16 +9156,18 @@ export class AuthenticationApi {
 }
 export enum ConnectorsApiApiKeys {
     access_token,
+    client_id,
 }
 
 export class ConnectorsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -2203,141 +9186,80 @@ export class ConnectorsApi {
 
     set useQuerystring(value: boolean) {
         this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
     }
 
     public setApiKey(key: ConnectorsApiApiKeys, value: string) {
-        this.authentications[ConnectorsApiApiKeys[key]].apiKey = value;
+        (this.authentications as any)[ConnectorsApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Mobile connect page
-     * This page is designed to be opened in a webview.  Instead of using popup authentication boxes, it uses redirection. You can include the user&#39;s access_token as a URL parameter like https://app.quantimo.do/api/v1/connect/mobile?access_token&#x3D;123
-     * @param accessToken User OAuth access token
-     * @param userId User&#39;s id
-     */
-    public v1ConnectMobileGet (accessToken: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/connect/mobile';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'accessToken' is not null or undefined
-        if (accessToken === null || accessToken === undefined) {
-            throw new Error('Required parameter accessToken was null or undefined when calling v1ConnectMobileGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Obtain a token from 3rd party data source
      * Attempt to obtain a token from the data provider, store it in the database. With this, the connector to continue to obtain new user data until the token is revoked.
-     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v1/connectors/list endpoint.
-     * @param accessToken User&#39;s OAuth2 access token
+     * @summary Obtain a token from 3rd party data source
+     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v3/connectors/list endpoint.
      * @param userId User&#39;s id
      */
-    public v1ConnectorsConnectorNameConnectGet (connectorName: string, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/connectors/{connectorName}/connect'
-            .replace('{' + 'connectorName' + '}', String(connectorName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
+    public connectConnector (connectorName: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/connectors/{connectorName}/connect'
+            .replace('{' + 'connectorName' + '}', encodeURIComponent(String(connectorName)));
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'connectorName' is not null or undefined
         if (connectorName === null || connectorName === undefined) {
-            throw new Error('Required parameter connectorName was null or undefined when calling v1ConnectorsConnectorNameConnectGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+            throw new Error('Required parameter connectorName was null or undefined when calling connectConnector.');
         }
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -2347,270 +9269,53 @@ export class ConnectorsApi {
         });
     }
     /**
-     * Connection Instructions
-     * Returns instructions that describe what parameters and endpoint to use to connect to the given data provider.
-     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v1/connectors/list endpoint.
-     * @param parameters JSON Array of Parameters for the request to enable connector.
-     * @param url URL which should be used to enable the connector.
-     * @param usePopup Should use popup when enabling connector
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1ConnectorsConnectorNameConnectInstructionsGet (connectorName: string, parameters: string, url: string, usePopup: boolean, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/connectors/{connectorName}/connectInstructions'
-            .replace('{' + 'connectorName' + '}', String(connectorName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'connectorName' is not null or undefined
-        if (connectorName === null || connectorName === undefined) {
-            throw new Error('Required parameter connectorName was null or undefined when calling v1ConnectorsConnectorNameConnectInstructionsGet.');
-        }
-
-        // verify required parameter 'parameters' is not null or undefined
-        if (parameters === null || parameters === undefined) {
-            throw new Error('Required parameter parameters was null or undefined when calling v1ConnectorsConnectorNameConnectInstructionsGet.');
-        }
-
-        // verify required parameter 'url' is not null or undefined
-        if (url === null || url === undefined) {
-            throw new Error('Required parameter url was null or undefined when calling v1ConnectorsConnectorNameConnectInstructionsGet.');
-        }
-
-        // verify required parameter 'usePopup' is not null or undefined
-        if (usePopup === null || usePopup === undefined) {
-            throw new Error('Required parameter usePopup was null or undefined when calling v1ConnectorsConnectorNameConnectInstructionsGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (parameters !== undefined) {
-            queryParameters['parameters'] = parameters;
-        }
-
-        if (url !== undefined) {
-            queryParameters['url'] = url;
-        }
-
-        if (usePopup !== undefined) {
-            queryParameters['usePopup'] = usePopup;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Connect Parameter
-     * Returns instructions that describe what parameters and endpoint to use to connect to the given data provider.
-     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v1/connectors/list endpoint.
-     * @param displayName Name of the parameter that is user visible in the form
-     * @param key Name of the property that the user has to enter such as username or password Connector (used in HTTP request)
-     * @param placeholder Placeholder hint value for the parameter input tag.
-     * @param type Type of input field such as those found here http://www.w3schools.com/tags/tag_input.asp
-     * @param usePopup Should use popup when enabling connector
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param defaultValue Default parameter value
-     */
-    public v1ConnectorsConnectorNameConnectParameterGet (connectorName: string, displayName: string, key: string, placeholder: string, type: string, usePopup: boolean, accessToken?: string, userId?: number, defaultValue?: string) : Promise<{ response: http.ClientResponse; body: ConnectorInstruction;  }> {
-        const localVarPath = this.basePath + '/v1/connectors/{connectorName}/connectParameter'
-            .replace('{' + 'connectorName' + '}', String(connectorName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'connectorName' is not null or undefined
-        if (connectorName === null || connectorName === undefined) {
-            throw new Error('Required parameter connectorName was null or undefined when calling v1ConnectorsConnectorNameConnectParameterGet.');
-        }
-
-        // verify required parameter 'displayName' is not null or undefined
-        if (displayName === null || displayName === undefined) {
-            throw new Error('Required parameter displayName was null or undefined when calling v1ConnectorsConnectorNameConnectParameterGet.');
-        }
-
-        // verify required parameter 'key' is not null or undefined
-        if (key === null || key === undefined) {
-            throw new Error('Required parameter key was null or undefined when calling v1ConnectorsConnectorNameConnectParameterGet.');
-        }
-
-        // verify required parameter 'placeholder' is not null or undefined
-        if (placeholder === null || placeholder === undefined) {
-            throw new Error('Required parameter placeholder was null or undefined when calling v1ConnectorsConnectorNameConnectParameterGet.');
-        }
-
-        // verify required parameter 'type' is not null or undefined
-        if (type === null || type === undefined) {
-            throw new Error('Required parameter type was null or undefined when calling v1ConnectorsConnectorNameConnectParameterGet.');
-        }
-
-        // verify required parameter 'usePopup' is not null or undefined
-        if (usePopup === null || usePopup === undefined) {
-            throw new Error('Required parameter usePopup was null or undefined when calling v1ConnectorsConnectorNameConnectParameterGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (defaultValue !== undefined) {
-            queryParameters['defaultValue'] = defaultValue;
-        }
-
-        if (displayName !== undefined) {
-            queryParameters['displayName'] = displayName;
-        }
-
-        if (key !== undefined) {
-            queryParameters['key'] = key;
-        }
-
-        if (placeholder !== undefined) {
-            queryParameters['placeholder'] = placeholder;
-        }
-
-        if (type !== undefined) {
-            queryParameters['type'] = type;
-        }
-
-        if (usePopup !== undefined) {
-            queryParameters['usePopup'] = usePopup;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: ConnectorInstruction;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Delete stored connection info
      * The disconnect method deletes any stored tokens or connection information from the connectors database.
-     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v1/connectors/list endpoint.
+     * @summary Delete stored connection info
+     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v3/connectors/list endpoint.
      */
-    public v1ConnectorsConnectorNameDisconnectGet (connectorName: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/connectors/{connectorName}/disconnect'
-            .replace('{' + 'connectorName' + '}', String(connectorName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
+    public disconnectConnector (connectorName: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/connectors/{connectorName}/disconnect'
+            .replace('{' + 'connectorName' + '}', encodeURIComponent(String(connectorName)));
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'connectorName' is not null or undefined
         if (connectorName === null || connectorName === undefined) {
-            throw new Error('Required parameter connectorName was null or undefined when calling v1ConnectorsConnectorNameDisconnectGet.');
+            throw new Error('Required parameter connectorName was null or undefined when calling disconnectConnector.');
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -2620,178 +9325,57 @@ export class ConnectorsApi {
         });
     }
     /**
-     * Get connector info for user
-     * Returns information about the connector such as the connector id, whether or not is connected for this user (i.e. we have a token or credentials), and its update history for the user.
-     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v1/connectors/list endpoint.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1ConnectorsConnectorNameInfoGet (connectorName: string, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: ConnectorInfo;  }> {
-        const localVarPath = this.basePath + '/v1/connectors/{connectorName}/info'
-            .replace('{' + 'connectorName' + '}', String(connectorName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'connectorName' is not null or undefined
-        if (connectorName === null || connectorName === undefined) {
-            throw new Error('Required parameter connectorName was null or undefined when calling v1ConnectorsConnectorNameInfoGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: ConnectorInfo;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Sync with data source
-     * The update method tells the QM Connector Framework to check with the data provider (such as Fitbit or MyFitnessPal) and retrieve any new measurements available.
-     * @param connectorName Lowercase system name of the source application or device
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1ConnectorsConnectorNameUpdateGet (connectorName: string, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/connectors/{connectorName}/update'
-            .replace('{' + 'connectorName' + '}', String(connectorName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'connectorName' is not null or undefined
-        if (connectorName === null || connectorName === undefined) {
-            throw new Error('Required parameter connectorName was null or undefined when calling v1ConnectorsConnectorNameUpdateGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * List of Connectors
      * A connector pulls data from other data providers using their API or a screenscraper. Returns a list of all available connectors and information about them such as their id, name, whether the user has provided access, logo url, connection instructions, and the update history.
+     * @summary List of Connectors
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v1ConnectorsListGet () : Promise<{ response: http.ClientResponse; body: Array<Connector>;  }> {
-        const localVarPath = this.basePath + '/v1/connectors/list';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getConnectors (clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: GetConnectorsResponse;  }> {
+        const localVarPath = this.basePath + '/v3/connectors/list';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
 
 
-        let useFormData = false;
+        let localVarUseFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: Array<Connector>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: GetConnectorsResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "GetConnectorsResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -2801,47 +9385,52 @@ export class ConnectorsApi {
         });
     }
     /**
-     * Get embeddable connect javascript
-     * Get embeddable connect javascript. Usage:   - Embedding in applications with popups for 3rd-party authentication windows.     Use &#x60;qmSetupInPopup&#x60; function after connecting &#x60;connect.js&#x60;.   - Embedding in applications with popups for 3rd-party authentication windows.     Requires a selector to block. It will be embedded in this block.     Use &#x60;qmSetupOnPage&#x60; function after connecting &#x60;connect.js&#x60;.   - Embedding in mobile applications without popups for 3rd-party authentication.     Use &#x60;qmSetupOnMobile&#x60; function after connecting &#x60;connect.js&#x60;.     If using in a Cordova application call  &#x60;qmSetupOnIonic&#x60; function after connecting &#x60;connect.js&#x60;.
-     * @param accessToken User&#39;s OAuth2 access token
+     * Get embeddable connect javascript. Usage:   - Embedding in applications with popups for 3rd-party authentication windows.     Use `qmSetupInPopup` function after connecting `connect.js`.   - Embedding in applications with popups for 3rd-party authentication windows.     Requires a selector to block. It will be embedded in this block.     Use `qmSetupOnPage` function after connecting `connect.js`.   - Embedding in mobile applications without popups for 3rd-party authentication.     Use `qmSetupOnMobile` function after connecting `connect.js`.     If using in a Cordova application call  `qmSetupOnIonic` function after connecting `connect.js`.
+     * @summary Get embeddable connect javascript
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v1IntegrationJsGet (accessToken?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/integration.js';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getIntegrationJs (clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/integration.js';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
         }
 
-        let useFormData = false;
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
 
-        let requestOptions: request.Options = {
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -2850,221 +9439,48 @@ export class ConnectorsApi {
             });
         });
     }
-}
-export enum CorrelationsApiApiKeys {
-    access_token,
-}
-
-export class CorrelationsApi {
-    protected basePath = defaultBasePath;
-    protected defaultHeaders : any = {};
-    protected _useQuerystring : boolean = false;
-
-    protected authentications = {
-        'default': <Authentication>new VoidAuth(),
-        'access_token': new ApiKeyAuth('query', 'access_token'),
-        'quantimodo_oauth2': new OAuth(),
-    }
-
-    constructor(basePath?: string);
-    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
-        if (password) {
-            if (basePath) {
-                this.basePath = basePath;
-            }
-        } else {
-            if (basePathOrUsername) {
-                this.basePath = basePathOrUsername
-            }
-        }
-    }
-
-    set useQuerystring(value: boolean) {
-        this._useQuerystring = value;
-    }
-
-    public setApiKey(key: CorrelationsApiApiKeys, value: string) {
-        this.authentications[CorrelationsApiApiKeys[key]].apiKey = value;
-    }
-
-    set accessToken(token: string) {
-        this.authentications.quantimodo_oauth2.accessToken = token;
-    }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Get aggregated correlations
-     * Get correlations based on the anonymized aggregate data from all QuantiModo users.
-     * @param accessToken User&#39;s OAuth2 access token
+     * This page is designed to be opened in a webview.  Instead of using popup authentication boxes, it uses redirection. You can include the user's access_token as a URL parameter like https://app.quantimo.do/api/v3/connect/mobile?access_token=123
+     * @summary Mobile connect page
      * @param userId User&#39;s id
-     * @param effect Variable name of the effect variable for which the user desires correlations
-     * @param cause Variable name of the cause variable for which the user desires correlations
-     * @param correlationCoefficient Pearson correlation coefficient between cause and effect after lagging by onset delay and grouping by duration of action
-     * @param onsetDelay The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
-     * @param durationOfAction The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
-     * @param updatedAt The time that this measurement was last updated in the UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;.  Generally, you&#39;ll be retrieving new or updated user data. To avoid unnecessary API calls, you&#39;ll want to store your last refresh time locally. Then whenever you make a request to get new data, you should limit the returned results to those updated since your last refresh by appending append &#x60;?updatedAt&#x3D;(ge)2013-01-D01T01:01:01 to your request.
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
-     * @param outcomesOfInterest Only include correlations for which the effect is an outcome of interest for the user
      */
-    public v1AggregatedCorrelationsGet (accessToken?: string, userId?: number, effect?: string, cause?: string, correlationCoefficient?: string, onsetDelay?: string, durationOfAction?: string, updatedAt?: string, limit?: number, offset?: number, sort?: number, outcomesOfInterest?: boolean) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/aggregatedCorrelations';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
+    public getMobileConnectPage (userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/connect/mobile';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        if (effect !== undefined) {
-            queryParameters['effect'] = effect;
-        }
 
-        if (cause !== undefined) {
-            queryParameters['cause'] = cause;
-        }
+        let localVarUseFormData = false;
 
-        if (correlationCoefficient !== undefined) {
-            queryParameters['correlationCoefficient'] = correlationCoefficient;
-        }
-
-        if (onsetDelay !== undefined) {
-            queryParameters['onsetDelay'] = onsetDelay;
-        }
-
-        if (durationOfAction !== undefined) {
-            queryParameters['durationOfAction'] = durationOfAction;
-        }
-
-        if (updatedAt !== undefined) {
-            queryParameters['updatedAt'] = updatedAt;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        if (outcomesOfInterest !== undefined) {
-            queryParameters['outcomesOfInterest'] = outcomesOfInterest;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Store or Update a Correlation
-     * Add correlation
-     * @param body Provides correlation data
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1AggregatedCorrelationsPost (body: PostCorrelation, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/aggregatedCorrelations';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1AggregatedCorrelationsPost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -3074,773 +9490,58 @@ export class CorrelationsApi {
         });
     }
     /**
-     * Get correlations
-     * Get correlations based on data from a single user.
-     * @param accessToken User&#39;s OAuth2 access token
+     * The update method tells the QM Connector Framework to check with the data provider (such as Fitbit or MyFitnessPal) and retrieve any new measurements available.
+     * @summary Sync with data source
+     * @param connectorName Lowercase system name of the source application or device. Get a list of available connectors from the /v3/connectors/list endpoint.
      * @param userId User&#39;s id
-     * @param effect Variable name of the effect variable for which the user desires correlations
-     * @param cause Variable name of the cause variable for which the user desires correlations
-     * @param correlationCoefficient Pearson correlation coefficient between cause and effect after lagging by onset delay and grouping by duration of action
-     * @param onsetDelay The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
-     * @param durationOfAction The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
-     * @param updatedAt The time that this measurement was last updated in the UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;.  Generally, you&#39;ll be retrieving new or updated user data. To avoid unnecessary API calls, you&#39;ll want to store your last refresh time locally. Then whenever you make a request to get new data, you should limit the returned results to those updated since your last refresh by appending append &#x60;?updatedAt&#x3D;(ge)2013-01-D01T01:01:01 to your request.
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
-     * @param outcomesOfInterest Only include correlations for which the effect is an outcome of interest for the user
      */
-    public v1CorrelationsGet (accessToken?: string, userId?: number, effect?: string, cause?: string, correlationCoefficient?: string, onsetDelay?: string, durationOfAction?: string, updatedAt?: string, limit?: number, offset?: number, sort?: number, outcomesOfInterest?: boolean) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/correlations';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public updateConnector (connectorName: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/connectors/{connectorName}/update'
+            .replace('{' + 'connectorName' + '}', encodeURIComponent(String(connectorName)));
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        // verify required parameter 'connectorName' is not null or undefined
+        if (connectorName === null || connectorName === undefined) {
+            throw new Error('Required parameter connectorName was null or undefined when calling updateConnector.');
         }
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        if (effect !== undefined) {
-            queryParameters['effect'] = effect;
-        }
 
-        if (cause !== undefined) {
-            queryParameters['cause'] = cause;
-        }
+        let localVarUseFormData = false;
 
-        if (correlationCoefficient !== undefined) {
-            queryParameters['correlationCoefficient'] = correlationCoefficient;
-        }
-
-        if (onsetDelay !== undefined) {
-            queryParameters['onsetDelay'] = onsetDelay;
-        }
-
-        if (durationOfAction !== undefined) {
-            queryParameters['durationOfAction'] = durationOfAction;
-        }
-
-        if (updatedAt !== undefined) {
-            queryParameters['updatedAt'] = updatedAt;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        if (outcomesOfInterest !== undefined) {
-            queryParameters['outcomesOfInterest'] = outcomesOfInterest;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Search user correlations for a given cause
-     * Returns average of all correlations and votes for all user cause variables for a given cause. If parameter \&quot;include_public\&quot; is used, it also returns public correlations. User correlation overwrites or supersedes public correlation.
-     * @param organizationId Organization ID
-     * @param userId2 User id
-     * @param variableName Effect variable name
-     * @param organizationToken Organization access token
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param includePublic Include public correlations, Can be \&quot;1\&quot; or empty.
-     */
-    public v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameCausesGet (organizationId: number, userId2: number, variableName: string, organizationToken: string, accessToken?: string, userId?: number, includePublic?: string) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/organizations/{organizationId}/users/{userId}/variables/{variableName}/causes'
-            .replace('{' + 'organizationId' + '}', String(organizationId))
-            .replace('{' + 'userId' + '}', String(userId2))
-            .replace('{' + 'variableName' + '}', String(variableName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'organizationId' is not null or undefined
-        if (organizationId === null || organizationId === undefined) {
-            throw new Error('Required parameter organizationId was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameCausesGet.');
-        }
-
-        // verify required parameter 'userId2' is not null or undefined
-        if (userId2 === null || userId2 === undefined) {
-            throw new Error('Required parameter userId2 was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameCausesGet.');
-        }
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameCausesGet.');
-        }
-
-        // verify required parameter 'organizationToken' is not null or undefined
-        if (organizationToken === null || organizationToken === undefined) {
-            throw new Error('Required parameter organizationToken was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameCausesGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (organizationToken !== undefined) {
-            queryParameters['organization_token'] = organizationToken;
-        }
-
-        if (includePublic !== undefined) {
-            queryParameters['includePublic'] = includePublic;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Search user correlations for a given cause
-     * Returns average of all correlations and votes for all user cause variables for a given effect. If parameter \&quot;include_public\&quot; is used, it also returns public correlations. User correlation overwrites or supersedes public correlation.
-     * @param organizationId Organization ID
-     * @param userId2 User id
-     * @param variableName Cause variable name
-     * @param organizationToken Organization access token
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param includePublic Include public correlations, Can be \&quot;1\&quot; or empty.
-     */
-    public v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameEffectsGet (organizationId: number, userId2: number, variableName: string, organizationToken: string, accessToken?: string, userId?: number, includePublic?: string) : Promise<{ response: http.ClientResponse; body: Array<CommonResponse>;  }> {
-        const localVarPath = this.basePath + '/v1/organizations/{organizationId}/users/{userId}/variables/{variableName}/effects'
-            .replace('{' + 'organizationId' + '}', String(organizationId))
-            .replace('{' + 'userId' + '}', String(userId2))
-            .replace('{' + 'variableName' + '}', String(variableName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'organizationId' is not null or undefined
-        if (organizationId === null || organizationId === undefined) {
-            throw new Error('Required parameter organizationId was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameEffectsGet.');
-        }
-
-        // verify required parameter 'userId2' is not null or undefined
-        if (userId2 === null || userId2 === undefined) {
-            throw new Error('Required parameter userId2 was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameEffectsGet.');
-        }
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameEffectsGet.');
-        }
-
-        // verify required parameter 'organizationToken' is not null or undefined
-        if (organizationToken === null || organizationToken === undefined) {
-            throw new Error('Required parameter organizationToken was null or undefined when calling v1OrganizationsOrganizationIdUsersUserIdVariablesVariableNameEffectsGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (organizationToken !== undefined) {
-            queryParameters['organization_token'] = organizationToken;
-        }
-
-        if (includePublic !== undefined) {
-            queryParameters['include_public'] = includePublic;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<CommonResponse>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Get average correlations for variables containing search term
-     * Returns the average correlations from all users for all public variables that contain the characters in the search query. Returns average of all users public variable correlations with a specified cause or effect.
-     * @param search Name of the variable that you want to know the causes or effects of.
-     * @param effectOrCause Setting this to effect indicates that the searched variable is the effect and that the causes of this variable should be returned. cause indicates that the searched variable is the cause and the effects should be returned.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param outcomesOfInterest Only include correlations for which the effect is an outcome of interest for the user
-     */
-    public v1PublicCorrelationsSearchSearchGet (search: string, effectOrCause: string, accessToken?: string, userId?: number, outcomesOfInterest?: boolean) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/public/correlations/search/{search}'
-            .replace('{' + 'search' + '}', String(search));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'search' is not null or undefined
-        if (search === null || search === undefined) {
-            throw new Error('Required parameter search was null or undefined when calling v1PublicCorrelationsSearchSearchGet.');
-        }
-
-        // verify required parameter 'effectOrCause' is not null or undefined
-        if (effectOrCause === null || effectOrCause === undefined) {
-            throw new Error('Required parameter effectOrCause was null or undefined when calling v1PublicCorrelationsSearchSearchGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (effectOrCause !== undefined) {
-            queryParameters['effectOrCause'] = effectOrCause;
-        }
-
-        if (outcomesOfInterest !== undefined) {
-            queryParameters['outcomesOfInterest'] = outcomesOfInterest;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Search user correlations for a given effect
-     * Returns average of all correlations and votes for all user cause variables for a given effect
-     * @param variableName Effect variable name
-     */
-    public v1VariablesVariableNameCausesGet (variableName: string) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/variables/{variableName}/causes'
-            .replace('{' + 'variableName' + '}', String(variableName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1VariablesVariableNameCausesGet.');
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Search user correlations for a given cause
-     * Returns average of all correlations and votes for all user effect variables for a given cause
-     * @param variableName Cause variable name
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param correlationCoefficient You can use this to get effects with correlations greater than or less than 0
-     */
-    public v1VariablesVariableNameEffectsGet (variableName: string, accessToken?: string, userId?: number, correlationCoefficient?: string) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/variables/{variableName}/effects'
-            .replace('{' + 'variableName' + '}', String(variableName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1VariablesVariableNameEffectsGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (correlationCoefficient !== undefined) {
-            queryParameters['correlationCoefficient'] = correlationCoefficient;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Search public correlations for a given effect
-     * Returns average of all correlations and votes for all public cause variables for a given effect
-     * @param variableName Effect variable name
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param correlationCoefficient You can use this to get causes with correlations greater than or less than 0
-     */
-    public v1VariablesVariableNamePublicCausesGet (variableName: string, accessToken?: string, userId?: number, correlationCoefficient?: string) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/variables/{variableName}/public/causes'
-            .replace('{' + 'variableName' + '}', String(variableName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1VariablesVariableNamePublicCausesGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (correlationCoefficient !== undefined) {
-            queryParameters['correlationCoefficient'] = correlationCoefficient;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Search public correlations for a given cause
-     * Returns average of all correlations and votes for all public cause variables for a given cause
-     * @param variableName Cause variable name
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1VariablesVariableNamePublicEffectsGet (variableName: string, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }> {
-        const localVarPath = this.basePath + '/v1/variables/{variableName}/public/effects'
-            .replace('{' + 'variableName' + '}', String(variableName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1VariablesVariableNamePublicEffectsGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Correlation>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Delete vote
-     * Delete previously posted vote
-     * @param body The cause and effect variable names for the predictor vote to be deleted.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1VotesDeletePost (body: VoteDelete, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/votes/delete';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1VotesDeletePost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Post or update vote
-     * This is to enable users to indicate their opinion on the plausibility of a causal relationship between a treatment and outcome. QuantiModo incorporates crowd-sourced plausibility estimations into their algorithm. This is done allowing user to indicate their view of the plausibility of each relationship with thumbs up/down buttons placed next to each prediction.
-     * @param body Contains the cause variable, effect variable, and vote value.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1VotesPost (body: PostVote, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/votes';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1VotesPost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -3852,16 +9553,18 @@ export class CorrelationsApi {
 }
 export enum MeasurementsApiApiKeys {
     access_token,
+    client_id,
 }
 
 export class MeasurementsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -3880,295 +9583,76 @@ export class MeasurementsApi {
 
     set useQuerystring(value: boolean) {
         this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
     }
 
     public setApiKey(key: MeasurementsApiApiKeys, value: string) {
-        this.authentications[MeasurementsApiApiKeys[key]].apiKey = value;
+        (this.authentications as any)[MeasurementsApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Get measurement sources
-     * Returns a list of all the apps from which measurement data is obtained.
-     */
-    public v1MeasurementSourcesGet () : Promise<{ response: http.ClientResponse; body: MeasurementSource;  }> {
-        const localVarPath = this.basePath + '/v1/measurementSources';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: MeasurementSource;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Add a data source
-     * Add a life-tracking app or device to the QuantiModo list of data sources.
-     * @param body An array of names of data sources you want to add.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1MeasurementSourcesPost (body: MeasurementSource, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/measurementSources';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1MeasurementSourcesPost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Get daily measurements for this user
-     * Measurements are any value that can be recorded like daily steps, a mood rating, or apples eaten. Supported filter parameters:&lt;ul&gt;&lt;li&gt;&lt;b&gt;value&lt;/b&gt; - Value of measurement&lt;/li&gt;&lt;li&gt;&lt;b&gt;updatedAt&lt;/b&gt; - The time that this measurement was created or last updated in the UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;&lt;/li&gt;&lt;/ul&gt;
-     * @param variableName Name of the variable you want measurements for
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param unitAbbreviatedName The unit your want the measurements in
-     * @param startTime The lower limit of measurements returned (UTC Iso8601 \&quot;YYYY-MM-DDThh:mm:ss\&quot; format)
-     * @param endTime The upper limit of measurements returned (UTC Iso8601 \&quot;YYYY-MM-DDThh:mm:ss\&quot; format)
-     * @param groupingWidth The time (in seconds) over which measurements are grouped together
-     * @param groupingTimezone The time (in seconds) over which measurements are grouped together
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
-     */
-    public v1MeasurementsDailyGet (variableName: string, accessToken?: string, userId?: number, unitAbbreviatedName?: string, startTime?: string, endTime?: string, groupingWidth?: number, groupingTimezone?: string, limit?: number, offset?: number, sort?: number) : Promise<{ response: http.ClientResponse; body: Measurement;  }> {
-        const localVarPath = this.basePath + '/v1/measurements/daily';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1MeasurementsDailyGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (variableName !== undefined) {
-            queryParameters['variableName'] = variableName;
-        }
-
-        if (unitAbbreviatedName !== undefined) {
-            queryParameters['unitAbbreviatedName'] = unitAbbreviatedName;
-        }
-
-        if (startTime !== undefined) {
-            queryParameters['startTime'] = startTime;
-        }
-
-        if (endTime !== undefined) {
-            queryParameters['endTime'] = endTime;
-        }
-
-        if (groupingWidth !== undefined) {
-            queryParameters['groupingWidth'] = groupingWidth;
-        }
-
-        if (groupingTimezone !== undefined) {
-            queryParameters['groupingTimezone'] = groupingTimezone;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Measurement;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Delete a measurement
      * Delete a previously submitted measurement
+     * @summary Delete a measurement
      * @param body The startTime and variableId of the measurement to be deleted.
      */
-    public v1MeasurementsDeletePost (body: MeasurementDelete) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/measurements/delete';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
+    public deleteMeasurement (body: MeasurementDelete) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/measurements/delete';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'body' is not null or undefined
         if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1MeasurementsDeletePost.');
+            throw new Error('Required parameter body was null or undefined when calling deleteMeasurement.');
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'DELETE',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
+            body: ObjectSerializer.serialize(body, "MeasurementDelete")
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -4178,131 +9662,157 @@ export class MeasurementsApi {
         });
     }
     /**
-     * Get measurements for this user
-     * Measurements are any value that can be recorded like daily steps, a mood rating, or apples eaten. Supported filter parameters:&lt;ul&gt;&lt;li&gt;&lt;b&gt;value&lt;/b&gt; - Value of measurement&lt;/li&gt;&lt;li&gt;&lt;b&gt;updatedAt&lt;/b&gt; - The time that this measurement was created or last updated in the UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;&lt;/li&gt;&lt;/ul&gt;
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param id Measurement id
+     * Measurements are any value that can be recorded like daily steps, a mood rating, or apples eaten.
+     * @summary Get measurements for this user
      * @param variableName Name of the variable you want measurements for
-     * @param variableCategoryName Name of the variable category you want measurements for
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param variableCategoryName Limit results to a specific variable category
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param userId User&#39;s id
      * @param sourceName ID of the source you want measurements for (supports exact name match only)
+     * @param connectorName Ex: facebook
      * @param value Value of measurement
-     * @param unitAbbreviatedName The unit you want the measurements returned in
-     * @param earliestMeasurementTime The lower limit of measurements returned in ISO 8601 format or epoch seconds (unixtime)
-     * @param latestMeasurementTime The upper limit of measurements returned in ISO 8601 format or epoch seconds (unixtime)
-     * @param createdAt The time the measurement record was first created in the format YYYY-MM-DDThh:mm:ss. Time zone should be UTC and not local.
-     * @param updatedAt The time the measurement record was last changed in the format YYYY-MM-DDThh:mm:ss. Time zone should be UTC and not local.
+     * @param unitName Ex: Milligrams
+     * @param earliestMeasurementTime Excluded records with measurement times earlier than this value. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+     * @param latestMeasurementTime Excluded records with measurement times later than this value. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+     * @param createdAt When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param id Measurement id
      * @param groupingWidth The time (in seconds) over which measurements are grouped together
      * @param groupingTimezone The time (in seconds) over which measurements are grouped together
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
+     * @param doNotProcess Ex: true
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param doNotConvert Ex: 1
+     * @param minMaxFilter Ex: 1
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v1MeasurementsGet (accessToken?: string, userId?: number, id?: number, variableName?: string, variableCategoryName?: string, sourceName?: string, value?: string, unitAbbreviatedName?: string, earliestMeasurementTime?: string, latestMeasurementTime?: string, createdAt?: string, updatedAt?: string, groupingWidth?: number, groupingTimezone?: string, limit?: number, offset?: number, sort?: number) : Promise<{ response: http.ClientResponse; body: Measurement;  }> {
-        const localVarPath = this.basePath + '/v1/measurements';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (id !== undefined) {
-            queryParameters['id'] = id;
-        }
+    public getMeasurements (variableName?: string, sort?: string, limit?: number, offset?: number, variableCategoryName?: string, updatedAt?: string, userId?: number, sourceName?: string, connectorName?: string, value?: string, unitName?: string, earliestMeasurementTime?: string, latestMeasurementTime?: string, createdAt?: string, id?: number, groupingWidth?: number, groupingTimezone?: string, doNotProcess?: boolean, clientId?: string, doNotConvert?: boolean, minMaxFilter?: boolean, platform?: string) : Promise<{ response: http.ClientResponse; body: Array<Measurement>;  }> {
+        const localVarPath = this.basePath + '/v3/measurements';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         if (variableName !== undefined) {
-            queryParameters['variableName'] = variableName;
+            localVarQueryParameters['variableName'] = ObjectSerializer.serialize(variableName, "string");
+        }
+
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
+        }
+
+        if (limit !== undefined) {
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
+        }
+
+        if (offset !== undefined) {
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
         }
 
         if (variableCategoryName !== undefined) {
-            queryParameters['variableCategoryName'] = variableCategoryName;
-        }
-
-        if (sourceName !== undefined) {
-            queryParameters['sourceName'] = sourceName;
-        }
-
-        if (value !== undefined) {
-            queryParameters['value'] = value;
-        }
-
-        if (unitAbbreviatedName !== undefined) {
-            queryParameters['unitAbbreviatedName'] = unitAbbreviatedName;
-        }
-
-        if (earliestMeasurementTime !== undefined) {
-            queryParameters['earliestMeasurementTime'] = earliestMeasurementTime;
-        }
-
-        if (latestMeasurementTime !== undefined) {
-            queryParameters['latestMeasurementTime'] = latestMeasurementTime;
-        }
-
-        if (createdAt !== undefined) {
-            queryParameters['createdAt'] = createdAt;
+            localVarQueryParameters['variableCategoryName'] = ObjectSerializer.serialize(variableCategoryName, "string");
         }
 
         if (updatedAt !== undefined) {
-            queryParameters['updatedAt'] = updatedAt;
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (sourceName !== undefined) {
+            localVarQueryParameters['sourceName'] = ObjectSerializer.serialize(sourceName, "string");
+        }
+
+        if (connectorName !== undefined) {
+            localVarQueryParameters['connectorName'] = ObjectSerializer.serialize(connectorName, "string");
+        }
+
+        if (value !== undefined) {
+            localVarQueryParameters['value'] = ObjectSerializer.serialize(value, "string");
+        }
+
+        if (unitName !== undefined) {
+            localVarQueryParameters['unitName'] = ObjectSerializer.serialize(unitName, "string");
+        }
+
+        if (earliestMeasurementTime !== undefined) {
+            localVarQueryParameters['earliestMeasurementTime'] = ObjectSerializer.serialize(earliestMeasurementTime, "string");
+        }
+
+        if (latestMeasurementTime !== undefined) {
+            localVarQueryParameters['latestMeasurementTime'] = ObjectSerializer.serialize(latestMeasurementTime, "string");
+        }
+
+        if (createdAt !== undefined) {
+            localVarQueryParameters['createdAt'] = ObjectSerializer.serialize(createdAt, "string");
+        }
+
+        if (id !== undefined) {
+            localVarQueryParameters['id'] = ObjectSerializer.serialize(id, "number");
         }
 
         if (groupingWidth !== undefined) {
-            queryParameters['groupingWidth'] = groupingWidth;
+            localVarQueryParameters['groupingWidth'] = ObjectSerializer.serialize(groupingWidth, "number");
         }
 
         if (groupingTimezone !== undefined) {
-            queryParameters['groupingTimezone'] = groupingTimezone;
+            localVarQueryParameters['groupingTimezone'] = ObjectSerializer.serialize(groupingTimezone, "string");
         }
 
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
+        if (doNotProcess !== undefined) {
+            localVarQueryParameters['doNotProcess'] = ObjectSerializer.serialize(doNotProcess, "boolean");
         }
 
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
         }
 
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
+        if (doNotConvert !== undefined) {
+            localVarQueryParameters['doNotConvert'] = ObjectSerializer.serialize(doNotConvert, "boolean");
         }
 
-        let useFormData = false;
+        if (minMaxFilter !== undefined) {
+            localVarQueryParameters['minMaxFilter'] = ObjectSerializer.serialize(minMaxFilter, "boolean");
+        }
 
-        let requestOptions: request.Options = {
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: Measurement;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: Array<Measurement>;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "Array<Measurement>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -4312,122 +9822,107 @@ export class MeasurementsApi {
         });
     }
     /**
-     * Post a new set or update existing measurements to the database
-     * You can submit or update multiple measurements in a \&quot;measurements\&quot; sub-array.  If the variable these measurements correspond to does not already exist in the database, it will be automatically added.  The request body should look something like [{\&quot;measurements\&quot;:[{\&quot;startTime\&quot;:1439389320,\&quot;value\&quot;:\&quot;3\&quot;}, {\&quot;startTime\&quot;:1439389319,\&quot;value\&quot;:\&quot;2\&quot;}],\&quot;name\&quot;:\&quot;Acne (out of 5)\&quot;,\&quot;source\&quot;:\&quot;QuantiModo\&quot;,\&quot;category\&quot;:\&quot;Symptoms\&quot;,\&quot;combinationOperation\&quot;:\&quot;MEAN\&quot;,\&quot;unit\&quot;:\&quot;/5\&quot;}]
-     * @param body An array of measurements you want to insert.
-     * @param accessToken User&#39;s OAuth2 access token
+     * Pairs cause measurements with effect measurements grouped over the duration of action after the onset delay.
+     * @summary Get pairs of measurements for correlational analysis
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param effectUnitName Name for the unit effect measurements to be returned in
      * @param userId User&#39;s id
+     * @param causeUnitName Name for the unit cause measurements to be returned in
+     * @param onsetDelay The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the onset delay. For example, the onset delay between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
+     * @param durationOfAction The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
+     * @param earliestMeasurementTime Excluded records with measurement times earlier than this value. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+     * @param latestMeasurementTime Excluded records with measurement times later than this value. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
      */
-    public v1MeasurementsPost (body: MeasurementSet, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/measurements';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getPairs (causeVariableName?: string, effectVariableName?: string, effectUnitName?: string, userId?: number, causeUnitName?: string, onsetDelay?: string, durationOfAction?: string, earliestMeasurementTime?: string, latestMeasurementTime?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: Array<Pair>;  }> {
+        const localVarPath = this.basePath + '/v3/pairs';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1MeasurementsPost.');
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
         }
 
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (effectUnitName !== undefined) {
+            localVarQueryParameters['effectUnitName'] = ObjectSerializer.serialize(effectUnitName, "string");
         }
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Get measurements range for this user
-     * Get Unix time-stamp (epoch time) of the user&#39;s first and last measurements taken.
-     * @param sources Enter source name to limit to specific source (varchar)
-     * @param user If not specified, uses currently logged in user (bigint)
-     */
-    public v1MeasurementsRangeGet (sources?: string, user?: number) : Promise<{ response: http.ClientResponse; body: MeasurementRange;  }> {
-        const localVarPath = this.basePath + '/v1/measurementsRange';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (sources !== undefined) {
-            queryParameters['sources'] = sources;
+        if (causeUnitName !== undefined) {
+            localVarQueryParameters['causeUnitName'] = ObjectSerializer.serialize(causeUnitName, "string");
         }
 
-        if (user !== undefined) {
-            queryParameters['user'] = user;
+        if (onsetDelay !== undefined) {
+            localVarQueryParameters['onsetDelay'] = ObjectSerializer.serialize(onsetDelay, "string");
         }
 
-        let useFormData = false;
+        if (durationOfAction !== undefined) {
+            localVarQueryParameters['durationOfAction'] = ObjectSerializer.serialize(durationOfAction, "string");
+        }
 
-        let requestOptions: request.Options = {
+        if (earliestMeasurementTime !== undefined) {
+            localVarQueryParameters['earliestMeasurementTime'] = ObjectSerializer.serialize(earliestMeasurementTime, "string");
+        }
+
+        if (latestMeasurementTime !== undefined) {
+            localVarQueryParameters['latestMeasurementTime'] = ObjectSerializer.serialize(latestMeasurementTime, "string");
+        }
+
+        if (limit !== undefined) {
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
+        }
+
+        if (offset !== undefined) {
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
+        }
+
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: MeasurementRange;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: Array<Pair>;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "Array<Pair>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -4437,289 +9932,171 @@ export class MeasurementsApi {
         });
     }
     /**
-     * Update a measurement
-     * Delete a previously submitted measurement
-     * @param body The id as well as the new startTime, note, and/or value of the measurement to be updated
+     * Use this endpoint to schedule a CSV export containing all user measurements to be emailed to the user within 24 hours.
+     * @summary Post Request for Measurements CSV
+     * @param userId User&#39;s id
      */
-    public v1MeasurementsUpdatePost (body: MeasurementUpdate) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/measurements/update';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public measurementExportRequest (userId?: number) : Promise<{ response: http.ClientResponse; body: number;  }> {
+        const localVarPath = this.basePath + '/v2/measurements/exportRequest';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: number;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "number");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * You can submit or update multiple measurements in a \"measurements\" sub-array.  If the variable these measurements correspond to does not already exist in the database, it will be automatically added.
+     * @summary Post a new set or update existing measurements to the database
+     * @param body An array of measurement sets containing measurement items you want to insert.
+     * @param userId User&#39;s id
+     */
+    public postMeasurements (body: Array<MeasurementSet>, userId?: number) : Promise<{ response: http.ClientResponse; body: PostMeasurementsResponse;  }> {
+        const localVarPath = this.basePath + '/v3/measurements/post';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'body' is not null or undefined
         if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1MeasurementsUpdatePost.');
+            throw new Error('Required parameter body was null or undefined when calling postMeasurements.');
         }
 
-        let useFormData = false;
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
 
-        let requestOptions: request.Options = {
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
+            body: ObjectSerializer.serialize(body, "Array<MeasurementSet>")
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: PostMeasurementsResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "PostMeasurementsResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Update a previously submitted measurement
+     * @summary Update a measurement
+     * @param body The id as well as the new startTime, note, and/or value of the measurement to be updated
+     */
+    public updateMeasurement (body: MeasurementUpdate) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/measurements/update';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'body' is not null or undefined
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling updateMeasurement.');
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(body, "MeasurementUpdate")
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Get Measurements CSV
-     * Download a CSV containing all user measurements
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v2MeasurementsCsvGet (accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: any;  }> {
-        const localVarPath = this.basePath + '/v2/measurements/csv';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Post Request for Measurements CSV
-     * Use this endpoint to schedule a CSV export containing all user measurements to be emailed to the user within 24 hours.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v2MeasurementsRequestCsvPost (accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: number;  }> {
-        const localVarPath = this.basePath + '/v2/measurements/request_csv';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: number;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Post Request for Measurements PDF
-     * Use this endpoint to schedule a PDF export containing all user measurements to be emailed to the user within 24 hours.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v2MeasurementsRequestPdfPost (accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: number;  }> {
-        const localVarPath = this.basePath + '/v2/measurements/request_pdf';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: number;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Post Request for Measurements XLS
-     * Use this endpoint to schedule a XLS export containing all user measurements to be emailed to the user within 24 hours.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v2MeasurementsRequestXlsPost (accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: number;  }> {
-        const localVarPath = this.basePath + '/v2/measurements/request_xls';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: number;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -4729,18 +10106,20 @@ export class MeasurementsApi {
         });
     }
 }
-export enum OrganizationsApiApiKeys {
+export enum NotificationsApiApiKeys {
     access_token,
+    client_id,
 }
 
-export class OrganizationsApi {
-    protected basePath = defaultBasePath;
+export class NotificationsApi {
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -4761,398 +10140,114 @@ export class OrganizationsApi {
         this._useQuerystring = value;
     }
 
-    public setApiKey(key: OrganizationsApiApiKeys, value: string) {
-        this.authentications[OrganizationsApiApiKeys[key]].apiKey = value;
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
+    public setApiKey(key: NotificationsApiApiKeys, value: string) {
+        (this.authentications as any)[NotificationsApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
+    /**
+     * Get NotificationPreferences
+     * @summary Get NotificationPreferences
+     */
+    public getNotificationPreferences () : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/notificationPreferences';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return <T1&T2>objA;
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
     }
     /**
-     * Get user tokens for existing users, create new users
-     * Get user tokens for existing users, create new users
-     * @param organizationId Organization ID
-     * @param body Provides organization token and user ID
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
+     * Post user token for Android, iOS, or web push notifications
+     * @summary Post DeviceTokens
+     * @param body The platform and token
      */
-    public v1OrganizationsOrganizationIdUsersPost (organizationId: number, body: UserTokenRequest, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: UserTokenSuccessfulResponse;  }> {
-        const localVarPath = this.basePath + '/v1/organizations/{organizationId}/users'
-            .replace('{' + 'organizationId' + '}', String(organizationId));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'organizationId' is not null or undefined
-        if (organizationId === null || organizationId === undefined) {
-            throw new Error('Required parameter organizationId was null or undefined when calling v1OrganizationsOrganizationIdUsersPost.');
-        }
+    public postDeviceToken (body: DeviceToken) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/deviceTokens';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'body' is not null or undefined
         if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1OrganizationsOrganizationIdUsersPost.');
+            throw new Error('Required parameter body was null or undefined when calling postDeviceToken.');
         }
 
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
 
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
+        let localVarUseFormData = false;
 
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
+            body: ObjectSerializer.serialize(body, "DeviceToken")
         };
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: UserTokenSuccessfulResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-}
-export enum PairsApiApiKeys {
-    access_token,
-}
-
-export class PairsApi {
-    protected basePath = defaultBasePath;
-    protected defaultHeaders : any = {};
-    protected _useQuerystring : boolean = false;
-
-    protected authentications = {
-        'default': <Authentication>new VoidAuth(),
-        'access_token': new ApiKeyAuth('query', 'access_token'),
-        'quantimodo_oauth2': new OAuth(),
-    }
-
-    constructor(basePath?: string);
-    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
-        if (password) {
-            if (basePath) {
-                this.basePath = basePath;
-            }
-        } else {
-            if (basePathOrUsername) {
-                this.basePath = basePathOrUsername
-            }
-        }
-    }
-
-    set useQuerystring(value: boolean) {
-        this._useQuerystring = value;
-    }
-
-    public setApiKey(key: PairsApiApiKeys, value: string) {
-        this.authentications[PairsApiApiKeys[key]].apiKey = value;
-    }
-
-    set accessToken(token: string) {
-        this.authentications.quantimodo_oauth2.accessToken = token;
-    }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
-    /**
-     * Get pairs
-     * Pairs cause measurements with effect measurements grouped over the duration of action after the onset delay.
-     * @param cause Original variable name for the explanatory or independent variable
-     * @param effect Original variable name for the outcome or dependent variable
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param causeSource Name of data source that the cause measurements should come from
-     * @param causeUnit Abbreviated name for the unit cause measurements to be returned in
-     * @param delay The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
-     * @param duration The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
-     * @param effectSource Name of data source that the effectmeasurements should come from
-     * @param effectUnit Abbreviated name for the unit effect measurements to be returned in
-     * @param endTime The most recent date (in epoch time) for which we should return measurements
-     * @param startTime The earliest date (in epoch time) for which we should return measurements
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
-     */
-    public v1PairsCsvGet (cause: string, effect: string, accessToken?: string, userId?: number, causeSource?: string, causeUnit?: string, delay?: string, duration?: string, effectSource?: string, effectUnit?: string, endTime?: string, startTime?: string, limit?: number, offset?: number, sort?: number) : Promise<{ response: http.ClientResponse; body: Array<Pairs>;  }> {
-        const localVarPath = this.basePath + '/v1/pairsCsv';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'cause' is not null or undefined
-        if (cause === null || cause === undefined) {
-            throw new Error('Required parameter cause was null or undefined when calling v1PairsCsvGet.');
-        }
-
-        // verify required parameter 'effect' is not null or undefined
-        if (effect === null || effect === undefined) {
-            throw new Error('Required parameter effect was null or undefined when calling v1PairsCsvGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (cause !== undefined) {
-            queryParameters['cause'] = cause;
-        }
-
-        if (causeSource !== undefined) {
-            queryParameters['causeSource'] = causeSource;
-        }
-
-        if (causeUnit !== undefined) {
-            queryParameters['causeUnit'] = causeUnit;
-        }
-
-        if (delay !== undefined) {
-            queryParameters['delay'] = delay;
-        }
-
-        if (duration !== undefined) {
-            queryParameters['duration'] = duration;
-        }
-
-        if (effect !== undefined) {
-            queryParameters['effect'] = effect;
-        }
-
-        if (effectSource !== undefined) {
-            queryParameters['effectSource'] = effectSource;
-        }
-
-        if (effectUnit !== undefined) {
-            queryParameters['effectUnit'] = effectUnit;
-        }
-
-        if (endTime !== undefined) {
-            queryParameters['endTime'] = endTime;
-        }
-
-        if (startTime !== undefined) {
-            queryParameters['startTime'] = startTime;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Pairs>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Get pairs
-     * Pairs cause measurements with effect measurements grouped over the duration of action after the onset delay.
-     * @param cause Original variable name for the explanatory or independent variable
-     * @param effect Original variable name for the outcome or dependent variable
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param causeSource Name of data source that the cause measurements should come from
-     * @param causeUnit Abbreviated name for the unit cause measurements to be returned in
-     * @param delay The amount of time in seconds that elapses after the predictor/stimulus event before the outcome as perceived by a self-tracker is known as the “onset delay”. For example, the “onset delay” between the time a person takes an aspirin (predictor/stimulus event) and the time a person perceives a change in their headache severity (outcome) is approximately 30 minutes.
-     * @param duration The amount of time over which a predictor/stimulus event can exert an observable influence on an outcome variable’s value. For instance, aspirin (stimulus/predictor) typically decreases headache severity for approximately four hours (duration of action) following the onset delay.
-     * @param effectSource Name of data source that the effectmeasurements should come from
-     * @param effectUnit Abbreviated name for the unit effect measurements to be returned in
-     * @param endTime The most recent date (in epoch time) for which we should return measurements
-     * @param startTime The earliest date (in epoch time) for which we should return measurements
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
-     */
-    public v1PairsGet (cause: string, effect: string, accessToken?: string, userId?: number, causeSource?: string, causeUnit?: string, delay?: string, duration?: string, effectSource?: string, effectUnit?: string, endTime?: string, startTime?: string, limit?: number, offset?: number, sort?: number) : Promise<{ response: http.ClientResponse; body: Array<Pairs>;  }> {
-        const localVarPath = this.basePath + '/v1/pairs';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'cause' is not null or undefined
-        if (cause === null || cause === undefined) {
-            throw new Error('Required parameter cause was null or undefined when calling v1PairsGet.');
-        }
-
-        // verify required parameter 'effect' is not null or undefined
-        if (effect === null || effect === undefined) {
-            throw new Error('Required parameter effect was null or undefined when calling v1PairsGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (cause !== undefined) {
-            queryParameters['cause'] = cause;
-        }
-
-        if (causeSource !== undefined) {
-            queryParameters['causeSource'] = causeSource;
-        }
-
-        if (causeUnit !== undefined) {
-            queryParameters['causeUnit'] = causeUnit;
-        }
-
-        if (delay !== undefined) {
-            queryParameters['delay'] = delay;
-        }
-
-        if (duration !== undefined) {
-            queryParameters['duration'] = duration;
-        }
-
-        if (effect !== undefined) {
-            queryParameters['effect'] = effect;
-        }
-
-        if (effectSource !== undefined) {
-            queryParameters['effectSource'] = effectSource;
-        }
-
-        if (effectUnit !== undefined) {
-            queryParameters['effectUnit'] = effectUnit;
-        }
-
-        if (endTime !== undefined) {
-            queryParameters['endTime'] = endTime;
-        }
-
-        if (startTime !== undefined) {
-            queryParameters['startTime'] = startTime;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Pairs>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -5164,16 +10259,18 @@ export class PairsApi {
 }
 export enum RemindersApiApiKeys {
     access_token,
+    client_id,
 }
 
 export class RemindersApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -5192,368 +10289,81 @@ export class RemindersApi {
 
     set useQuerystring(value: boolean) {
         this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
     }
 
     public setApiKey(key: RemindersApiApiKeys, value: string) {
-        this.authentications[RemindersApiApiKeys[key]].apiKey = value;
+        (this.authentications as any)[RemindersApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Get specific pending tracking reminders
-     * Specfic pending reminder instances that still need to be tracked.  
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param variableCategoryName Limit tracking reminder notifications to a specific variable category
-     * @param createdAt When the record was first created. Use UTC ISO 8601 \&quot;YYYY-MM-DDThh:mm:ss\&quot;  datetime format. Time zone should be UTC and not local.
-     * @param updatedAt When the record was last updated. Use UTC ISO 8601 \&quot;YYYY-MM-DDThh:mm:ss\&quot;  datetime format. Time zone should be UTC and not local.
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
-     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
-     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
-     */
-    public v1TrackingReminderNotificationsGet (accessToken?: string, userId?: number, variableCategoryName?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: InlineResponse2002;  }> {
-        const localVarPath = this.basePath + '/v1/trackingReminderNotifications';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (variableCategoryName !== undefined) {
-            queryParameters['variableCategoryName'] = variableCategoryName;
-        }
-
-        if (createdAt !== undefined) {
-            queryParameters['createdAt'] = createdAt;
-        }
-
-        if (updatedAt !== undefined) {
-            queryParameters['updatedAt'] = updatedAt;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: InlineResponse2002;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Skip a pending tracking reminder
-     * Deletes the pending tracking reminder
-     * @param body Id of the pending reminder to be skipped or deleted
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1TrackingReminderNotificationsSkipPost (body: TrackingReminderNotificationSkip, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/trackingReminderNotifications/skip';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1TrackingReminderNotificationsSkipPost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Snooze a pending tracking reminder
-     * Changes the reminder time to now plus one hour
-     * @param body Id of the pending reminder to be snoozed
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1TrackingReminderNotificationsSnoozePost (body: TrackingReminderNotificationSnooze, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/trackingReminderNotifications/snooze';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1TrackingReminderNotificationsSnoozePost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Track a pending tracking reminder
-     * Adds the default measurement for the pending tracking reminder with the reminder time as the measurment start time
-     * @param body Id of the pending reminder to be tracked
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1TrackingReminderNotificationsTrackPost (body: TrackingReminderNotificationTrack, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/trackingReminderNotifications/track';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1TrackingReminderNotificationsTrackPost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Delete tracking reminder
-     * Delete previously created tracking reminder
+     * Stop getting notifications to record data for a variable.  Previously recorded measurements will be preserved.
+     * @summary Delete Tracking Reminder
      * @param body Id of reminder to be deleted
-     * @param accessToken User&#39;s OAuth2 access token
      * @param userId User&#39;s id
      */
-    public v1TrackingRemindersDeletePost (body: TrackingReminderDelete, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/trackingReminders/delete';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
+    public deleteTrackingReminder (body: TrackingReminderDelete, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/trackingReminders/delete';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'body' is not null or undefined
         if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1TrackingRemindersDeletePost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+            throw new Error('Required parameter body was null or undefined when calling deleteTrackingReminder.');
         }
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'DELETE',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
+            body: ObjectSerializer.serialize(body, "TrackingReminderDelete")
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -5563,86 +10373,107 @@ export class RemindersApi {
         });
     }
     /**
-     * Get repeating tracking reminder settings
-     * Users can be reminded to track certain variables at a specified frequency with a default value.
-     * @param accessToken User&#39;s OAuth2 access token
+     * Specific tracking reminder notification instances that still need to be tracked.
+     * @summary Get specific tracking reminder notifications
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
      * @param userId User&#39;s id
-     * @param variableCategoryName Limit tracking reminders to a specific variable category
-     * @param createdAt When the record was first created. Use UTC ISO 8601 \&quot;YYYY-MM-DDThh:mm:ss\&quot;  datetime format. Time zone should be UTC and not local.
-     * @param updatedAt When the record was last updated. Use UTC ISO 8601 \&quot;YYYY-MM-DDThh:mm:ss\&quot;  datetime format. Time zone should be UTC and not local.
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
-     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause. If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
-     * @param sort Sort by given field. If the field is prefixed with &#39;-&#39;, it will sort in descending order.
+     * @param createdAt When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param variableCategoryName Limit results to a specific variable category
+     * @param reminderTime Ex: (lt)2017-07-31 21:43:26
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param onlyPast Ex: 1
+     * @param includeDeleted Include deleted variables
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v1TrackingRemindersGet (accessToken?: string, userId?: number, variableCategoryName?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string) : Promise<{ response: http.ClientResponse; body: InlineResponse200;  }> {
-        const localVarPath = this.basePath + '/v1/trackingReminders';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getTrackingReminderNotifications (sort?: string, userId?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, variableCategoryName?: string, reminderTime?: string, clientId?: string, onlyPast?: boolean, includeDeleted?: boolean, platform?: string) : Promise<{ response: http.ClientResponse; body: GetTrackingReminderNotificationsResponse;  }> {
+        const localVarPath = this.basePath + '/v3/trackingReminderNotifications';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
         }
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (variableCategoryName !== undefined) {
-            queryParameters['variableCategoryName'] = variableCategoryName;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
         if (createdAt !== undefined) {
-            queryParameters['createdAt'] = createdAt;
+            localVarQueryParameters['createdAt'] = ObjectSerializer.serialize(createdAt, "string");
         }
 
         if (updatedAt !== undefined) {
-            queryParameters['updatedAt'] = updatedAt;
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
         }
 
         if (limit !== undefined) {
-            queryParameters['limit'] = limit;
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
         }
 
         if (offset !== undefined) {
-            queryParameters['offset'] = offset;
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
         }
 
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
+        if (variableCategoryName !== undefined) {
+            localVarQueryParameters['variableCategoryName'] = ObjectSerializer.serialize(variableCategoryName, "string");
         }
 
-        let useFormData = false;
+        if (reminderTime !== undefined) {
+            localVarQueryParameters['reminderTime'] = ObjectSerializer.serialize(reminderTime, "string");
+        }
 
-        let requestOptions: request.Options = {
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (onlyPast !== undefined) {
+            localVarQueryParameters['onlyPast'] = ObjectSerializer.serialize(onlyPast, "boolean");
+        }
+
+        if (includeDeleted !== undefined) {
+            localVarQueryParameters['includeDeleted'] = ObjectSerializer.serialize(includeDeleted, "boolean");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: InlineResponse200;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: GetTrackingReminderNotificationsResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "GetTrackingReminderNotificationsResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -5652,58 +10483,226 @@ export class RemindersApi {
         });
     }
     /**
-     * Store a Tracking Reminder
-     * This is to enable users to create reminders to track a variable with a default value at a specified frequency
-     * @param accessToken User&#39;s OAuth2 access token
+     * Users can be reminded to track certain variables at a specified frequency with a default value.
+     * @summary Get repeating tracking reminder settings
      * @param userId User&#39;s id
+     * @param variableCategoryName Limit results to a specific variable category
+     * @param createdAt When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param appVersion Ex: 2.1.1.0
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public getTrackingReminders (userId?: number, variableCategoryName?: string, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string, clientId?: string, appVersion?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: Array<TrackingReminder>;  }> {
+        const localVarPath = this.basePath + '/v3/trackingReminders';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (variableCategoryName !== undefined) {
+            localVarQueryParameters['variableCategoryName'] = ObjectSerializer.serialize(variableCategoryName, "string");
+        }
+
+        if (createdAt !== undefined) {
+            localVarQueryParameters['createdAt'] = ObjectSerializer.serialize(createdAt, "string");
+        }
+
+        if (updatedAt !== undefined) {
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
+        }
+
+        if (limit !== undefined) {
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
+        }
+
+        if (offset !== undefined) {
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
+        }
+
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (appVersion !== undefined) {
+            localVarQueryParameters['appVersion'] = ObjectSerializer.serialize(appVersion, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: Array<TrackingReminder>;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "Array<TrackingReminder>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Snooze, skip, or track a tracking reminder notification
+     * @summary Snooze, skip, or track a tracking reminder notification
+     * @param body Id of the tracking reminder notification to be snoozed
+     * @param userId User&#39;s id
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public postTrackingReminderNotifications (body: Array<TrackingReminderNotificationPost>, userId?: number, clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/trackingReminderNotifications';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'body' is not null or undefined
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling postTrackingReminderNotifications.');
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(body, "Array<TrackingReminderNotificationPost>")
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * This is to enable users to create reminders to track a variable with a default value at a specified frequency
+     * @summary Store a Tracking Reminder
      * @param body TrackingReminder that should be stored
      */
-    public v1TrackingRemindersPost (accessToken?: string, userId?: number, body?: TrackingReminder) : Promise<{ response: http.ClientResponse; body: InlineResponse2001;  }> {
-        const localVarPath = this.basePath + '/v1/trackingReminders';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public postTrackingReminders (body: Array<TrackingReminder>) : Promise<{ response: http.ClientResponse; body: PostTrackingRemindersResponse;  }> {
+        const localVarPath = this.basePath + '/v3/trackingReminders';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        // verify required parameter 'body' is not null or undefined
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling postTrackingReminders.');
         }
 
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
 
-        let useFormData = false;
+        let localVarUseFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
+            body: ObjectSerializer.serialize(body, "Array<TrackingReminder>")
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: InlineResponse2001;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: PostTrackingRemindersResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "PostTrackingRemindersResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -5713,18 +10712,20 @@ export class RemindersApi {
         });
     }
 }
-export enum TagsApiApiKeys {
+export enum SharesApiApiKeys {
     access_token,
+    client_id,
 }
 
-export class TagsApi {
-    protected basePath = defaultBasePath;
+export class SharesApi {
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -5745,82 +10746,87 @@ export class TagsApi {
         this._useQuerystring = value;
     }
 
-    public setApiKey(key: TagsApiApiKeys, value: string) {
-        this.authentications[TagsApiApiKeys[key]].apiKey = value;
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
+    public setApiKey(key: SharesApiApiKeys, value: string) {
+        (this.authentications as any)[SharesApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Delete user tag or ingredient
-     * Delete previously created user tags or ingredients.
-     * @param taggedVariableId This is the id of the variable being tagged with an ingredient or something.
-     * @param tagVariableId This is the id of the ingredient variable whose value is determined based on the value of the tagged variable.
+     * Remove access to user data for a given client_id associated with a given individual, app, or study
+     * @summary Delete share
+     * @param clientIdToRevoke Client id of the individual, study, or app that the user wishes to no longer have access to their data
+     * @param reason Ex: I hate you!
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v1UserTagsDeletePost (taggedVariableId: number, tagVariableId: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/userTags/delete';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public deleteShare (clientIdToRevoke: string, reason?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: User;  }> {
+        const localVarPath = this.basePath + '/v3/shares/delete';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        // verify required parameter 'taggedVariableId' is not null or undefined
-        if (taggedVariableId === null || taggedVariableId === undefined) {
-            throw new Error('Required parameter taggedVariableId was null or undefined when calling v1UserTagsDeletePost.');
+        // verify required parameter 'clientIdToRevoke' is not null or undefined
+        if (clientIdToRevoke === null || clientIdToRevoke === undefined) {
+            throw new Error('Required parameter clientIdToRevoke was null or undefined when calling deleteShare.');
         }
 
-        // verify required parameter 'tagVariableId' is not null or undefined
-        if (tagVariableId === null || tagVariableId === undefined) {
-            throw new Error('Required parameter tagVariableId was null or undefined when calling v1UserTagsDeletePost.');
+        if (clientIdToRevoke !== undefined) {
+            localVarQueryParameters['clientIdToRevoke'] = ObjectSerializer.serialize(clientIdToRevoke, "string");
         }
 
-        if (taggedVariableId !== undefined) {
-            queryParameters['taggedVariableId'] = taggedVariableId;
+        if (reason !== undefined) {
+            localVarQueryParameters['reason'] = ObjectSerializer.serialize(reason, "string");
         }
 
-        if (tagVariableId !== undefined) {
-            queryParameters['tagVariableId'] = tagVariableId;
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: User;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "User");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -5830,63 +10836,940 @@ export class TagsApi {
         });
     }
     /**
-     * Post or update user tags or ingredients
-     * This endpoint allows users to tag foods with their ingredients.  This information will then be used to infer the user intake of the different ingredients by just entering the foods. The inferred intake levels will then be used to determine the effects of different nutrients on the user during analysis.
-     * @param body Contains the new user tag data
-     * @param accessToken User&#39;s OAuth2 access token
+     * This is a list of individuals, apps, or studies with access to your measurements.
+     * @summary Get Authorized Apps, Studies, and Individuals
      * @param userId User&#39;s id
+     * @param createdAt When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param appVersion Ex: 2.1.1.0
+     * @param platform Ex: chrome, android, ios, web
+     * @param log Username or email
+     * @param pwd User password
      */
-    public v1UserTagsPost (body: UserTag, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/userTags';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1UserTagsPost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
+    public getShares (userId?: number, createdAt?: string, updatedAt?: string, clientId?: string, appVersion?: string, platform?: string, log?: string, pwd?: string) : Promise<{ response: http.ClientResponse; body: GetSharesResponse;  }> {
+        const localVarPath = this.basePath + '/v3/shares';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        let useFormData = false;
+        if (createdAt !== undefined) {
+            localVarQueryParameters['createdAt'] = ObjectSerializer.serialize(createdAt, "string");
+        }
 
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+        if (updatedAt !== undefined) {
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (appVersion !== undefined) {
+            localVarQueryParameters['appVersion'] = ObjectSerializer.serialize(appVersion, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+        if (log !== undefined) {
+            localVarQueryParameters['log'] = ObjectSerializer.serialize(log, "string");
+        }
+
+        if (pwd !== undefined) {
+            localVarQueryParameters['pwd'] = ObjectSerializer.serialize(pwd, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: GetSharesResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "GetSharesResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Invite someone to view your measurements
+     * @summary Delete share
+     * @param body Details about person to share with
+     * @param platform Ex: chrome, android, ios, web
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     */
+    public inviteShare (body: ShareInvitationBody, platform?: string, clientId?: string) : Promise<{ response: http.ClientResponse; body: User;  }> {
+        const localVarPath = this.basePath + '/v3/shares/invite';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'body' is not null or undefined
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling inviteShare.');
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(body, "ShareInvitationBody")
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: User;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "User");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+}
+export enum StudiesApiApiKeys {
+    access_token,
+    client_id,
+}
+
+export class StudiesApi {
+    protected _basePath = defaultBasePath;
+    protected defaultHeaders : any = {};
+    protected _useQuerystring : boolean = false;
+
+    protected authentications = {
+        'default': <Authentication>new VoidAuth(),
+        'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
+        'quantimodo_oauth2': new OAuth(),
+    }
+
+    constructor(basePath?: string);
+    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
+        if (password) {
+            if (basePath) {
+                this.basePath = basePath;
+            }
+        } else {
+            if (basePathOrUsername) {
+                this.basePath = basePathOrUsername
+            }
+        }
+    }
+
+    set useQuerystring(value: boolean) {
+        this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
+    public setApiKey(key: StudiesApiApiKeys, value: string) {
+        (this.authentications as any)[StudiesApiApiKeys[key]].apiKey = value;
+    }
+
+    set accessToken(token: string) {
+        this.authentications.quantimodo_oauth2.accessToken = token;
+    }
+    /**
+     * Create a cohort study examining the relationship between a predictor and outcome variable. You will be given a study id which you can invite participants to join and share their measurements for the specified variables.
+     * @summary Create a Cohort Study
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public createStudy (causeVariableName?: string, effectVariableName?: string, clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: PostStudyCreateResponse;  }> {
+        const localVarPath = this.basePath + '/v3/study/create';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
+        }
+
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: PostStudyCreateResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "PostStudyCreateResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Delete previously posted vote
+     * @summary Delete vote
+     * @param body The cause and effect variable names for the predictor vote to be deleted.
+     * @param userId User&#39;s id
+     */
+    public deleteVote (body: VoteDelete, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/votes/delete';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'body' is not null or undefined
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling deleteVote.');
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'DELETE',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(body, "VoteDelete")
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * These are studies that anyone can join and share their data for the predictor and outcome variables of interest.
+     * @summary These are open studies that anyone can join
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param userId User&#39;s id
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param includeCharts Highcharts configs that can be used if you have highcharts.js included on the page.  This only works if the id or name query parameter is also provided.
+     * @param platform Ex: chrome, android, ios, web
+     * @param recalculate Recalculate instead of using cached analysis
+     * @param studyId Client id for the cohort study you want
+     */
+    public getOpenStudies (causeVariableName?: string, effectVariableName?: string, userId?: number, clientId?: string, includeCharts?: boolean, platform?: string, recalculate?: boolean, studyId?: string) : Promise<{ response: http.ClientResponse; body: GetStudiesResponse;  }> {
+        const localVarPath = this.basePath + '/v3/studies/open';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
+        }
+
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (includeCharts !== undefined) {
+            localVarQueryParameters['includeCharts'] = ObjectSerializer.serialize(includeCharts, "boolean");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+        if (recalculate !== undefined) {
+            localVarQueryParameters['recalculate'] = ObjectSerializer.serialize(recalculate, "boolean");
+        }
+
+        if (studyId !== undefined) {
+            localVarQueryParameters['studyId'] = ObjectSerializer.serialize(studyId, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: GetStudiesResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "GetStudiesResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * These are cohort studies that you have created.
+     * @summary Get cohort studies you have created
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param userId User&#39;s id
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public getStudiesCreated (causeVariableName?: string, effectVariableName?: string, sort?: string, limit?: number, offset?: number, userId?: number, updatedAt?: string, clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: GetStudiesResponse;  }> {
+        const localVarPath = this.basePath + '/v3/studies/created';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
+        }
+
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
+        }
+
+        if (limit !== undefined) {
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
+        }
+
+        if (offset !== undefined) {
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (updatedAt !== undefined) {
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: GetStudiesResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "GetStudiesResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * These are studies that you are currently sharing your data with.
+     * @summary Studies You Have Joined
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param userId User&#39;s id
+     * @param correlationCoefficient Pearson correlation coefficient between cause and effect after lagging by onset delay and grouping by duration of action
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param outcomesOfInterest Only include correlations for which the effect is an outcome of interest for the user
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public getStudiesJoined (causeVariableName?: string, effectVariableName?: string, sort?: string, limit?: number, offset?: number, userId?: number, correlationCoefficient?: string, updatedAt?: string, outcomesOfInterest?: boolean, clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: GetStudiesResponse;  }> {
+        const localVarPath = this.basePath + '/v3/studies/joined';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
+        }
+
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
+        }
+
+        if (limit !== undefined) {
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
+        }
+
+        if (offset !== undefined) {
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (correlationCoefficient !== undefined) {
+            localVarQueryParameters['correlationCoefficient'] = ObjectSerializer.serialize(correlationCoefficient, "string");
+        }
+
+        if (updatedAt !== undefined) {
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
+        }
+
+        if (outcomesOfInterest !== undefined) {
+            localVarQueryParameters['outcomesOfInterest'] = ObjectSerializer.serialize(outcomesOfInterest, "boolean");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: GetStudiesResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "GetStudiesResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Get Study
+     * @summary Get Study
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param userId User&#39;s id
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param includeCharts Highcharts configs that can be used if you have highcharts.js included on the page.  This only works if the id or name query parameter is also provided.
+     * @param platform Ex: chrome, android, ios, web
+     * @param recalculate Recalculate instead of using cached analysis
+     * @param studyId Client id for the cohort study you want
+     */
+    public getStudy (causeVariableName?: string, effectVariableName?: string, userId?: number, clientId?: string, includeCharts?: boolean, platform?: string, recalculate?: boolean, studyId?: string) : Promise<{ response: http.ClientResponse; body: Study;  }> {
+        const localVarPath = this.basePath + '/v4/study';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
+        }
+
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (includeCharts !== undefined) {
+            localVarQueryParameters['includeCharts'] = ObjectSerializer.serialize(includeCharts, "boolean");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+        if (recalculate !== undefined) {
+            localVarQueryParameters['recalculate'] = ObjectSerializer.serialize(recalculate, "boolean");
+        }
+
+        if (studyId !== undefined) {
+            localVarQueryParameters['studyId'] = ObjectSerializer.serialize(studyId, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'GET',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: Study;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "Study");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Anonymously share measurements for specified variables
+     * @summary Join a Study
+     * @param studyId Client id for the cohort study you want
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param userId User&#39;s id
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public joinStudy (studyId?: string, causeVariableName?: string, effectVariableName?: string, userId?: number, clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: PostStudyPublishResponse;  }> {
+        const localVarPath = this.basePath + '/v3/study/join';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (studyId !== undefined) {
+            localVarQueryParameters['studyId'] = ObjectSerializer.serialize(studyId, "string");
+        }
+
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
+        }
+
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: PostStudyPublishResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "PostStudyPublishResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * I am really good at finding correlations and even compensating for various onset delays and durations of action. However, you are much better than me at knowing if there's a way that a given factor could plausibly influence an outcome. You can help me learn and get better at my predictions by pressing the thumbs down button for relationships that you think are coincidences and thumbs up once that make logic sense.
+     * @summary Post or update vote
+     * @param body Contains the cause variable, effect variable, and vote value.
+     * @param userId User&#39;s id
+     */
+    public postVote (body: Vote, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/votes';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'body' is not null or undefined
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling postVote.');
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(body, "Vote")
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Make a study and all related measurements publicly visible by anyone
+     * @summary Publish Your Study
+     * @param causeVariableName Name of the hypothetical predictor variable.  Ex: Sleep Duration
+     * @param effectVariableName Name of the hypothetical outcome variable.  Ex: Overall Mood
+     * @param userId User&#39;s id
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param includeCharts Highcharts configs that can be used if you have highcharts.js included on the page.  This only works if the id or name query parameter is also provided.
+     * @param platform Ex: chrome, android, ios, web
+     * @param recalculate Recalculate instead of using cached analysis
+     * @param studyId Client id for the cohort study you want
+     */
+    public publishStudy (causeVariableName?: string, effectVariableName?: string, userId?: number, clientId?: string, includeCharts?: boolean, platform?: string, recalculate?: boolean, studyId?: string) : Promise<{ response: http.ClientResponse; body: PostStudyPublishResponse;  }> {
+        const localVarPath = this.basePath + '/v3/study/publish';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (causeVariableName !== undefined) {
+            localVarQueryParameters['causeVariableName'] = ObjectSerializer.serialize(causeVariableName, "string");
+        }
+
+        if (effectVariableName !== undefined) {
+            localVarQueryParameters['effectVariableName'] = ObjectSerializer.serialize(effectVariableName, "string");
+        }
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (includeCharts !== undefined) {
+            localVarQueryParameters['includeCharts'] = ObjectSerializer.serialize(includeCharts, "boolean");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+        if (recalculate !== undefined) {
+            localVarQueryParameters['recalculate'] = ObjectSerializer.serialize(recalculate, "boolean");
+        }
+
+        if (studyId !== undefined) {
+            localVarQueryParameters['studyId'] = ObjectSerializer.serialize(studyId, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+        };
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: PostStudyPublishResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "PostStudyPublishResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -5898,16 +11781,18 @@ export class TagsApi {
 }
 export enum UnitsApiApiKeys {
     access_token,
+    client_id,
 }
 
 export class UnitsApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -5928,62 +11813,67 @@ export class UnitsApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UnitsApiApiKeys, value: string) {
-        this.authentications[UnitsApiApiKeys[key]].apiKey = value;
+        (this.authentications as any)[UnitsApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Get unit categories
-     * Get a list of the categories of measurement units such as &#39;Distance&#39;, &#39;Duration&#39;, &#39;Energy&#39;, &#39;Frequency&#39;, &#39;Miscellany&#39;, &#39;Pressure&#39;, &#39;Proportion&#39;, &#39;Rating&#39;, &#39;Temperature&#39;, &#39;Volume&#39;, and &#39;Weight&#39;.
+     * Get a list of the categories of measurement units such as 'Distance', 'Duration', 'Energy', 'Frequency', 'Miscellany', 'Pressure', 'Proportion', 'Rating', 'Temperature', 'Volume', and 'Weight'.
+     * @summary Get unit categories
      */
-    public v1UnitCategoriesGet () : Promise<{ response: http.ClientResponse; body: UnitCategory;  }> {
-        const localVarPath = this.basePath + '/v1/unitCategories';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getUnitCategories () : Promise<{ response: http.ClientResponse; body: Array<UnitCategory>;  }> {
+        const localVarPath = this.basePath + '/v3/unitCategories';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
 
-        let useFormData = false;
+        let localVarUseFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: UnitCategory;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: Array<UnitCategory>;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "Array<UnitCategory>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -5993,155 +11883,47 @@ export class UnitsApi {
         });
     }
     /**
-     * Get all available units
-     * Get all available units
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param id Unit id
-     * @param unitName Unit name
-     * @param unitAbbreviatedName Restrict the results to a specific unit by providing the unit abbreviation.
-     * @param unitCategoryName Restrict the results to a specific unit category by providing the unit category name.
+     * Get a list of the available measurement units
+     * @summary Get units
      */
-    public v1UnitsGet (accessToken?: string, userId?: number, id?: number, unitName?: string, unitAbbreviatedName?: string, unitCategoryName?: string) : Promise<{ response: http.ClientResponse; body: Array<Unit>;  }> {
-        const localVarPath = this.basePath + '/v1/units';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getUnits () : Promise<{ response: http.ClientResponse; body: Array<Unit>;  }> {
+        const localVarPath = this.basePath + '/v3/units';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
 
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
+        let localVarUseFormData = false;
 
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (id !== undefined) {
-            queryParameters['id'] = id;
-        }
-
-        if (unitName !== undefined) {
-            queryParameters['unitName'] = unitName;
-        }
-
-        if (unitAbbreviatedName !== undefined) {
-            queryParameters['unitAbbreviatedName'] = unitAbbreviatedName;
-        }
-
-        if (unitCategoryName !== undefined) {
-            queryParameters['unitCategoryName'] = unitCategoryName;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: Array<Unit>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Units for Variable
-     * Get a list of all possible units to use for a given variable
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param unitName Name of Unit you want to retrieve
-     * @param unitAbbreviatedName Abbreviated Unit Name of the unit you want
-     * @param unitCategoryName Name of the category you want units for
-     * @param variable Name of the variable you want units for
-     */
-    public v1UnitsVariableGet (accessToken?: string, userId?: number, unitName?: string, unitAbbreviatedName?: string, unitCategoryName?: string, variable?: string) : Promise<{ response: http.ClientResponse; body: Array<Unit>;  }> {
-        const localVarPath = this.basePath + '/v1/unitsVariable';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (unitName !== undefined) {
-            queryParameters['unitName'] = unitName;
-        }
-
-        if (unitAbbreviatedName !== undefined) {
-            queryParameters['unitAbbreviatedName'] = unitAbbreviatedName;
-        }
-
-        if (unitCategoryName !== undefined) {
-            queryParameters['unitCategoryName'] = unitCategoryName;
-        }
-
-        if (variable !== undefined) {
-            queryParameters['variable'] = variable;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Array<Unit>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "Array<Unit>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -6153,16 +11935,18 @@ export class UnitsApi {
 }
 export enum UserApiApiKeys {
     access_token,
+    client_id,
 }
 
 export class UserApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -6183,82 +11967,87 @@ export class UserApi {
         this._useQuerystring = value;
     }
 
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
+    }
+
     public setApiKey(key: UserApiApiKeys, value: string) {
-        this.authentications[UserApiApiKeys[key]].apiKey = value;
+        (this.authentications as any)[UserApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Get user tokens for existing users, create new users
-     * Get user tokens for existing users, create new users
-     * @param organizationId Organization ID
-     * @param body Provides organization token and user ID
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
+     * Delete user account. Only the client app that created a user can delete that user.
+     * @summary Delete user
+     * @param reason Ex: I hate you!
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v1OrganizationsOrganizationIdUsersPost (organizationId: number, body: UserTokenRequest, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: UserTokenSuccessfulResponse;  }> {
-        const localVarPath = this.basePath + '/v1/organizations/{organizationId}/users'
-            .replace('{' + 'organizationId' + '}', String(organizationId));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public deleteUser (reason: string, clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/user/delete';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        // verify required parameter 'organizationId' is not null or undefined
-        if (organizationId === null || organizationId === undefined) {
-            throw new Error('Required parameter organizationId was null or undefined when calling v1OrganizationsOrganizationIdUsersPost.');
+        // verify required parameter 'reason' is not null or undefined
+        if (reason === null || reason === undefined) {
+            throw new Error('Required parameter reason was null or undefined when calling deleteUser.');
         }
 
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1OrganizationsOrganizationIdUsersPost.');
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
         }
 
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        if (reason !== undefined) {
+            localVarQueryParameters['reason'] = ObjectSerializer.serialize(reason, "string");
         }
 
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'DELETE',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
         };
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: UserTokenSuccessfulResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -6268,46 +12057,175 @@ export class UserApi {
         });
     }
     /**
-     * Get all available units for variableGet authenticated user
-     * Returns user info for the currently authenticated user.
+     * Returns user info.  If no userId is specified, returns info for currently authenticated user
+     * @summary Get user info
+     * @param userId User&#39;s id
+     * @param createdAt When the record was first created. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param appVersion Ex: 2.1.1.0
+     * @param clientUserId Ex: 74802
+     * @param platform Ex: chrome, android, ios, web
+     * @param log Username or email
+     * @param pwd User password
+     * @param includeAuthorizedClients Return list of apps, studies, and individuals with access to user data
      */
-    public v1UserMeGet () : Promise<{ response: http.ClientResponse; body: User;  }> {
-        const localVarPath = this.basePath + '/v1/user/me';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getUser (userId?: number, createdAt?: string, updatedAt?: string, limit?: number, offset?: number, sort?: string, clientId?: string, appVersion?: string, clientUserId?: number, platform?: string, log?: string, pwd?: string, includeAuthorizedClients?: boolean) : Promise<{ response: http.ClientResponse; body: User;  }> {
+        const localVarPath = this.basePath + '/v3/user';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        if (userId !== undefined) {
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
+        }
+
+        if (createdAt !== undefined) {
+            localVarQueryParameters['createdAt'] = ObjectSerializer.serialize(createdAt, "string");
+        }
+
+        if (updatedAt !== undefined) {
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
+        }
+
+        if (limit !== undefined) {
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
+        }
+
+        if (offset !== undefined) {
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
+        }
+
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (appVersion !== undefined) {
+            localVarQueryParameters['appVersion'] = ObjectSerializer.serialize(appVersion, "string");
+        }
+
+        if (clientUserId !== undefined) {
+            localVarQueryParameters['clientUserId'] = ObjectSerializer.serialize(clientUserId, "number");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+        if (log !== undefined) {
+            localVarQueryParameters['log'] = ObjectSerializer.serialize(log, "string");
+        }
+
+        if (pwd !== undefined) {
+            localVarQueryParameters['pwd'] = ObjectSerializer.serialize(pwd, "string");
+        }
+
+        if (includeAuthorizedClients !== undefined) {
+            localVarQueryParameters['includeAuthorizedClients'] = ObjectSerializer.serialize(includeAuthorizedClients, "boolean");
+        }
 
 
-        let useFormData = false;
+        let localVarUseFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: User;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "User");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Post UserSettings
+     * @summary Post UserSettings
+     * @param body User settings to update
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param platform Ex: chrome, android, ios, web
+     */
+    public postUserSettings (body: User, clientId?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: PostUserSettingsResponse;  }> {
+        const localVarPath = this.basePath + '/v3/userSettings';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'body' is not null or undefined
+        if (body === null || body === undefined) {
+            throw new Error('Required parameter body was null or undefined when calling postUserSettings.');
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(body, "User")
+        };
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body: PostUserSettingsResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    body = ObjectSerializer.deserialize(body, "PostUserSettingsResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -6319,16 +12237,18 @@ export class UserApi {
 }
 export enum VariablesApiApiKeys {
     access_token,
+    client_id,
 }
 
 export class VariablesApi {
-    protected basePath = defaultBasePath;
+    protected _basePath = defaultBasePath;
     protected defaultHeaders : any = {};
     protected _useQuerystring : boolean = false;
 
     protected authentications = {
         'default': <Authentication>new VoidAuth(),
         'access_token': new ApiKeyAuth('query', 'access_token'),
+        'client_id': new ApiKeyAuth('query', 'clientId'),
         'quantimodo_oauth2': new OAuth(),
     }
 
@@ -6347,129 +12267,79 @@ export class VariablesApi {
 
     set useQuerystring(value: boolean) {
         this._useQuerystring = value;
+    }
+
+    set basePath(basePath: string) {
+        this._basePath = basePath;
+    }
+
+    get basePath() {
+        return this._basePath;
+    }
+
+    public setDefaultAuthentication(auth: Authentication) {
+	this.authentications.default = auth;
     }
 
     public setApiKey(key: VariablesApiApiKeys, value: string) {
-        this.authentications[VariablesApiApiKeys[key]].apiKey = value;
+        (this.authentications as any)[VariablesApiApiKeys[key]].apiKey = value;
     }
 
     set accessToken(token: string) {
         this.authentications.quantimodo_oauth2.accessToken = token;
     }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
     /**
-     * Get public variables
-     * This endpoint retrieves an array of all public variables. Public variables are things like foods, medications, symptoms, conditions, and anything not unique to a particular user. For instance, a telephone number or name would not be a public variable.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param id Common variable id
-     * @param category Filter data by category
-     * @param name Original name of the variable (supports exact name match only)
-     * @param updatedAt Filter by the last time any of the properties of the variable were changed. Uses UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;
-     * @param source The name of the data source that created the variable (supports exact name match only). So if you have a client application and you only want variables that were last updated by your app, you can include the name of your app here
-     * @param latestMeasurementTime Filter variables based on the last time a measurement for them was created or updated in the UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;
-     * @param numberOfRawMeasurements Filter variables by the total number of measurements that they have. This could be used of you want to filter or sort by popularity.
-     * @param lastSource Limit variables to those which measurements were last submitted by a specific source. So if you have a client application and you only want variables that were last updated by your app, you can include the name of your app here. (supports exact name match only)
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
+     * Delete previously created user tags or ingredients.
+     * @summary Delete user tag or ingredient
+     * @param taggedVariableId Id of the tagged variable (i.e. Lollipop) you would like to get variables it can be tagged with (i.e. Sugar).  Converted measurements of the tagged variable are included in analysis of the tag variable (i.e. ingredient).
+     * @param tagVariableId Id of the tag variable (i.e. Sugar) you would like to get variables it can be tagged to (i.e. Lollipop).  Converted measurements of the tagged variable are included in analysis of the tag variable (i.e. ingredient).
      */
-    public v1PublicVariablesGet (accessToken?: string, userId?: number, id?: number, category?: string, name?: string, updatedAt?: string, source?: string, latestMeasurementTime?: string, numberOfRawMeasurements?: string, lastSource?: string, limit?: number, offset?: number, sort?: number) : Promise<{ response: http.ClientResponse; body: Variable;  }> {
-        const localVarPath = this.basePath + '/v1/public/variables';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public deleteUserTag (taggedVariableId?: number, tagVariableId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/userTags/delete';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        if (taggedVariableId !== undefined) {
+            localVarQueryParameters['taggedVariableId'] = ObjectSerializer.serialize(taggedVariableId, "number");
         }
 
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+        if (tagVariableId !== undefined) {
+            localVarQueryParameters['tagVariableId'] = ObjectSerializer.serialize(tagVariableId, "number");
         }
 
-        if (id !== undefined) {
-            queryParameters['id'] = id;
-        }
 
-        if (category !== undefined) {
-            queryParameters['category'] = category;
-        }
+        let localVarUseFormData = false;
 
-        if (name !== undefined) {
-            queryParameters['name'] = name;
-        }
-
-        if (updatedAt !== undefined) {
-            queryParameters['updatedAt'] = updatedAt;
-        }
-
-        if (source !== undefined) {
-            queryParameters['source'] = source;
-        }
-
-        if (latestMeasurementTime !== undefined) {
-            queryParameters['latestMeasurementTime'] = latestMeasurementTime;
-        }
-
-        if (numberOfRawMeasurements !== undefined) {
-            queryParameters['numberOfRawMeasurements'] = numberOfRawMeasurements;
-        }
-
-        if (lastSource !== undefined) {
-            queryParameters['lastSource'] = lastSource;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'DELETE',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
-        return new Promise<{ response: http.ClientResponse; body: Variable;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+        return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -6479,266 +12349,53 @@ export class VariablesApi {
         });
     }
     /**
-     * Get top 5 PUBLIC variables with the most correlations
-     * Get top 5 PUBLIC variables with the most correlations containing the entered search characters. For example, search for &#39;mood&#39; as an effect. Since &#39;Overall Mood&#39; has a lot of correlations with other variables, it should be in the autocomplete list.Supported filter parameters:&lt;ul&gt;&lt;li&gt;&lt;b&gt;category&lt;/b&gt; - Category of Variable&lt;/li&gt;&lt;/ul&gt;
-     * @param search Search query can be some fraction of a variable name.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param variableCategoryName Filter variables by category name. The variable categories include Activity, Causes of Illness, Cognitive Performance, Conditions, Environment, Foods, Location, Miscellaneous, Mood, Nutrition, Physical Activity, Physique, Sleep, Social Interactions, Symptoms, Treatments, Vital Signs, and Work.
-     * @param source Specify a data source name to only return variables from a specific data source.
-     * @param effectOrCause Indicate if you only want variables that have user correlations. Possible values are effect and cause.
-     * @param publicEffectOrCause Indicate if you only want variables that have aggregated correlations.  Possible values are effect and cause.
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
-     */
-    public v1PublicVariablesSearchSearchGet (search: string, accessToken?: string, userId?: number, variableCategoryName?: string, source?: string, effectOrCause?: string, publicEffectOrCause?: string, limit?: number, offset?: number, sort?: number) : Promise<{ response: http.ClientResponse; body: Variable;  }> {
-        const localVarPath = this.basePath + '/v1/public/variables/search/{search}'
-            .replace('{' + 'search' + '}', String(search));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'search' is not null or undefined
-        if (search === null || search === undefined) {
-            throw new Error('Required parameter search was null or undefined when calling v1PublicVariablesSearchSearchGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (variableCategoryName !== undefined) {
-            queryParameters['variableCategoryName'] = variableCategoryName;
-        }
-
-        if (source !== undefined) {
-            queryParameters['source'] = source;
-        }
-
-        if (effectOrCause !== undefined) {
-            queryParameters['effectOrCause'] = effectOrCause;
-        }
-
-        if (publicEffectOrCause !== undefined) {
-            queryParameters['publicEffectOrCause'] = publicEffectOrCause;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Variable;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Delete All Measurements For Variable
      * Users can delete all of their measurements for a variable
+     * @summary Delete All Measurements For Variable
      * @param variableId Id of the variable whose measurements should be deleted
      */
-    public v1UserVariablesDeletePost (variableId: UserVariableDelete) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/userVariables/delete';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'variableId' is not null or undefined
-        if (variableId === null || variableId === undefined) {
-            throw new Error('Required parameter variableId was null or undefined when calling v1UserVariablesDeletePost.');
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: variableId,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Update User Settings for a Variable
-     * Users can change the parameters used in analysis of that variable such as the expected duration of action for a variable to have an effect, the estimated delay before the onset of action. In order to filter out erroneous data, they are able to set the maximum and minimum reasonable daily values for a variable.
-     * @param userVariables Variable user settings data
-     */
-    public v1UserVariablesPost (userVariables: UserVariables) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/userVariables';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'userVariables' is not null or undefined
-        if (userVariables === null || userVariables === undefined) {
-            throw new Error('Required parameter userVariables was null or undefined when calling v1UserVariablesPost.');
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: userVariables,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Reset user settings for a variable to defaults
-     * Reset user settings for a variable to defaults
-     * @param variableId Id of the variable that should be reset
-     */
-    public v1UserVariablesResetPost (variableId: UserVariableDelete) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/userVariables/reset';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
+    public deleteUserVariable (variableId: UserVariableDelete) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/userVariables/delete';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'variableId' is not null or undefined
         if (variableId === null || variableId === undefined) {
-            throw new Error('Required parameter variableId was null or undefined when calling v1UserVariablesResetPost.');
+            throw new Error('Required parameter variableId was null or undefined when calling deleteUserVariable.');
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'DELETE',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: variableId,
+            body: ObjectSerializer.serialize(variableId, "UserVariableDelete")
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -6748,46 +12405,47 @@ export class VariablesApi {
         });
     }
     /**
-     * Variable categories
      * The variable categories include Activity, Causes of Illness, Cognitive Performance, Conditions, Environment, Foods, Location, Miscellaneous, Mood, Nutrition, Physical Activity, Physique, Sleep, Social Interactions, Symptoms, Treatments, Vital Signs, and Work.
+     * @summary Variable categories
      */
-    public v1VariableCategoriesGet () : Promise<{ response: http.ClientResponse; body: Array<VariableCategory>;  }> {
-        const localVarPath = this.basePath + '/v1/variableCategories';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getVariableCategories () : Promise<{ response: http.ClientResponse; body: Array<VariableCategory>;  }> {
+        const localVarPath = this.basePath + '/v3/variableCategories';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
 
-        let useFormData = false;
+        let localVarUseFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: Array<VariableCategory>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "Array<VariableCategory>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -6797,283 +12455,237 @@ export class VariablesApi {
         });
     }
     /**
-     * Get variables with user&#39;s settings
-     * Get variables for which the user has measurements. If the user has specified variable settings, these are provided instead of the common variable defaults.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param id Common variable id
-     * @param category Filter data by category
-     * @param name Original name of the variable (supports exact name match only)
-     * @param updatedAt Filter by the last time any of the properties of the variable were changed. Uses UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;
-     * @param source The name of the data source that created the variable (supports exact name match only). So if you have a client application and you only want variables that were last updated by your app, you can include the name of your app here
-     * @param latestMeasurementTime Filter variables based on the last time a measurement for them was created or updated in the UTC format \&quot;YYYY-MM-DDThh:mm:ss\&quot;
+     * Get variables. If the user has specified variable settings, these are provided instead of the common variable defaults.
+     * @summary Get variables along with related user-specific analysis settings and statistics
+     * @param includeCharts Highcharts configs that can be used if you have highcharts.js included on the page.  This only works if the id or name query parameter is also provided.
      * @param numberOfRawMeasurements Filter variables by the total number of measurements that they have. This could be used of you want to filter or sort by popularity.
-     * @param lastSource Limit variables to those which measurements were last submitted by a specific source. So if you have a client application and you only want variables that were last updated by your app, you can include the name of your app here. (supports exact name match only)
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     * @param sort Sort by given field. If the field is prefixed with &#x60;-, it will sort in descending order.
+     * @param userId User&#39;s id
+     * @param variableCategoryName Limit results to a specific variable category
+     * @param name Name of the variable. To get results matching a substring, add % as a wildcard as the first and/or last character of a query string parameter. In order to get variables that contain &#x60;Mood&#x60;, the following query should be used: ?variableName&#x3D;%Mood%
+     * @param updatedAt When the record was last updated. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss datetime format. Time zone should be UTC and not local.
+     * @param sourceName ID of the source you want measurements for (supports exact name match only)
+     * @param earliestMeasurementTime Excluded records with measurement times earlier than this value. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+     * @param latestMeasurementTime Excluded records with measurement times later than this value. Use UTC ISO 8601 YYYY-MM-DDThh:mm:ss  datetime format. Time zone should be UTC and not local.
+     * @param id Common variable id
+     * @param lastSourceName Limit variables to those which measurements were last submitted by a specific source. So if you have a client application and you only want variables that were last updated by your app, you can include the name of your app here
+     * @param limit The LIMIT is used to limit the number of results returned. So if youhave 1000 results, but only want to the first 10, you would set this to 10 and offset to 0. The maximum limit is 200 records.
+     * @param offset OFFSET says to skip that many rows before beginning to return rows to the client. OFFSET 0 is the same as omitting the OFFSET clause.If both OFFSET and LIMIT appear, then OFFSET rows are skipped before starting to count the LIMIT rows that are returned.
+     * @param sort Sort by one of the listed field names. If the field name is prefixed with &#x60;-&#x60;, it will sort in descending order.
+     * @param includePublic Include variables the user has no measurements for
+     * @param manualTracking Only include variables tracked manually by the user
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param upc UPC or other barcode scan result
+     * @param effectOrCause Provided variable is the effect or cause
+     * @param publicEffectOrCause Ex: 
+     * @param exactMatch Require exact match
+     * @param variableCategoryId Ex: 13
+     * @param includePrivate Include user-specific variables in results
+     * @param searchPhrase Ex: %Body Fat%
+     * @param synonyms Ex: %McDonalds hotcake%
+     * @param taggedVariableId Id of the tagged variable (i.e. Lollipop) you would like to get variables it can be tagged with (i.e. Sugar).  Converted measurements of the tagged variable are included in analysis of the tag variable (i.e. ingredient).
+     * @param tagVariableId Id of the tag variable (i.e. Sugar) you would like to get variables it can be tagged to (i.e. Lollipop).  Converted measurements of the tagged variable are included in analysis of the tag variable (i.e. ingredient).
+     * @param joinVariableId Id of the variable you would like to get variables that can be joined to.  This is used to merge duplicate variables.   If joinVariableId is specified, this returns only variables eligible to be joined to the variable specified by the joinVariableId.
+     * @param parentUserTagVariableId Id of the parent category variable (i.e. Fruit) you would like to get eligible child sub-type variables (i.e. Apple) for.  Child variable measurements will be included in analysis of the parent variable.  For instance, a child sub-type of the parent category Fruit could be Apple.  When Apple is tagged with the parent category Fruit, Apple measurements will be included when Fruit is analyzed.
+     * @param childUserTagVariableId Id of the child sub-type variable (i.e. Apple) you would like to get eligible parent variables (i.e. Fruit) for.  Child variable measurements will be included in analysis of the parent variable.  For instance, a child sub-type of the parent category Fruit could be Apple. When Apple is tagged with the parent category Fruit, Apple measurements will be included when Fruit is analyzed.
+     * @param ingredientUserTagVariableId Id of the ingredient variable (i.e. Fructose)  you would like to get eligible ingredientOf variables (i.e. Apple) for.  IngredientOf variable measurements will be included in analysis of the ingredient variable.  For instance, a ingredientOf of variable Fruit could be Apple.
+     * @param ingredientOfUserTagVariableId Id of the ingredientOf variable (i.e. Apple) you would like to get eligible ingredient variables (i.e. Fructose) for.  IngredientOf variable measurements will be included in analysis of the ingredient variable.  For instance, a ingredientOf of variable Fruit could be Apple.
+     * @param commonOnly Return only public and aggregated common variable data instead of user-specific variables
+     * @param userOnly Return only user-specific variables and data, excluding common aggregated variable data
+     * @param platform Ex: chrome, android, ios, web
+     * @param includeTags Return parent, child, duplicate, and ingredient variables
+     * @param recalculate Recalculate instead of using cached analysis
+     * @param variableId Ex: 13
      */
-    public v1VariablesGet (accessToken?: string, userId?: number, id?: number, category?: string, name?: string, updatedAt?: string, source?: string, latestMeasurementTime?: string, numberOfRawMeasurements?: string, lastSource?: string, limit?: number, offset?: number, sort?: number) : Promise<{ response: http.ClientResponse; body: Variable;  }> {
-        const localVarPath = this.basePath + '/v1/variables';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public getVariables (includeCharts?: boolean, numberOfRawMeasurements?: string, userId?: number, variableCategoryName?: string, name?: string, updatedAt?: string, sourceName?: string, earliestMeasurementTime?: string, latestMeasurementTime?: string, id?: number, lastSourceName?: string, limit?: number, offset?: number, sort?: string, includePublic?: boolean, manualTracking?: boolean, clientId?: string, upc?: string, effectOrCause?: string, publicEffectOrCause?: string, exactMatch?: boolean, variableCategoryId?: number, includePrivate?: boolean, searchPhrase?: string, synonyms?: string, taggedVariableId?: number, tagVariableId?: number, joinVariableId?: number, parentUserTagVariableId?: number, childUserTagVariableId?: number, ingredientUserTagVariableId?: number, ingredientOfUserTagVariableId?: number, commonOnly?: boolean, userOnly?: boolean, platform?: string, includeTags?: boolean, recalculate?: boolean, variableId?: number) : Promise<{ response: http.ClientResponse; body: Array<Variable>;  }> {
+        const localVarPath = this.basePath + '/v3/variables';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        if (id !== undefined) {
-            queryParameters['id'] = id;
-        }
-
-        if (category !== undefined) {
-            queryParameters['category'] = category;
-        }
-
-        if (name !== undefined) {
-            queryParameters['name'] = name;
-        }
-
-        if (updatedAt !== undefined) {
-            queryParameters['updatedAt'] = updatedAt;
-        }
-
-        if (source !== undefined) {
-            queryParameters['source'] = source;
-        }
-
-        if (latestMeasurementTime !== undefined) {
-            queryParameters['latestMeasurementTime'] = latestMeasurementTime;
+        if (includeCharts !== undefined) {
+            localVarQueryParameters['includeCharts'] = ObjectSerializer.serialize(includeCharts, "boolean");
         }
 
         if (numberOfRawMeasurements !== undefined) {
-            queryParameters['numberOfRawMeasurements'] = numberOfRawMeasurements;
-        }
-
-        if (lastSource !== undefined) {
-            queryParameters['lastSource'] = lastSource;
-        }
-
-        if (limit !== undefined) {
-            queryParameters['limit'] = limit;
-        }
-
-        if (offset !== undefined) {
-            queryParameters['offset'] = offset;
-        }
-
-        if (sort !== undefined) {
-            queryParameters['sort'] = sort;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Variable;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Create Variables
-     * Allows the client to create a new variable in the &#x60;variables&#x60; table.
-     * @param body Original name for the variable.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1VariablesPost (body: VariablesNew, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body?: any;  }> {
-        const localVarPath = this.basePath + '/v1/variables';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1VariablesPost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+            localVarQueryParameters['numberOfRawMeasurements'] = ObjectSerializer.serialize(numberOfRawMeasurements, "string");
         }
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-            body: body,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Get variables by search query
-     * Get variables containing the search characters for which the currently logged in user has measurements. Used to provide auto-complete function in variable search boxes.
-     * @param search Search query which may be an entire variable name or a fragment of one.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     * @param variableCategoryName Filter variables by category name. The variable categories include Activity, Causes of Illness, Cognitive Performance, Conditions, Environment, Foods, Location, Miscellaneous, Mood, Nutrition, Physical Activity, Physique, Sleep, Social Interactions, Symptoms, Treatments, Vital Signs, and Work.
-     * @param includePublic Set to true if you would like to include public variables when no user variables are found.
-     * @param manualTracking Set to true if you would like to exlude variables like apps and website names.
-     * @param source Specify a data source name to only return variables from a specific data source.
-     * @param effectOrCause Indicate if you only want variables that have user correlations. Possible values are effect and cause.
-     * @param publicEffectOrCause Indicate if you only want variables that have aggregated correlations.  Possible values are effect and cause.
-     * @param limit The LIMIT is used to limit the number of results returned. So if you have 1000 results, but only want to the first 10, you would set this to 10 and offset to 0.
-     * @param offset Since the maximum limit is 200 records, to get more than that you&#39;ll have to make multiple API calls and page through the results. To retrieve all the data, you can iterate through data by using the &#x60;limit&#x60; and &#x60;offset&#x60; query parameters.  For example, if you want to retrieve data from 61-80 then you can use a query with the following parameters, &#x60;imit&#x3D;20&amp;offset&#x3D;60&#x60;.
-     */
-    public v1VariablesSearchSearchGet (search: string, accessToken?: string, userId?: number, variableCategoryName?: string, includePublic?: boolean, manualTracking?: boolean, source?: string, effectOrCause?: string, publicEffectOrCause?: string, limit?: number, offset?: number) : Promise<{ response: http.ClientResponse; body: Array<Variable>;  }> {
-        const localVarPath = this.basePath + '/v1/variables/search/{search}'
-            .replace('{' + 'search' + '}', String(search));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'search' is not null or undefined
-        if (search === null || search === undefined) {
-            throw new Error('Required parameter search was null or undefined when calling v1VariablesSearchSearchGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
         if (variableCategoryName !== undefined) {
-            queryParameters['variableCategoryName'] = variableCategoryName;
+            localVarQueryParameters['variableCategoryName'] = ObjectSerializer.serialize(variableCategoryName, "string");
         }
 
-        if (includePublic !== undefined) {
-            queryParameters['includePublic'] = includePublic;
+        if (name !== undefined) {
+            localVarQueryParameters['name'] = ObjectSerializer.serialize(name, "string");
         }
 
-        if (manualTracking !== undefined) {
-            queryParameters['manualTracking'] = manualTracking;
+        if (updatedAt !== undefined) {
+            localVarQueryParameters['updatedAt'] = ObjectSerializer.serialize(updatedAt, "string");
         }
 
-        if (source !== undefined) {
-            queryParameters['source'] = source;
+        if (sourceName !== undefined) {
+            localVarQueryParameters['sourceName'] = ObjectSerializer.serialize(sourceName, "string");
         }
 
-        if (effectOrCause !== undefined) {
-            queryParameters['effectOrCause'] = effectOrCause;
+        if (earliestMeasurementTime !== undefined) {
+            localVarQueryParameters['earliestMeasurementTime'] = ObjectSerializer.serialize(earliestMeasurementTime, "string");
         }
 
-        if (publicEffectOrCause !== undefined) {
-            queryParameters['publicEffectOrCause'] = publicEffectOrCause;
+        if (latestMeasurementTime !== undefined) {
+            localVarQueryParameters['latestMeasurementTime'] = ObjectSerializer.serialize(latestMeasurementTime, "string");
+        }
+
+        if (id !== undefined) {
+            localVarQueryParameters['id'] = ObjectSerializer.serialize(id, "number");
+        }
+
+        if (lastSourceName !== undefined) {
+            localVarQueryParameters['lastSourceName'] = ObjectSerializer.serialize(lastSourceName, "string");
         }
 
         if (limit !== undefined) {
-            queryParameters['limit'] = limit;
+            localVarQueryParameters['limit'] = ObjectSerializer.serialize(limit, "number");
         }
 
         if (offset !== undefined) {
-            queryParameters['offset'] = offset;
+            localVarQueryParameters['offset'] = ObjectSerializer.serialize(offset, "number");
         }
 
-        let useFormData = false;
+        if (sort !== undefined) {
+            localVarQueryParameters['sort'] = ObjectSerializer.serialize(sort, "string");
+        }
 
-        let requestOptions: request.Options = {
+        if (includePublic !== undefined) {
+            localVarQueryParameters['includePublic'] = ObjectSerializer.serialize(includePublic, "boolean");
+        }
+
+        if (manualTracking !== undefined) {
+            localVarQueryParameters['manualTracking'] = ObjectSerializer.serialize(manualTracking, "boolean");
+        }
+
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
+        }
+
+        if (upc !== undefined) {
+            localVarQueryParameters['upc'] = ObjectSerializer.serialize(upc, "string");
+        }
+
+        if (effectOrCause !== undefined) {
+            localVarQueryParameters['effectOrCause'] = ObjectSerializer.serialize(effectOrCause, "string");
+        }
+
+        if (publicEffectOrCause !== undefined) {
+            localVarQueryParameters['publicEffectOrCause'] = ObjectSerializer.serialize(publicEffectOrCause, "string");
+        }
+
+        if (exactMatch !== undefined) {
+            localVarQueryParameters['exactMatch'] = ObjectSerializer.serialize(exactMatch, "boolean");
+        }
+
+        if (variableCategoryId !== undefined) {
+            localVarQueryParameters['variableCategoryId'] = ObjectSerializer.serialize(variableCategoryId, "number");
+        }
+
+        if (includePrivate !== undefined) {
+            localVarQueryParameters['includePrivate'] = ObjectSerializer.serialize(includePrivate, "boolean");
+        }
+
+        if (searchPhrase !== undefined) {
+            localVarQueryParameters['searchPhrase'] = ObjectSerializer.serialize(searchPhrase, "string");
+        }
+
+        if (synonyms !== undefined) {
+            localVarQueryParameters['synonyms'] = ObjectSerializer.serialize(synonyms, "string");
+        }
+
+        if (taggedVariableId !== undefined) {
+            localVarQueryParameters['taggedVariableId'] = ObjectSerializer.serialize(taggedVariableId, "number");
+        }
+
+        if (tagVariableId !== undefined) {
+            localVarQueryParameters['tagVariableId'] = ObjectSerializer.serialize(tagVariableId, "number");
+        }
+
+        if (joinVariableId !== undefined) {
+            localVarQueryParameters['joinVariableId'] = ObjectSerializer.serialize(joinVariableId, "number");
+        }
+
+        if (parentUserTagVariableId !== undefined) {
+            localVarQueryParameters['parentUserTagVariableId'] = ObjectSerializer.serialize(parentUserTagVariableId, "number");
+        }
+
+        if (childUserTagVariableId !== undefined) {
+            localVarQueryParameters['childUserTagVariableId'] = ObjectSerializer.serialize(childUserTagVariableId, "number");
+        }
+
+        if (ingredientUserTagVariableId !== undefined) {
+            localVarQueryParameters['ingredientUserTagVariableId'] = ObjectSerializer.serialize(ingredientUserTagVariableId, "number");
+        }
+
+        if (ingredientOfUserTagVariableId !== undefined) {
+            localVarQueryParameters['ingredientOfUserTagVariableId'] = ObjectSerializer.serialize(ingredientOfUserTagVariableId, "number");
+        }
+
+        if (commonOnly !== undefined) {
+            localVarQueryParameters['commonOnly'] = ObjectSerializer.serialize(commonOnly, "boolean");
+        }
+
+        if (userOnly !== undefined) {
+            localVarQueryParameters['userOnly'] = ObjectSerializer.serialize(userOnly, "boolean");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+        if (includeTags !== undefined) {
+            localVarQueryParameters['includeTags'] = ObjectSerializer.serialize(includeTags, "boolean");
+        }
+
+        if (recalculate !== undefined) {
+            localVarQueryParameters['recalculate'] = ObjectSerializer.serialize(recalculate, "boolean");
+        }
+
+        if (variableId !== undefined) {
+            localVarQueryParameters['variableId'] = ObjectSerializer.serialize(variableId, "number");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: Array<Variable>;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "Array<Variable>");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -7083,177 +12695,59 @@ export class VariablesApi {
         });
     }
     /**
-     * Get info about a variable
-     * Get all of the settings and information about a variable by its name. If the logged in user has modified the settings for the variable, these will be provided instead of the default settings for that variable.
-     * @param variableName Variable name
-     * @param accessToken User&#39;s OAuth2 access token
+     * This endpoint allows users to tag foods with their ingredients.  This information will then be used to infer the user intake of the different ingredients by just entering the foods. The inferred intake levels will then be used to determine the effects of different nutrients on the user during analysis.
+     * @summary Post or update user tags or ingredients
+     * @param body Contains the new user tag data
      * @param userId User&#39;s id
      */
-    public v1VariablesVariableNameGet (variableName: string, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: Variable;  }> {
-        const localVarPath = this.basePath + '/v1/variables/{variableName}'
-            .replace('{' + 'variableName' + '}', String(variableName));
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
-
-        // verify required parameter 'variableName' is not null or undefined
-        if (variableName === null || variableName === undefined) {
-            throw new Error('Required parameter variableName was null or undefined when calling v1VariablesVariableNameGet.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
-        }
-
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
-        }
-
-        let useFormData = false;
-
-        let requestOptions: request.Options = {
-            method: 'GET',
-            qs: queryParameters,
-            headers: headerParams,
-            uri: localVarPath,
-            useQuerystring: this._useQuerystring,
-            json: true,
-        };
-
-        this.authentications.access_token.applyToRequest(requestOptions);
-
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
-
-        this.authentications.default.applyToRequest(requestOptions);
-
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
-            } else {
-                requestOptions.form = formParams;
-            }
-        }
-        return new Promise<{ response: http.ClientResponse; body: Variable;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
-                        resolve({ response: response, body: body });
-                    } else {
-                        reject({ response: response, body: body });
-                    }
-                }
-            });
-        });
-    }
-}
-export enum VotesApiApiKeys {
-    access_token,
-}
-
-export class VotesApi {
-    protected basePath = defaultBasePath;
-    protected defaultHeaders : any = {};
-    protected _useQuerystring : boolean = false;
-
-    protected authentications = {
-        'default': <Authentication>new VoidAuth(),
-        'access_token': new ApiKeyAuth('query', 'access_token'),
-        'quantimodo_oauth2': new OAuth(),
-    }
-
-    constructor(basePath?: string);
-    constructor(basePathOrUsername: string, password?: string, basePath?: string) {
-        if (password) {
-            if (basePath) {
-                this.basePath = basePath;
-            }
-        } else {
-            if (basePathOrUsername) {
-                this.basePath = basePathOrUsername
-            }
-        }
-    }
-
-    set useQuerystring(value: boolean) {
-        this._useQuerystring = value;
-    }
-
-    public setApiKey(key: VotesApiApiKeys, value: string) {
-        this.authentications[VotesApiApiKeys[key]].apiKey = value;
-    }
-
-    set accessToken(token: string) {
-        this.authentications.quantimodo_oauth2.accessToken = token;
-    }
-    private extendObj<T1,T2>(objA: T1, objB: T2) {
-        for(let key in objB){
-            if(objB.hasOwnProperty(key)){
-                objA[key] = objB[key];
-            }
-        }
-        return <T1&T2>objA;
-    }
-    /**
-     * Delete vote
-     * Delete previously posted vote
-     * @param body The cause and effect variable names for the predictor vote to be deleted.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
-     */
-    public v1VotesDeletePost (body: VoteDelete, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/votes/delete';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
-
+    public postUserTags (body: UserTag, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/userTags';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
         // verify required parameter 'body' is not null or undefined
         if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1VotesDeletePost.');
-        }
-
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+            throw new Error('Required parameter body was null or undefined when calling postUserTags.');
         }
 
         if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+            localVarQueryParameters['userId'] = ObjectSerializer.serialize(userId, "number");
         }
 
-        let useFormData = false;
 
-        let requestOptions: request.Options = {
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
+            body: ObjectSerializer.serialize(body, "UserTag")
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
@@ -7263,63 +12757,160 @@ export class VotesApi {
         });
     }
     /**
-     * Post or update vote
-     * This is to enable users to indicate their opinion on the plausibility of a causal relationship between a treatment and outcome. QuantiModo incorporates crowd-sourced plausibility estimations into their algorithm. This is done allowing user to indicate their view of the plausibility of each relationship with thumbs up/down buttons placed next to each prediction.
-     * @param body Contains the cause variable, effect variable, and vote value.
-     * @param accessToken User&#39;s OAuth2 access token
-     * @param userId User&#39;s id
+     * Users can change the parameters used in analysis of that variable such as the expected duration of action for a variable to have an effect, the estimated delay before the onset of action. In order to filter out erroneous data, they are able to set the maximum and minimum reasonable daily values for a variable.
+     * @summary Update User Settings for a Variable
+     * @param userVariables Variable user settings data
+     * @param includePrivate Include user-specific variables in results
+     * @param clientId Your QuantiModo client id can be obtained by creating an app at https://builder.quantimo.do
+     * @param includePublic Include variables the user has no measurements for
+     * @param searchPhrase Ex: %Body Fat%
+     * @param exactMatch Require exact match
+     * @param manualTracking Only include variables tracked manually by the user
+     * @param variableCategoryName Limit results to a specific variable category
+     * @param variableCategoryId Ex: 13
+     * @param synonyms Ex: %McDonalds hotcake%
+     * @param platform Ex: chrome, android, ios, web
      */
-    public v1VotesPost (body: PostVote, accessToken?: string, userId?: number) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
-        const localVarPath = this.basePath + '/v1/votes';
-        let queryParameters: any = {};
-        let headerParams: any = this.extendObj({}, this.defaultHeaders);
-        let formParams: any = {};
+    public postUserVariables (userVariables: Array<Variable>, includePrivate?: boolean, clientId?: string, includePublic?: boolean, searchPhrase?: string, exactMatch?: boolean, manualTracking?: boolean, variableCategoryName?: string, variableCategoryId?: number, synonyms?: string, platform?: string) : Promise<{ response: http.ClientResponse; body: CommonResponse;  }> {
+        const localVarPath = this.basePath + '/v3/variables';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
 
-
-        // verify required parameter 'body' is not null or undefined
-        if (body === null || body === undefined) {
-            throw new Error('Required parameter body was null or undefined when calling v1VotesPost.');
+        // verify required parameter 'userVariables' is not null or undefined
+        if (userVariables === null || userVariables === undefined) {
+            throw new Error('Required parameter userVariables was null or undefined when calling postUserVariables.');
         }
 
-        if (accessToken !== undefined) {
-            queryParameters['access_token'] = accessToken;
+        if (includePrivate !== undefined) {
+            localVarQueryParameters['includePrivate'] = ObjectSerializer.serialize(includePrivate, "boolean");
         }
 
-        if (userId !== undefined) {
-            queryParameters['userId'] = userId;
+        if (clientId !== undefined) {
+            localVarQueryParameters['clientId'] = ObjectSerializer.serialize(clientId, "string");
         }
 
-        let useFormData = false;
+        if (includePublic !== undefined) {
+            localVarQueryParameters['includePublic'] = ObjectSerializer.serialize(includePublic, "boolean");
+        }
 
-        let requestOptions: request.Options = {
+        if (searchPhrase !== undefined) {
+            localVarQueryParameters['searchPhrase'] = ObjectSerializer.serialize(searchPhrase, "string");
+        }
+
+        if (exactMatch !== undefined) {
+            localVarQueryParameters['exactMatch'] = ObjectSerializer.serialize(exactMatch, "boolean");
+        }
+
+        if (manualTracking !== undefined) {
+            localVarQueryParameters['manualTracking'] = ObjectSerializer.serialize(manualTracking, "boolean");
+        }
+
+        if (variableCategoryName !== undefined) {
+            localVarQueryParameters['variableCategoryName'] = ObjectSerializer.serialize(variableCategoryName, "string");
+        }
+
+        if (variableCategoryId !== undefined) {
+            localVarQueryParameters['variableCategoryId'] = ObjectSerializer.serialize(variableCategoryId, "number");
+        }
+
+        if (synonyms !== undefined) {
+            localVarQueryParameters['synonyms'] = ObjectSerializer.serialize(synonyms, "string");
+        }
+
+        if (platform !== undefined) {
+            localVarQueryParameters['platform'] = ObjectSerializer.serialize(platform, "string");
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
             method: 'POST',
-            qs: queryParameters,
-            headers: headerParams,
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
             json: true,
-            body: body,
+            body: ObjectSerializer.serialize(userVariables, "Array<Variable>")
         };
 
-        this.authentications.access_token.applyToRequest(requestOptions);
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
 
-        this.authentications.quantimodo_oauth2.applyToRequest(requestOptions);
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
 
-        this.authentications.default.applyToRequest(requestOptions);
+        this.authentications.default.applyToRequest(localVarRequestOptions);
 
-        if (Object.keys(formParams).length) {
-            if (useFormData) {
-                (<any>requestOptions).formData = formParams;
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
             } else {
-                requestOptions.form = formParams;
+                localVarRequestOptions.form = localVarFormParams;
             }
         }
         return new Promise<{ response: http.ClientResponse; body: CommonResponse;  }>((resolve, reject) => {
-            request(requestOptions, (error, response, body) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
                 if (error) {
                     reject(error);
                 } else {
-                    if (response.statusCode >= 200 && response.statusCode <= 299) {
+                    body = ObjectSerializer.deserialize(body, "CommonResponse");
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
+                        resolve({ response: response, body: body });
+                    } else {
+                        reject({ response: response, body: body });
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Reset user settings for a variable to defaults
+     * @summary Reset user settings for a variable to defaults
+     * @param variableId Id of the variable whose measurements should be deleted
+     */
+    public resetUserVariableSettings (variableId: UserVariableDelete) : Promise<{ response: http.ClientResponse; body?: any;  }> {
+        const localVarPath = this.basePath + '/v3/userVariables/reset';
+        let localVarQueryParameters: any = {};
+        let localVarHeaderParams: any = (<any>Object).assign({}, this.defaultHeaders);
+        let localVarFormParams: any = {};
+
+        // verify required parameter 'variableId' is not null or undefined
+        if (variableId === null || variableId === undefined) {
+            throw new Error('Required parameter variableId was null or undefined when calling resetUserVariableSettings.');
+        }
+
+
+        let localVarUseFormData = false;
+
+        let localVarRequestOptions: localVarRequest.Options = {
+            method: 'POST',
+            qs: localVarQueryParameters,
+            headers: localVarHeaderParams,
+            uri: localVarPath,
+            useQuerystring: this._useQuerystring,
+            json: true,
+            body: ObjectSerializer.serialize(variableId, "UserVariableDelete")
+        };
+
+        this.authentications.access_token.applyToRequest(localVarRequestOptions);
+
+        this.authentications.quantimodo_oauth2.applyToRequest(localVarRequestOptions);
+
+        this.authentications.default.applyToRequest(localVarRequestOptions);
+
+        if (Object.keys(localVarFormParams).length) {
+            if (localVarUseFormData) {
+                (<any>localVarRequestOptions).formData = localVarFormParams;
+            } else {
+                localVarRequestOptions.form = localVarFormParams;
+            }
+        }
+        return new Promise<{ response: http.ClientResponse; body?: any;  }>((resolve, reject) => {
+            localVarRequest(localVarRequestOptions, (error, response, body) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (response.statusCode && response.statusCode >= 200 && response.statusCode <= 299) {
                         resolve({ response: response, body: body });
                     } else {
                         reject({ response: response, body: body });
